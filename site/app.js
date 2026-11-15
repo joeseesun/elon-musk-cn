@@ -12,6 +12,22 @@
   const grid = $('#grid');
   const input = $('#search');
 
+  /* 手机端汉堡菜单 */
+  const menuBtn = $('[data-menu-toggle]');
+  const mastMenu = $('#mastMenu');
+  if (menuBtn && mastMenu) {
+    const setMenu = (open) => {
+      mastMenu.classList.toggle('open', open);
+      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+    menuBtn.addEventListener('click', (e) => { e.stopPropagation(); setMenu(!mastMenu.classList.contains('open')); });
+    document.addEventListener('click', (e) => {
+      if (mastMenu.classList.contains('open') && !mastMenu.contains(e.target) && !menuBtn.contains(e.target)) setMenu(false);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+    mastMenu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
+  }
+
   const ls = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },

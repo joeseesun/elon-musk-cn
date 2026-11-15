@@ -45,7 +45,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 9, 4, 6, 4, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 10, 5, 6, 4, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -834,11 +834,15 @@ def build_index(eps):
   <div class="wrap">
     <div class="mast-top">
       <span class="mast-date" id="mastDate"></span>
-      <span class="mast-actions"><a class="mast-link" href="/search/">文稿搜索</a><a class="mast-link" href="/trends/">话题趋势</a><a class="mast-link" href="/stats/">数据</a><a class="mast-link" href="/predictions/">预言追踪</a><a class="mast-link" href="/quotes/">语录</a><a class="mast-link" href="/themes/">主题</a><a class="mast-link" href="/archive/">目录</a>{THEME_BTN}</span>
+      <span class="mast-actions">
+        <nav class="mast-nav" aria-label="频道">{''.join(f'<a href="{h}"' + (' aria-current="page"' if k == 'home' else '') + f'>{l}</a>' for k, h, l in CHANNELS)}</nav>
+        <button class="menu-toggle" type="button" data-menu-toggle aria-label="打开菜单" aria-expanded="false" aria-controls="mastMenu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        {THEME_BTN}
+        <nav class="mast-menu" id="mastMenu" aria-label="频道" hidden>{''.join(f'<a href="{h}"' + (' aria-current="page"' if k == 'home' else '') + f'>{l}</a>' for k, h, l in CHANNELS)}</nav>
+      </span>
     </div>
     <h1 class="mast-title"><a href="/">Elon Musk <span>全访谈</span></a></h1>
     <p class="mast-sub" id="mastSub">{len(eps)} 个公开视频 · {n_zh} 篇中文精读 · {since} 年至今</p>
-    <nav class="chan-nav mast-chan" aria-label="频道">{''.join(f'<a href="{h}"' + (' aria-current="page"' if k == 'home' else '') + f'>{l}</a>' for k, h, l in CHANNELS)}</nav>
   </div>
 </header>
 
