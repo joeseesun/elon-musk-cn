@@ -105,7 +105,13 @@ docs/screenshots  README 截图
 
 ## 部署
 
-纯静态站，任何静态托管都可用：把 `site/` 目录发布即可。本站使用 Vercel + 自定义域名 `elon.qiaomu.ai`（Cloudflare DNS）。`tools/site_config.json` 里的 `umami` 字段填 [Umami](https://umami.qiaomu.ai/) 统计 website ID 后重新构建即接入统计。
+纯静态站，任何静态托管都可用：把 `site/` 目录发布即可。本站部署在乔木 VPS（Nginx 静态 + Let's Encrypt 证书），域名 `elon.qiaomu.ai`（Cloudflare DNS A 记录指向服务器）：
+
+```bash
+python3 tools/build.py && tools/deploy.sh    # 构建 + rsync 到服务器
+```
+
+`tools/site_config.json` 里的 `umami` 字段填 [Umami](https://umami.qiaomu.ai/) 统计 website ID 后重新构建即接入统计（登记待完成，见下）。
 
 ## 关于向阳乔木
 
