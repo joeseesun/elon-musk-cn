@@ -45,7 +45,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 8, 4, 6, 4, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 9, 4, 6, 4, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -284,11 +284,24 @@ THEME_BTN = ('<button class="theme-toggle" type="button" data-theme-toggle aria-
 
 ICON_SEARCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>'
 
-SITE_HEADER = ('<header class="site-header slim">\n  <div class="wrap header-inner">\n'
-               '    <a class="hdr-back" href="/">← 全部视频</a>\n'
-               '    <a class="wordmark" href="/" aria-label="马斯克全访谈 · 首页">Elon Musk <span>全访谈</span></a>\n'
-               f'    <div class="header-actions"><a class="hdr-icon" href="/search/" aria-label="在文稿里搜索马斯克的原话" title="文稿搜索">{ICON_SEARCH}</a>{THEME_BTN}</div>\n'
-               '  </div>\n</header>')
+CHANNELS = [('home', '/', '首页'), ('archive', '/archive/', '目录'), ('search', '/search/', '搜索'),
+            ('quotes', '/quotes/', '语录'), ('themes', '/themes/', '主题'), ('trends', '/trends/', '趋势'),
+            ('stats', '/stats/', '数据'), ('predictions', '/predictions/', '预言')]
+
+
+def site_header(cur=''):
+    links = ''.join(f'<a href="{href}"' + (' aria-current="page"' if key == cur else '') + f'>{label}</a>'
+                    for key, href, label in CHANNELS)
+    # 窄屏频道条可横向滚动，把当前频道滚到可见处
+    center = ('<script>(function(){var n=document.getElementById(\'chanNav\'),a=n&&n.querySelector(\'[aria-current]\');'
+              'if(a&&n.scrollWidth>n.clientWidth)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;})();</script>'
+              if cur else '')
+    return ('<header class="site-header slim">\n  <div class="wrap header-inner">\n'
+            '    <a class="wordmark" href="/" aria-label="马斯克全访谈 · 首页">Elon Musk <span>全访谈</span></a>\n'
+            f'    <nav class="chan-nav" id="chanNav" aria-label="频道">{links}</nav>\n'
+            f'    <div class="header-actions">{THEME_BTN}</div>\n'
+            f'  </div>\n</header>{center}')
+
 
 ICON_PLAY = '<svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'
 
@@ -667,7 +680,7 @@ def build_page(i, eps):
         og_title=esc(og_title), og_img=esc(og_img),
         ldjson=ldjson, css_v=CSS_V, ep_v=EP_V, kit_v=KIT_V,
         theme_script=THEME_SCRIPT, head_extra=HEAD_EXTRA, feed_link=FEED_LINK,
-        site_header=SITE_HEADER, site_footer=SITE_FOOTER, umami=umami_tag(),
+        site_header=site_header(), site_footer=SITE_FOOTER, umami=umami_tag(),
         h1=h1, orig_line=orig_line, kicker=kicker, dek=dek, byline=byline,
         main_cls=' has-toc' if has_zh else '',
         article_meta=(f'<meta property="article:published_time" content="{d}">' if d else '') +
@@ -825,6 +838,7 @@ def build_index(eps):
     </div>
     <h1 class="mast-title"><a href="/">Elon Musk <span>全访谈</span></a></h1>
     <p class="mast-sub" id="mastSub">{len(eps)} 个公开视频 · {n_zh} 篇中文精读 · {since} 年至今</p>
+    <nav class="chan-nav mast-chan" aria-label="频道">{''.join(f'<a href="{h}"' + (' aria-current="page"' if k == 'home' else '') + f'>{l}</a>' for k, h, l in CHANNELS)}</nav>
   </div>
 </header>
 
@@ -952,7 +966,7 @@ def build_predictions():
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header('predictions')}
 <main class="wrap ep-main" id="main">
   <header class="ep-head"><div class="ep-kicker">档案专题</div><h1 class="ep-title">预言与承诺追踪</h1>
     <p class="ep-dek">{len(ps)} 条带日期的公开承诺与预言：已兑现 {counts['kept']} 条，迟到兑现 {counts['late']} 条，待验证 {counts['open']} 条，未兑现 {counts['missed']} 条。每条附原始出处与核实结果。</p></header>
@@ -1018,7 +1032,7 @@ def build_quotes():
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header('quotes')}
 <main class="wrap ep-main" id="main">
   <header class="ep-head"><div class="ep-kicker">档案专题</div><h1 class="ep-title">语录</h1>
     <p class="ep-dek">{len(sayings)} 条公开语录，按年份排列，每条注明出处{'，附中文译文（AI 翻译，以英文原话为准）' if SAYINGS_ZH else ''}；带 X 标记的来自他本人的帖子。</p></header>
@@ -1087,7 +1101,7 @@ def build_themes():
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header('themes')}
 <main class="wrap ep-main" id="main">
   <header class="ep-head"><div class="ep-kicker">档案专题</div><h1 class="ep-title">主题</h1>
     <p class="ep-dek">把 651 个视频按他反复谈论的主题归纳成 {len(themes)} 条线索，每条附谈话次数与高峰年份。</p></header>
@@ -1149,7 +1163,7 @@ def build_archive(eps):
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header('archive')}
 <main class="wrap ar-main" id="main">
   <header class="ep-head"><div class="ep-kicker">视频目录</div><h1 class="ep-title">全部 {len(eps)} 个视频</h1>
     <p class="ep-dek">从 1998 年到最新一期，按年份排列；标有「精读」的视频附中文长文。</p></header>
@@ -1224,7 +1238,7 @@ def build_disclaimer():
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header('')}
 
 <main class="wrap ep-main" id="main">{DISCLAIMER_BODY}
   <nav class="ep-prevnext">
@@ -1296,7 +1310,7 @@ def build_search_page():
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header('search')}
 <main class="wrap sr-main" id="main">
   <header class="ep-head sr-head"><div class="ep-kicker">文稿搜索</div><h1 class="ep-title">马斯克说过什么</h1>
     <p class="ep-dek">在 {n_docs} 份英文文稿（约 {hours} 小时）和 {n_zh} 篇中文精读里找他说过的话。英文原话的结果能跳到视频里的那一秒。</p></header>
@@ -1352,7 +1366,7 @@ def page_html(path, title, desc, kicker, h1, dek, body, scripts='', main_cls='in
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
-{SITE_HEADER}
+{site_header(path.strip('/'))}
 <main class="wrap {main_cls}" id="main">
   <header class="ep-head"><div class="ep-kicker">{kicker}</div><h1 class="ep-title">{h1}</h1>
     <p class="ep-dek">{dek}</p></header>
@@ -1469,6 +1483,9 @@ def build_stats_page():
     big = [(f'{len(master)}', '个公开视频', f'{ys[0]}–{ys[-1]}'), (f'{n_tr}', '份英文文稿', f'约 {tr_sec / 3600:.0f} 小时'),
            (f'{words / 10000:.0f} 万', '个英文词', '文稿总字数'), (f'{n_zh}', '篇中文精读', f'覆盖 {n_zh * 100 / max(1, n_tr):.0f}% 的文稿')]
     big_html = ''.join(f'<div class="bn"><b>{a}</b><span>{b}</span><small>{c}</small></div>' for a, b, c in big)
+    n_books, books_block = insights.books_html(
+        _en_docs(), lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0),
+        cover_dir=SITE / 'assets' / 'books')
     body = f"""
   <div class="bn-row">{big_html}</div>
   <section class="ins-sec">
@@ -1485,8 +1502,8 @@ def build_stats_page():
     {insights.phrases_html(ps, ts_mmss)}
   </section>
   <section class="ins-sec" id="books">
-    <div class="ins-h"><h2>马斯克书单：他在访谈里亲口提到的书</h2><p>不是网上流传的「推荐书单」，而是从 {n_tr} 份文稿里找出的、他在镜头前真正说起过的书。每本配一句原话，点一下跳到视频那一刻。</p></div>
-    {insights.books_html(_en_docs(), lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0))}
+    <div class="ins-h"><h2>马斯克书单：他在访谈里提到的 {n_books} 本书</h2><p>不是网上流传的「推荐书单」，而是从 {n_tr} 份文稿里找出的、他在镜头前真正说起过的书（少数是主持人先提起、他接着聊的）。每本配一句访谈原话，点一下跳到视频那一刻；封面链接到<a href="https://hackerbooks.qiaomu.ai/" target="_blank" rel="noopener">黑客书架</a>的书页。</p></div>
+    {books_block}
   </section>
   <section class="ins-sec">
     <div class="ins-h"><h2>中文精读进度</h2><p>AI 基于完整文稿改写的中文长文，正在一篇篇补齐。</p></div>
@@ -1627,7 +1644,7 @@ def build_special_pages(eps):
 <link rel="stylesheet" href="/style.css?v={CSS_V}">
 </head>
 <body>
-{SITE_HEADER}
+{site_header('')}
 {body}
 {SITE_FOOTER}
 {umami_tag()}
