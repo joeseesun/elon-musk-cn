@@ -38,6 +38,7 @@ MT_OVERRIDES = {
 MAX_TOKENS = 8192
 CHUNK_BYTES = 350_000
 WORKERS = 4
+DEPLOY_EVERY = 30  # 每生成 30 篇自动 build + rsync 部署
 
 _stats_lock = threading.Lock()
 _last_ok_model = [None]
@@ -349,6 +350,7 @@ def main():
     print(f'todo: {len(todo)} videos with transcript but no zh', flush=True)
 
     done = fail = 0
+    since_deploy = 0
     failures = {}
     attempts = {}
     MAX_ATTEMPTS = 4
@@ -384,17 +386,34 @@ def main():
                         print(f'FAIL {slug} [{model}] ({dt:.0f}s): {"; ".join(problems)[:250]}', flush=True)
                     else:
                         done += 1
+                        since_deploy += 1
                         print(f'OK {slug} chars={cjk} [{model}] ({dt:.0f}s) [{done + fail}]', flush=True)
                 except Exception as e:
                     fail += 1
                     failures[slug] = str(e)[:200]
                     print(f'ERR {slug}: {str(e)[:150]}', flush=True)
+        if since_deploy >= DEPLOY_EVERY:
+            print(f'--- deploying ({since_deploy} new) ---', flush=True)
+            try:
+                subprocess.run([sys.executable, 'tools/build.py'], cwd=ROOT, check=True, capture_output=True)
+                subprocess.run(['tools/deploy.sh'], cwd=ROOT, check=True, capture_output=True)
+                print('deploy ok', flush=True)
+            except Exception as e:
+                print(f'deploy FAILED: {str(e)[:300]}', flush=True)
+            since_deploy = 0
         todo = [it for it in todo if (ZH_DIR / f'{it[0]}.html').exists() is False
                 and attempts.get(it[0], 0) < MAX_ATTEMPTS]
         if not all_mode:
             break
 
     print(f'FINISHED done={done} fail={fail}', flush=True)
+    if done and since_deploy:
+        try:
+            subprocess.run([sys.executable, 'tools/build.py'], cwd=ROOT, check=True, capture_output=True)
+            subprocess.run(['tools/deploy.sh'], cwd=ROOT, check=True, capture_output=True)
+            print('final deploy ok', flush=True)
+        except Exception as e:
+            print(f'final deploy FAILED: {str(e)[:300]}', flush=True)
     if failures:
         json.dump(failures, open('/tmp/elon_gen_zh_failures.json', 'w'), ensure_ascii=False, indent=1)
 
