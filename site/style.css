@@ -1220,6 +1220,7 @@ body.has-pin #toTop { display: none; }
 .bk-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .bk-h b { font-size: 16px; }
 .bk-h span { font-family: var(--font-display); font-style: italic; font-size: 12.5px; color: var(--muted); }
+.bk-h .mv-meta { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .bk-note { margin: 4px 0 0; font-size: 13px; color: var(--text-soft); line-height: 1.6; }
 .bk-ex { display: block; margin-top: 8px; padding: 9px 12px; background: var(--trans-bg); border-radius: 8px; text-decoration: none; }
 .bk-ex:hover { background: var(--zh-soft); }

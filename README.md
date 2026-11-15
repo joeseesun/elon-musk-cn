@@ -41,7 +41,7 @@
 | 英文文稿 | 588 份带文稿：YouTube 字幕 / Whisper 全对话转录 / 第三方整理稿，按语句合并成段落并去掉 um、uh（每页标注来源与可靠性） |
 | 文稿搜索 | `/search/` 同时检索英文原话（588 份文稿逐段）与中文精读（逐段，定位回精读原文并高亮）：多词 AND、`a\|b` 任一、`"短语"` 精确匹配；中文词先查内置词表，查不到走免费谷歌翻译（`/api/tr` 经 Nginx 反代并缓存，配置见 `tools/nginx-api-tr.conf`），英文词也会翻成中文去查精读；年份分布筛选，按相关/从早到晚/从晚到早排序 |
 | 标题搜索 | 首页多词 AND、加权排序、关键词高亮、URL 同步可分享、标签筛选（Tesla/SpaceX/AI/政治…） |
-| 数据洞察 | `/trends/` 话题热力图（每格 = 当年提到该话题的段落占比，点格子搜那一年原话）与自选词折线对比（复用搜索索引和翻译，浏览器端计算）、公司注意力占比（100% 堆叠）、人物提及排行与走势、未来年份分布；`/stats/` 年度堆叠柱、场合与时长条形图、马斯克本人 50 万词里的口头禅排行、他在访谈里提到的书（每本配一句原话，封面与书页链接来自[黑客书架](https://hackerbooks.qiaomu.ai/)，`tools/book_covers.py` 从本地黑客书架项目拷贝封面到 `site/assets/books/`）；预言页「马斯克时间」：承诺期限 vs 实际兑现的时间线与迟到倍数。计算在 `tools/insights.py`，构建时生成静态 HTML |
+| 数据洞察 | `/trends/` 话题热力图（每格 = 当年提到该话题的段落占比，点格子搜那一年原话）与自选词折线对比（复用搜索索引和翻译，浏览器端计算）、公司注意力占比（100% 堆叠）、人物提及排行与走势、未来年份分布；`/stats/` 年度堆叠柱、场合与时长条形图、马斯克本人 50 万词里的口头禅排行、他在访谈里提到的书（每本配一句原话，封面与书页链接来自[黑客书架](https://hackerbooks.qiaomu.ai/)，`tools/book_covers.py` 从本地黑客书架项目拷贝封面到 `site/assets/books/`）、他聊过的电影和剧（每部配一句原话，海报由 `tools/movie_posters.py` 通过 OMDb 下载到 `site/assets/movies/`，需 `OMDB_API_KEY`；点海报去豆瓣搜索）；预言页「马斯克时间」：承诺期限 vs 实际兑现的时间线与迟到倍数。计算在 `tools/insights.py`，构建时生成静态 HTML |
 | 预言与语录 | 22 条预言追踪（含兑现结果）+ 556 条中英双语语录按年编排 + 每期中英双语金句 + 8 大主题导览 |
 | 阅读体验 | 所有页面顶部统一频道导航（首页/目录/搜索/语录/主题/趋势/数据/预言，当前频道高亮，手机上横向滑动）、精读目录侧栏（滚动高亮）、阅读设置（4 款字体 + 15–22px 字号）、明暗主题、阅读进度记忆 |
 | SEO / GEO | sitemap、RSS、JSON-LD（VideoObject + Article）、`llms.txt`、每页 canonical 与 OG 卡 |
@@ -88,7 +88,7 @@ python3 tools/translate_quotes.py
 python3 tools/build.py
 ```
 
-各脚本说明：`tools/sync_data.py`（抓取与主数据）、`tools/translate_titles.py`（标题与专题翻译）、`tools/gen_zh.py`（精读生成，含禁用句式校验与重试）、`tools/translate_quotes.py`（双语金句与语录）、`tools/search_index.py`（文稿分段与全文检索索引，构建时调用）、`tools/insights.py`（话题趋势、口头禅、承诺时间线、公司/人物/书/未来年份统计）、`tools/bili_match.py`（B 站搬运匹配，可断点续跑）、`tools/book_covers.py`（书单封面）、`tools/build.py`（全站构建）、`tools/brand.py`（图标与 OG 默认图）。
+各脚本说明：`tools/sync_data.py`（抓取与主数据）、`tools/translate_titles.py`（标题与专题翻译）、`tools/gen_zh.py`（精读生成，含禁用句式校验与重试）、`tools/translate_quotes.py`（双语金句与语录）、`tools/search_index.py`（文稿分段与全文检索索引，构建时调用）、`tools/insights.py`（话题趋势、口头禅、承诺时间线、公司/人物/书/电影/未来年份统计）、`tools/bili_match.py`（B 站搬运匹配，可断点续跑）、`tools/book_covers.py`（书单封面）、`tools/movie_posters.py`（片单海报，OMDb）、`tools/build.py`（全站构建）、`tools/brand.py`（图标与 OG 默认图）。
 
 </details>
 
@@ -146,7 +146,7 @@ python3 tools/build.py && tools/deploy.sh    # 构建 + rsync 到服务器
 - **One page per video**: click-to-load YouTube embeds (plus direct playback for X/Internet Archive clips), bilingual titles, and English transcripts with **clickable timestamps** that seek the YouTube player; a YouTube / Bilibili source switch where a re-upload exists; hover-to-translate on transcript paragraphs; select text to copy with citation, translate, or render a share poster with a QR code.
 - **AI Chinese deep-reads**: long-form rewrite of each conversation (**586 of 588** transcript-bearing videos covered; 2 skipped for too-short captions), with a Markdown version at `/ep/{slug}/index.md`.
 - **Findability**: [transcript search](https://elon.qiaomu.ai/search/) across 588 English transcripts, paragraph by paragraph, with Chinese-to-English keyword mapping, a by-year histogram, oldest-first sorting to trace how a view evolved, and results that jump to the exact second; plus title search (`/` or `⌘K`), kind/tag filters, dark mode, reading progress with "continue reading".
-- **Data insights**: a [topic heatmap](https://elon.qiaomu.ai/trends/) (26 topics by year, plus a type-any-word trend chart), [archive stats](https://elon.qiaomu.ai/stats/) (videos per year, venues, longest talks, Musk's most-used English words with example sentences, the books he names on camera), company attention share, the people and future years he mentions most, and an "Elon time" promise timeline on the predictions page.
+- **Data insights**: a [topic heatmap](https://elon.qiaomu.ai/trends/) (26 topics by year, plus a type-any-word trend chart), [archive stats](https://elon.qiaomu.ai/stats/) (videos per year, venues, longest talks, Musk's most-used English words with example sentences, the books he names on camera, and the films and shows he talks about), company attention share, the people and future years he mentions most, and an "Elon time" promise timeline on the predictions page.
 - **Elon-specific archives**: a [dated promises tracker](https://elon.qiaomu.ai/predictions/) (kept / late / open / missed, with verified outcomes), 556 bilingual [quotes](https://elon.qiaomu.ai/quotes/), bilingual per-episode highlights, and 8 recurring [themes](https://elon.qiaomu.ai/themes/).
 
 ## Quick start

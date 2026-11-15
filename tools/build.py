@@ -45,7 +45,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 10, 5, 6, 4, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 11, 5, 6, 4, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -1490,6 +1490,9 @@ def build_stats_page():
     n_books, books_block = insights.books_html(
         _en_docs(), lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0),
         cover_dir=SITE / 'assets' / 'books')
+    n_movies, movies_block = insights.movies_html(
+        _en_docs(), lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0),
+        poster_dir=SITE / 'assets' / 'movies')
     body = f"""
   <div class="bn-row">{big_html}</div>
   <section class="ins-sec">
@@ -1508,6 +1511,10 @@ def build_stats_page():
   <section class="ins-sec" id="books">
     <div class="ins-h"><h2>马斯克书单：他在访谈里提到的 {n_books} 本书</h2><p>不是网上流传的「推荐书单」，而是从 {n_tr} 份文稿里找出的、他在镜头前真正说起过的书（少数是主持人先提起、他接着聊的）。每本配一句访谈原话，点一下跳到视频那一刻；封面链接到<a href="https://hackerbooks.qiaomu.ai/" target="_blank" rel="noopener">黑客书架</a>的书页。</p></div>
     {books_block}
+  </section>
+  <section class="ins-sec" id="movies">
+    <div class="ins-h"><h2>马斯克片单：他在访谈里聊过的 {n_movies} 部电影和剧</h2><p>同样从 {n_tr} 份文稿里逐条核对出来：他说过喜欢、推荐过，或者常拿来打比方的片子（主持人随口一提、他没接话的不算）。每部配一句访谈原话，点一下跳到视频那一刻；海报来自 <a href="https://www.omdbapi.com/" target="_blank" rel="noopener">OMDb</a>，点海报去豆瓣搜索这部片。</p></div>
+    {movies_block}
   </section>
   <section class="ins-sec">
     <div class="ins-h"><h2>中文精读进度</h2><p>AI 基于完整文稿改写的中文长文，正在一篇篇补齐。</p></div>
