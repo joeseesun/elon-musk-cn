@@ -306,7 +306,61 @@
   /* ---------- 视频：YouTube 懒加载（YT IFrame API）/ MP4 直链 ---------- */
   const facade = $('.video-facade');
   const mp4 = $('.mp4-player');
-  let ytPlayer = null, pendingSeek = null, ytApiReady = false;
+  const srcTabs = $('.src-tabs');
+  let ytPlayer = null, pendingSeek = null, ytApiReady = false, biliFrame = null;
+  // 有 B 站搬运时可切换来源；没手动选过的话，国内时区默认 B 站（YouTube 在国内打不开）
+  let vsrc = facade && !facade.dataset.yt && facade.dataset.bv ? 'bili' : 'yt';
+  function markSrc() {
+    if (srcTabs) $$('[data-src]', srcTabs).forEach((b) => b.setAttribute('aria-selected', String(b.dataset.src === vsrc)));
+    const lab = facade && $('.vf-play span', facade);
+    if (lab) lab.textContent = vsrc === 'bili' ? '看视频 · B 站' : '看视频';
+  }
+  if (srcTabs && facade) {
+    let saved = null;
+    try { saved = localStorage.getItem('em-vsrc'); } catch (e) {}
+    let tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    vsrc = saved === 'bili' || saved === 'yt' ? saved : (/^Asia\/(Shanghai|Chongqing|Chungking|Harbin|Urumqi)$/.test(tz) ? 'bili' : 'yt');
+    srcTabs.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-src]');
+      if (!b || b.dataset.src === vsrc) return;
+      const live = media.classList.contains('video-open');
+      vsrc = b.dataset.src;
+      try { localStorage.setItem('em-vsrc', vsrc); } catch (err) {}
+      markSrc();
+      if (live) { resetMedia(); openVideo(); }
+      if (window.umami) window.umami.track('video-src', { src: vsrc, slug });
+    });
+  }
+  markSrc();
+
+  const biliUrl = (sec) => `https://player.bilibili.com/player.html?isOutside=true&bvid=${encodeURIComponent(facade.dataset.bv)}&p=${Number(facade.dataset.bp) || 1}&autoplay=1&danmaku=0&high_quality=1${sec ? '&t=' + Math.floor(sec) : ''}`;
+  function openBili(sec) {
+    media.classList.add('video-open', 'is-live');
+    if (!biliFrame) {
+      biliFrame = document.createElement('iframe');
+      biliFrame.className = 'bili-frame';
+      biliFrame.title = (($('.ep-title') || {}).textContent || 'Elon Musk') + '（B 站）';
+      biliFrame.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+      biliFrame.allowFullscreen = true;
+      biliFrame.setAttribute('scrolling', 'no');
+      biliFrame.src = biliUrl(sec);
+      if (facade.isConnected) facade.replaceWith(biliFrame);
+      else media.prepend(biliFrame);
+    } else {
+      biliFrame.src = biliUrl(sec);
+    }
+  }
+  // 换来源：拆掉当前播放器，放回封面
+  function resetMedia() {
+    if (ytPlayer && ytPlayer.destroy) { try { ytPlayer.destroy(); } catch (e) {} }
+    ytPlayer = null;
+    biliFrame = null;
+    unpin();
+    Array.from(media.children).forEach((c) => { if (!c.classList.contains('pin-close')) c.remove(); });
+    media.prepend(facade);
+    media.classList.remove('video-open', 'is-live');
+  }
 
   function loadYtApi() {
     if (ytApiReady) return;
@@ -317,8 +371,14 @@
   }
 
   function openVideo() {
-    if (!facade || !facade.isConnected) return Promise.resolve(null);
+    if (!facade) return Promise.resolve(null);
+    if (vsrc === 'bili' && facade.dataset.bv) {
+      openBili(pendingSeek || 0);
+      pendingSeek = null;
+      return Promise.resolve(null);
+    }
     if (ytPlayer) return Promise.resolve(ytPlayer);
+    if (!facade.isConnected) return Promise.resolve(null);
     const box = facade.closest('.media') || facade.parentNode;
     box.classList.add('video-open', 'is-live');
     const holder = document.createElement('div');
@@ -345,6 +405,14 @@
           });
         } else if (++tries < 100) {
           setTimeout(make, 100);
+        } else if (facade.dataset.bv) {
+          // YouTube 接口 10 秒没加载出来（多半是网络打不开），有 B 站源就直接换过去
+          holder.remove();
+          vsrc = 'bili';
+          markSrc();
+          openBili(pendingSeek || 0);
+          pendingSeek = null;
+          resolve(null);
         } else {
           // API 加载失败兜底：直接 iframe 自动播放
           const f = document.createElement('iframe');
@@ -361,6 +429,12 @@
   if (facade) facade.addEventListener('click', () => openVideo());
 
   function seekTo(sec) {
+    if (vsrc === 'bili' && facade && facade.dataset.bv) {
+      openBili(sec);
+      pinOff = false;
+      checkPin();
+      return;
+    }
     if (ytPlayer && ytPlayer.seekTo) {
       ytPlayer.seekTo(sec, true);
       if (ytPlayer.playVideo) ytPlayer.playVideo();
@@ -489,6 +563,8 @@
     unpin();
     if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     if (mp4) mp4.pause();
+    // B 站播放器跨域无法暂停，关小窗就直接停掉
+    if (biliFrame) resetMedia();
   });
   if (mp4) mp4.addEventListener('play', () => { media.classList.add('is-live'); checkPin(); });
 

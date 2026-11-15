@@ -379,3 +379,263 @@ def promise_timeline(ps, claims_zh, status_zh, today=None):
     html_out = (f'<div class="pt" style="--now:{pos(today):.2f}%">{legend}<div class="pt-axis"><div class="pt-axis-in">{ticks}{now}</div></div>'
                 f'<ol class="pt-rows">{"".join(out)}</ol></div>')
     return html_out, stats
+
+
+# ---------------------------------------------------------------- 提到的公司 / 人物 / 书 / 未来年份
+COMPANIES = [
+    ('特斯拉', 'tesla', 'k1'),
+    ('SpaceX', 'spacex|"space x"', 'k2'),
+    ('推特 / X', 'twitter|"x corp"|"x platform"|"x.com"', 'k3'),
+    ('xAI / Grok', 'xai|grok', 'k4'),
+    ('Neuralink', 'neuralink', 'k6'),
+    ('Boring', '"boring company"', 'k7'),
+    ('SolarCity', 'solarcity|"solar city"', 'k5'),
+]
+
+# (中文名, 英文名, 查询, 一句话身份)
+PEOPLE = [
+    ('特朗普', 'Donald Trump', 'trump', '美国总统'),
+    ('拜登', 'Joe Biden', 'biden', '美国前总统'),
+    ('奥巴马', 'Barack Obama', 'obama', '美国前总统'),
+    ('普京', 'Vladimir Putin', 'putin', '俄罗斯总统'),
+    ('万斯', 'JD Vance', '"jd vance"|"j.d. vance"|"senator vance"|"vice president vance"', '美国副总统'),
+    ('哈里斯', 'Kamala Harris', 'kamala', '美国前副总统'),
+    ('肯尼迪', 'JFK / RFK Jr.', 'kennedy|rfk', '肯尼迪家族'),
+    ('比尔·盖茨', 'Bill Gates', '"bill gates"', '微软创始人'),
+    ('贝索斯', 'Jeff Bezos', 'bezos', '亚马逊、蓝色起源创始人'),
+    ('乔布斯', 'Steve Jobs', '"steve jobs"', '苹果创始人'),
+    ('拉里·佩奇', 'Larry Page', '"larry page"', '谷歌创始人、昔日好友'),
+    ('扎克伯格', 'Mark Zuckerberg', 'zuckerberg', 'Meta 创始人'),
+    ('奥特曼', 'Sam Altman', 'altman', 'OpenAI CEO'),
+    ('哈萨比斯', 'Demis Hassabis', 'hassabis|demis', 'DeepMind 创始人'),
+    ('布兰森', 'Richard Branson', 'branson', '维珍集团创始人'),
+    ('巴菲特', 'Warren Buffett', 'buffett', '投资家'),
+    ('肖特维尔', 'Gwynne Shotwell', 'shotwell|gwynne', 'SpaceX 总裁'),
+    ('彼得·蒂尔', 'Peter Thiel', 'thiel', 'PayPal 联合创始人'),
+    ('爱迪生', 'Thomas Edison', 'edison', '发明家'),
+    ('尼古拉·特斯拉', 'Nikola Tesla', '"nikola tesla"', '发明家，特斯拉公司名字的来源'),
+    ('爱因斯坦', 'Albert Einstein', 'einstein', '物理学家'),
+    ('习近平', 'Xi Jinping', '"xi jinping"|"president xi"', '中国国家主席'),
+]
+
+# (中文书名, 英文书名, 作者, 查询, 一句话)
+BOOKS = [
+    ('银河系漫游指南', "The Hitchhiker's Guide to the Galaxy", '道格拉斯·亚当斯', 'hitchhiker|"douglas adams"',
+     '少年时期帮他走出存在主义危机：问对问题比找到答案更难'),
+    ('基地', 'Foundation', '阿西莫夫', '"foundation series"|asimov', '文明衰落后如何缩短黑暗时代，SpaceX 的精神源头之一'),
+    ('严厉的月亮', 'The Moon Is a Harsh Mistress', '海因莱因', 'heinlein|"harsh mistress"', '月球殖民地独立的故事，他心目中最好的海因莱因'),
+    ('文明系列', 'The Culture series', '伊恩·M·班克斯', '"iain banks"|"culture series"|"player of games"|"iain m banks"',
+     '他认为最接近「AI 与人类共处的美好未来」的描写'),
+    ('指环王', 'The Lord of the Rings', '托尔金', '"lord of the rings"|tolkien', '小时候读过很多遍：英雄总想拯救世界'),
+    ('富兰克林传', 'Benjamin Franklin: An American Life', '艾萨克森', '"benjamin franklin"|"ben franklin"', '他最敬佩的人之一：科学家、创业者、政治家'),
+    ('一九八四', 'Nineteen Eighty-Four', '奥威尔', 'orwell|orwellian', '谈言论自由和审查时最常引用'),
+    ('2001 太空漫游', '2001: A Space Odyssey', '阿瑟·克拉克', '"space odyssey"|"arthur c. clarke"|"arthur clarke"', 'HAL 9000：AI 被要求说谎的危险'),
+    ('文明的故事', 'The Story of Civilization', '威尔·杜兰特', '"will durant"|"lessons of history"|"story of civilization"',
+     '十一卷本世界史，他劝人读历史时常提；还有精简版《历史的教训》'),
+    ('生命 3.0', 'Life 3.0', '泰格马克', 'tegmark|"life 3.0"', '作者泰格马克创办了他资助的「未来生命研究所」'),
+]
+
+
+def _sent_with(text, groups, lo=40, hi=220):
+    best = None
+    for s in re.split(r'(?<=[.?!])\s+', text):
+        if not (lo <= len(s) <= hi) or '[' in s:
+            continue
+        seq = tok_seq(s)
+        if matches(groups, seq, set(seq)):
+            if best is None or abs(len(s) - 120) < abs(len(best) - 120):
+                best = s
+    return best
+
+
+def mention_stats(docs, items, quality=None, want_examples=0):
+    """items: [(key, query)]。返回 {cols, totals, rows: [{n, counts, rate, docs, ex}]}，统计口径与 topic_trends 相同（按段落）。"""
+    years = sorted({int(d[:4]) for _, d, _, _ in docs if d and d[:4].isdigit()})
+    cols = [bucket(YEAR_MIN - 1)] + [str(y) for y in range(YEAR_MIN, max(years) + 1)]
+    totals = {c: 0 for c in cols}
+    comp = [compile_query(q) for _, q in items]
+    rows = [{'key': k, 'q': q, 'n': 0, 'counts': {c: 0 for c in cols}, 'docs': set(), 'ex': []} for k, q in items]
+    for slug, d, zh, paras in docs:
+        if not d or not d[:4].isdigit():
+            continue
+        c = bucket(int(d[:4]))
+        qv = quality(slug) if quality else 0
+        for k, (sec, text) in enumerate(paras):
+            totals[c] += 1
+            seq = tok_seq(text)
+            sset = set(seq)
+            for i, g in enumerate(comp):
+                if matches(g, seq, sset):
+                    r = rows[i]
+                    r['n'] += 1
+                    r['counts'][c] += 1
+                    r['docs'].add(slug)
+                    if want_examples and len(r['ex']) < 80:
+                        s = _sent_with(text, g)
+                        if s:
+                            r['ex'].append({'q': qv, 'slug': slug, 'zh': zh, 'd': d, 'k': k, 'sec': sec, 's': s})
+    for r in rows:
+        r['rate'] = {c: (r['counts'][c] * 1000 / totals[c] if totals[c] else 0) for c in cols}
+        r['docs'] = len(r['docs'])
+        if want_examples:
+            r['ex'].sort(key=lambda e: (-e['q'], abs(len(e['s']) - 120)))
+            seen, picked = set(), []
+            for e in r['ex']:
+                if e['slug'] in seen:
+                    continue
+                seen.add(e['slug'])
+                picked.append(e)
+                if len(picked) >= want_examples:
+                    break
+            r['ex'] = picked
+    return {'cols': cols, 'totals': totals, 'rows': rows}
+
+
+def _ep_href(e, hl):
+    from urllib.parse import urlencode
+    q = {'p': e['k']}
+    if e['sec'] is not None:
+        q['t'] = e['sec']
+    if hl:
+        q['hl'] = hl
+    return f'/ep/{e["slug"]}/?{urlencode(q)}'
+
+
+def _hl(s, q):
+    words = sorted({w for w in re.findall(r'[a-z0-9.]+', q.lower()) if len(w) > 2}, key=len, reverse=True)
+    out = esc(s)
+    if words:
+        out = re.sub(r'(?i)\b(' + '|'.join(re.escape(w) for w in words) + r')\w*', lambda m: f'<mark>{m.group(0)}</mark>', out)
+    return out
+
+
+def attention_html(docs):
+    """每年提到各家公司的段落，按公司拆成 100% 堆叠柱：看注意力怎么在公司之间转移。"""
+    st = mention_stats(docs, [(zh, q) for zh, q, _ in COMPANIES])
+    cols = [c for c in st['cols'] if not c.startswith('≤')]
+    out = []
+    for c in cols:
+        tot = sum(r['counts'][c] for r in st['rows'])
+        segs = ''.join(f'<i class="{COMPANIES[i][2]}" style="height:{r["counts"][c] * 100 / tot:.2f}%"></i>'
+                       for i, r in enumerate(st['rows']) if tot and r['counts'][c])
+        tip = f'{c} 年：' + '；'.join(f'{r["key"]} {r["counts"][c] * 100 / tot:.0f}%' for r in st['rows'] if tot and r['counts'][c])
+        out.append(f'<div class="yb-col" title="{esc(tip)}" aria-label="{esc(tip)}"><div class="yb-stack at-stack">{segs}</div>'
+                   f'<span class="yb-y{" odd" if int(c) % 2 else ""}">{c[2:]}</span></div>')
+    legend = ''.join(f'<a href="/search/?q={esc(_q(q))}"><i class="lg {k}"></i>{esc(zh)}</a>' for zh, q, k in COMPANIES)
+    return f'<div class="yb-legend at-legend">{legend}</div><div class="yb at" role="img" aria-label="各公司被提及的占比，按年份">{"".join(out)}</div>'
+
+
+def _spark(vals, w=120, h=26):
+    mx = max(vals) or 1
+    n = len(vals)
+    pts = ' '.join(f'{i * w / (n - 1):.1f},{h - 2 - v / mx * (h - 4):.1f}' for i, v in enumerate(vals))
+    return f'<svg class="spark" viewBox="0 0 {w} {h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="{pts}"/></svg>'
+
+
+def people_html(docs):
+    st = mention_stats(docs, [(p[0], p[2]) for p in PEOPLE])
+    cols = [c for c in st['cols'] if not c.startswith('≤')]
+    rows = sorted(zip(PEOPLE, st['rows']), key=lambda x: -x[1]['n'])
+    mx = rows[0][1]['n'] or 1
+    out = []
+    for (zh, en, q, who), r in rows:
+        if r['n'] < 5:
+            continue
+        peak = max(cols, key=lambda c: r['rate'][c])
+        out.append(f'<li><a href="/search/?q={esc(_q(q))}"><span class="pp-n"><b>{esc(zh)}</b><small lang="en">{esc(en)}</small></span>'
+                   f'<span class="pp-who">{esc(who)}</span>'
+                   f'<span class="hb-bar"><i style="width:{r["n"] / mx * 100:.1f}%"></i></span><span class="hb-n">{r["n"]:,}</span>'
+                   f'{_spark([r["rate"][c] for c in cols])}<span class="pp-peak">{peak} 最多</span></a></li>')
+    return f'<ol class="pp">{"".join(out)}</ol><p class="ins-note">数字是提到此人的文稿段落数（含主持人和提问者的话），小折线是 {cols[0]}–{cols[-1]} 每年的热度。点一行去看原话。</p>'
+
+
+def books_html(docs, quality):
+    st = mention_stats(docs, [(b[0], b[3]) for b in BOOKS], quality=quality, want_examples=8)
+    out = []
+    for b, r in sorted(zip(BOOKS, st['rows']), key=lambda x: -x[1]['n']):
+        if not r['n'] or not r['ex']:
+            continue
+        zh, en, au, q, note = b
+        key = q.split('|')[0].strip('"').lower()
+        e = next((x for x in r['ex'] if key in x['s'].lower() and not x['s'].endswith('?')), r['ex'][0])
+        hl = ' '.join(w for w in re.findall(r'[a-z]+', q.split('|')[0].lower()) if len(w) > 2)
+        ts = e['sec'] is not None
+        out.append(f'''<li class="bk">
+  <div class="bk-cover" aria-hidden="true"><b>{esc(zh)}</b><small>{esc(au)}</small></div>
+  <div class="bk-body"><div class="bk-h"><b>《{esc(zh)}》</b><span lang="en">{esc(en)}</span></div>
+    <p class="bk-note">{esc(note)}</p>
+    <a class="bk-ex" href="{esc(_ep_href(e, hl))}"><span class="ph-s" lang="en">{_hl(e["s"], q)}</span><span class="ph-src">{"▶ " if ts else ""}{esc((e["d"] or "")[:4])} · {esc(e["zh"])}</span></a>
+    <a class="bk-more" href="/search/?q={esc(_q(q))}">{r["docs"]} 场视频里提到过 →</a></div>
+</li>''')
+    return f'<ol class="bk-list">{"".join(out)}</ol>'
+
+
+_YR = re.compile(r'(?<![\d$,.])(20[1-9]\d|2100)(?![\d,])')
+
+
+def future_years(docs, quality):
+    """他说话时提到的「未来年份」：只算比视频年份晚的年份。"""
+    from collections import defaultdict
+    cnt = defaultdict(int)
+    gaps = defaultdict(list)
+    ex = defaultdict(list)
+    for slug, d, zh, paras in docs:
+        if not d or not d[:4].isdigit():
+            continue
+        y0 = int(d[:4])
+        qv = quality(slug)
+        for k, (sec, text) in enumerate(paras):
+            for s in re.split(r'(?<=[.?!])\s+', text):
+                for m in set(_YR.findall(s)):
+                    t = int(m)
+                    if t <= y0:
+                        continue
+                    cnt[t] += 1
+                    gaps[t].append(t - y0)
+                    if 40 <= len(s) <= 200 and not s.rstrip().endswith('?') and len(ex[t]) < 40:
+                        ex[t].append({'q': qv, 'slug': slug, 'zh': zh, 'd': d, 'k': k, 'sec': sec, 's': s, 'g': t - y0,
+                                      'fw': bool(_FWD.search(s)), 'nar': bool(_NARR.search(s))})
+    return cnt, gaps, ex
+
+
+# 例句要像他本人在展望：第一人称 + 将来时；旁白、转述（he said / in a 2015 discussion）往后排
+_FWD = re.compile(r"\b(I think|I'd|I'll|we'll|we will|we're going to|going to|gonna|expect|hope|probably|maybe|by (?:the end of )?(?:19|20)\d\d)\b", re.I)
+_NARR = re.compile(r"\b(he|his|him|she|says|said|musk|elon|discussion|described|according|do you think|you think)\b|\bin an? (?:19|20)\d\d\b"
+                   r"|AIDS related", re.I)  # 最后一条：转述援助报告的数字，不是他的预测
+
+
+def future_html(docs, quality):
+    cnt, gaps, ex = future_years(docs, quality)
+    if not cnt:
+        return ''
+    total = sum(cnt.values())
+    lo, hi = 2010, 2100
+    decades = list(range(lo, hi + 1, 10))
+    mx = max(cnt.values())
+    bars = []
+    for y in range(lo, hi + 1):
+        n = cnt.get(y, 0)
+        lab = f'<span class="fy-y">{y}</span>' if y % 10 == 0 else ''
+        tip = f'{y} 年：被提到 {n} 次'
+        bars.append(f'<a class="fy-b{" on" if n >= mx * .25 else ""}" href="/search/?q={y}" title="{tip}" aria-label="{tip}">'
+                    f'<i style="height:{max(n / mx * 100, 1 if n else 0):.1f}%"></i>{lab}</a>')
+    # 卡片只挑「远期目标」：说的时候离那一年至少还有 3 年
+    med = {y: sorted(g)[len(g) // 2] for y, g in gaps.items()}
+    def best(y):
+        es = sorted(ex[y], key=lambda e: (e['nar'], -e['fw'], e['g'] < 2, -e['q'], abs(len(e['s']) - 110)))
+        return es[0] if es and not es[0]['nar'] else None
+    top = [y for y in sorted(cnt, key=lambda y: -cnt[y]) if med[y] >= 3 and cnt[y] >= 10 and best(y)][:6]
+    cards = []
+    for y in sorted(top):
+        e = best(y)
+        if e:
+            s = re.sub(r'^(?:(?:and|then|so|um|uh)[,\s]+)+', '', e['s'], flags=re.I)
+            e = dict(e, s=s[:1].upper() + s[1:])
+        g = med[y]
+        ex_html = (f'<a class="bk-ex" href="{esc(_ep_href(e, str(y)))}"><span class="ph-s" lang="en">{_hl(e["s"], str(y))}</span>'
+                   f'<span class="ph-src">{esc(e["d"][:4])} · {esc(e["zh"])}</span></a>') if e else ''
+        cards.append(f'<li class="fy-c"><div class="fy-h"><b>{y}</b><span>提到 {cnt[y]} 次 · 说的时候距那年中位数 {g} 年</span></div>{ex_html}</li>')
+    first = max(cnt, key=lambda y: cnt[y])
+    return (f'<div class="fy" role="img" aria-label="被提到的未来年份分布">{"".join(bars)}</div>'
+            f'<p class="ins-note">共 {total:,} 次提到「比当时更晚的年份」。被提得最多的是 <b>{first}</b> 年。点柱子搜这一年的原话。下面是被提到最多的远期年份（说的时候离那一年至少还有 3 年）。</p>'
+            f'<ol class="fy-list">{"".join(cards)}</ol>')
