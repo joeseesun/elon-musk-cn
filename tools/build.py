@@ -44,7 +44,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V = 4, 4, 4, 2
+CSS_V, APP_V, EP_V, SEARCH_V = 5, 4, 5, 3
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -57,6 +57,7 @@ quotes_zh = json.load(open(_qzh)) if _qzh.exists() else {}
 EP_QUOTES_ZH = quotes_zh.get('ep') or {}
 SAYINGS_ZH = quotes_zh.get('sayings') or {}
 PARAS = {}  # slug -> 文稿段落，视频页与全文检索共用
+ZTEXTS = {}  # slug -> 精读段落纯文本，与页面里的 data-z 序号一一对应
 tr_json = {x['srcId']: x for x in master if x['tr']}
 
 for m in master:
@@ -488,6 +489,9 @@ def build_page(i, eps):
     read_min = max(1, round(zh_chars / 450)) if zh_chars else 0
     zh_mtime = date.fromtimestamp(zh_html_file.stat().st_mtime).isoformat() if has_zh else None
     zh_sections = [H.unescape(re.sub(r'<[^>]+>', '', x)).strip() for x in re.findall(r'<h2[^>]*>(.*?)</h2>', zh_raw)]
+    zh_marked, ztexts = search_index.zh_blocks(zh_raw)
+    if ztexts:
+        ZTEXTS[slug] = ztexts
 
     tdata, segs = text_for(m)
     paras = search_index.paragraphs(segs) if segs else []
@@ -575,7 +579,7 @@ def build_page(i, eps):
     if has_zh:
         panel_zh = (f'<div class="tab-panel" id="panel-zh" data-panel="zh">'
                     f'<div class="zh-note">中文精读由 AI 基于原始视频与文稿改写，非官方翻译，可能存在偏差或错误；表述以原视频为准。<a href="/disclaimer/">说明</a></div>'
-                    f'<div class="zh-article">{zh_raw}</div>{COLOPHON}</div>')
+                    f'<div class="zh-article">{zh_marked}</div>{COLOPHON}</div>')
 
     panel_tr = ''
     if paras:
@@ -1181,6 +1185,11 @@ def build_search():
     st = search_index.build(SITE / 'data' / 'search', docs)
     print(f"search index: {st['docs']} videos, {st['paras']} paragraphs, {st['terms']} terms, "
           f"shards {st['shard_total'] // 1024} KB (max {st['shard_max'] // 1024} KB)")
+    zdocs = [(m['slug'], m.get('d'), m['zh'], m['title'], m.get('kZh'), m.get('ytId'), ZTEXTS[m['slug']])
+             for m in master if m['slug'] in ZTEXTS]
+    zs = search_index.build_zh(SITE / 'data' / 'search', zdocs)
+    print(f"zh search index: {zs['docs']} articles, {zs['paras']} paragraphs, {zs['terms']} terms, "
+          f"shards {zs['shard_total'] // 1024} KB (max {zs['shard_max'] // 1024} KB)")
     return st
 
 
@@ -1188,7 +1197,9 @@ def build_search_page():
     n_docs = len(PARAS)
     hours = round(sum((by_slug[s].get('sec') or 0) for s in PARAS) / 3600)
     title = f'文稿搜索 · 马斯克的原话 · {SITE_NAME}'
-    desc = f'在 {n_docs} 份马斯克英文文稿（约 {hours} 小时）里搜索他的原话，结果精确到段落，点时间戳直接跳到视频那一秒。支持常用中文关键词。'
+    n_zh = len(ZTEXTS)
+    desc = (f'在 {n_docs} 份马斯克英文文稿（约 {hours} 小时）和 {n_zh} 篇中文精读里搜索，结果精确到段落，'
+            '点时间戳直接跳到视频那一秒。中文、英文都能搜。')
     url = f'{DOMAIN}/search'
     ld = {"@context": "https://schema.org", "@type": "SearchResultsPage", "name": title, "url": f'{url}/',
           "inLanguage": "zh-CN", "description": desc, "isPartOf": {"@id": f'{DOMAIN}/#website'}}
@@ -1220,14 +1231,14 @@ def build_search_page():
 {SITE_HEADER}
 <main class="wrap sr-main" id="main">
   <header class="ep-head sr-head"><div class="ep-kicker">文稿搜索</div><h1 class="ep-title">马斯克说过什么</h1>
-    <p class="ep-dek">在 {n_docs} 份英文文稿（约 {hours} 小时）里找他的原话。每条结果都能跳到视频里的那一秒。</p></header>
+    <p class="ep-dek">在 {n_docs} 份英文文稿（约 {hours} 小时）和 {n_zh} 篇中文精读里找他说过的话。英文原话的结果能跳到视频里的那一秒。</p></header>
   <form class="sr-form" role="search" action="/search/" onsubmit="return false">
     <svg class="i-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
     <input id="srq" name="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
-      placeholder="试试：第一性原理、火星、first principles" aria-label="搜索文稿">
+      placeholder="试试：第一性原理、火星时间表、first principles" aria-label="搜索文稿">
     <button type="button" class="sr-clear" aria-label="清除" hidden>清除</button>
   </form>
-  <p class="sr-tip">英文词直接搜；常用中文词会自动换成英文。<code>"短语"</code> 精确匹配，<code>a|b</code> 表示任一。</p>
+  <p class="sr-tip">中文、英文都能搜：中文词会翻成英文去查原话，英文词也会翻成中文去查精读。<code>"短语"</code> 精确匹配，<code>a|b</code> 表示任一。</p>
   <div id="srBody" aria-live="polite"><noscript><p class="sr-empty">文稿搜索需要启用 JavaScript。</p></noscript></div>
 </main>
 {SITE_FOOTER}

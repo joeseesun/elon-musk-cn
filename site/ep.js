@@ -282,7 +282,7 @@
   onScroll();
 
   /* 继续阅读：上次读到中段时，给一个可点的提示，不自动跳 */
-  if (article && !location.hash && !/[?&](p|t)=/.test(location.search)) {
+  if (article && !location.hash && !/[?&](p|t|z)=/.test(location.search)) {
     const rp = histGet().rp || 0;
     if (rp > 0.06 && rp < 0.95) {
       const toast = document.createElement('div');
@@ -492,32 +492,44 @@
   });
   if (mp4) mp4.addEventListener('play', () => { media.classList.add('is-live'); checkPin(); });
 
-  /* ---------- 深链：?p=段落&t=秒&hl=高亮词（来自文稿搜索）/ ?t=秒 ---------- */
+  /* ---------- 深链：?p=段落&t=秒&hl=高亮词（来自文稿搜索）/ ?z=精读段落&hl= / ?t=秒 ---------- */
   const params = new URLSearchParams(location.search);
-  const pParam = params.get('p'), tParam = params.get('t');
+  const pParam = params.get('p'), tParam = params.get('t'), zParam = params.get('z');
   const tSec = tParam != null && /^\d+(\.\d+)?$/.test(tParam) ? Number(tParam) : null;
   const deepPara = pParam != null && /^\d+$/.test(pParam) ? document.getElementById('p' + pParam) : null;
+  const hlWords = (params.get('hl') || '').split(/\s+/).filter(Boolean).slice(0, 8);
+  function highlightIn(el, words) {
+    if (!words.length) return;
+    const re = new RegExp('(' + words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) if (!walker.currentNode.parentNode.classList.contains('ts-link')) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      const parts = node.nodeValue.split(re);
+      if (parts.length < 2) return;
+      const frag = document.createDocumentFragment();
+      parts.forEach((s, i) => {
+        if (!s) return;
+        if (i % 2) { const m = document.createElement('mark'); m.textContent = s; frag.appendChild(m); }
+        else frag.appendChild(document.createTextNode(s));
+      });
+      node.parentNode.replaceChild(frag, node);
+    });
+  }
+  const deepZh = zParam != null && /^\d+$/.test(zParam) && article ? $(`[data-z="${zParam}"]`, article) : null;
+  if (deepZh) {
+    if (tabBtns.length) activate('zh');
+    deepZh.classList.add('z-hit');
+    highlightIn(deepZh, hlWords);
+    requestAnimationFrame(() => {
+      const offset = (tabsRow ? tabsRow.offsetHeight : 0) + 28;
+      window.scrollTo({ top: deepZh.getBoundingClientRect().top + window.scrollY - offset });
+    });
+  }
   if (deepPara && trText && tabBtns.some((b) => b.dataset.tab === 'tr')) {
     activate('tr');
     deepPara.classList.add('hit');
-    const words = (params.get('hl') || '').split(/\s+/).filter(Boolean).slice(0, 8);
-    if (words.length) {
-      const re = new RegExp('(' + words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
-      const walker = document.createTreeWalker(deepPara, NodeFilter.SHOW_TEXT);
-      const nodes = [];
-      while (walker.nextNode()) if (!walker.currentNode.parentNode.classList.contains('ts-link')) nodes.push(walker.currentNode);
-      nodes.forEach((node) => {
-        const parts = node.nodeValue.split(re);
-        if (parts.length < 2) return;
-        const frag = document.createDocumentFragment();
-        parts.forEach((s, i) => {
-          if (!s) return;
-          if (i % 2) { const m = document.createElement('mark'); m.textContent = s; frag.appendChild(m); }
-          else frag.appendChild(document.createTextNode(s));
-        });
-        node.parentNode.replaceChild(frag, node);
-      });
-    }
+    highlightIn(deepPara, hlWords);
     requestAnimationFrame(() => {
       const top = tabsRow.parentNode.getBoundingClientRect().top + window.scrollY - 1;
       window.scrollTo({ top });
