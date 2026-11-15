@@ -45,7 +45,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V = 7, 4, 5, 4, 2
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 8, 4, 6, 4, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -55,6 +55,8 @@ extra = json.load(open(ROOT.parent / 'data' / 'extra.json'))
 extra_zh = json.load(open(ROOT.parent / 'data' / 'extra-zh.json'))
 _qzh = ROOT.parent / 'data' / 'quotes-zh.json'
 quotes_zh = json.load(open(_qzh)) if _qzh.exists() else {}
+_bili = ROOT / 'bili.json'
+BILI = json.loads(_bili.read_text()) if _bili.exists() else {}
 EP_QUOTES_ZH = quotes_zh.get('ep') or {}
 SAYINGS_ZH = quotes_zh.get('sayings') or {}
 PARAS = {}  # slug -> 文稿段落，视频页与全文检索共用
@@ -454,6 +456,7 @@ EP_SHELL = """<!DOCTYPE html>
 
 {umami}
 <script src="/ep.js?v={ep_v}"></script>
+<script src="/kit.js?v={kit_v}"></script>
 </body>
 </html>
 """
@@ -554,13 +557,22 @@ def build_page(i, eps):
         by.append(f'<span>精读约 {wan} · 阅读 {read_min} 分钟</span>')
     byline = '<span class="k-sep">·</span>'.join(by)
 
-    # 媒体：YouTube 嵌入 / MP4 直链 / 无视频
-    if y:
-        img = thumb_of(m)
+    # 媒体：YouTube 嵌入（有 B 站搬运时加来源切换）/ MP4 直链 / 无视频
+    bili = BILI.get(slug)
+    if y or (bili and not m.get('mp4')):
+        img = thumb_of(m) or (bili or {}).get('pic') or ''
+        attrs = (f' data-yt="{esc(y)}"' if y else '') + (f' data-bv="{esc(bili["bv"])}" data-bp="{int(bili.get("p") or 1)}"' if bili else '')
+        onerr = f' onerror="this.onerror=null;this.src=\'https://i.ytimg.com/vi/{y}/hqdefault.jpg\'"' if y else ''
         media_html = (f'<div class="media">'
-                      f'<button type="button" class="video-facade" data-yt="{esc(y)}" aria-label="播放视频">'
-                      f'<img src="{img}" alt="" width="320" height="180" onerror="this.onerror=null;this.src=\'https://i.ytimg.com/vi/{y}/hqdefault.jpg\'">'
+                      f'<button type="button" class="video-facade"{attrs} aria-label="播放视频">'
+                      f'<img src="{img}" alt="" width="320" height="180"{onerr}>'
                       f'<span class="vf-play">{ICON_PLAY}<span>看视频</span></span></button></div>')
+        if y and bili:
+            sub = '<small>中字</small>' if bili.get('sub') else ''
+            media_html = (f'<div class="src-tabs" role="tablist" aria-label="视频来源">'
+                          f'<button type="button" role="tab" data-src="yt" aria-selected="true">YouTube</button>'
+                          f'<button type="button" role="tab" data-src="bili" aria-selected="false">B 站{sub}</button>'
+                          f'<span class="src-note">B 站版本为网友搬运，时间点可能差几秒</span></div>') + media_html
     elif m.get('mp4'):
         media_html = f'<div class="media"><video class="mp4-player" controls preload="none" playsinline poster="{esc(m.get("poster") or "")}" src="{esc(m["mp4"])}"></video></div>'
     else:
@@ -605,7 +617,8 @@ def build_page(i, eps):
             ts_html = f'<a class="q-ts ts-link" data-t="{ts}" href="javascript:void(0)">▶ {ts}</a>' if ts else ''
             items.append(f'<blockquote class="quote-item bi"><p class="q-zh">{esc(q["zh"])}</p>'
                          f'<p class="q-en" lang="en">{esc(q["en"])}</p>'
-                         f'<div class="q-foot">{ts_html}<button type="button" class="q-copy" data-copy-q>复制</button></div></blockquote>')
+                         f'<div class="q-foot">{ts_html}<button type="button" class="q-copy" data-copy-q>复制</button>'
+                         f'<button type="button" class="q-copy" data-poster-q>生成海报</button></div></blockquote>')
         panel_q = (f'<div class="tab-panel" id="panel-q" data-panel="q">'
                    f'<div class="tr-note">从现场发言里挑出的 {len(qzh)} 句原话，附中文译文（AI 翻译，以英文原话为准）。点时间戳可跳到视频对应位置。</div>'
                    f'<div class="quotes-list">{"".join(items)}</div></div>')
@@ -614,7 +627,8 @@ def build_page(i, eps):
         for q in qs:
             ts = ts_mmss(q[1])
             ts_html = f'<a class="q-ts ts-link" data-t="{ts}" href="javascript:void(0)">{ts}</a>' if ts else ''
-            items.append(f'<blockquote class="quote-item">{esc(q[2])}{ts_html}</blockquote>')
+            items.append(f'<blockquote class="quote-item">{esc(q[2])}{ts_html}'
+                         f'<button type="button" class="q-copy q-poster" data-poster-q>生成海报</button></blockquote>')
         panel_q = (f'<div class="tab-panel" id="panel-q" data-panel="q">'
                    f'<div class="tr-note">编辑精选的 {len(qs)} 条现场发言，点时间戳可跳到视频对应位置。</div>'
                    f'<div class="quotes-list">{"".join(items)}</div></div>')
@@ -626,6 +640,9 @@ def build_page(i, eps):
     res = ['<section class="ep-resources"><h2>资源与出处</h2><ul>']
     if y:
         res.append(f'<li><span class="res-k">视频</span><a href="https://www.youtube.com/watch?v={esc(y)}" target="_blank" rel="noopener">在 YouTube 收看</a></li>')
+    if bili:
+        note = f'UP 主「{esc(bili.get("up") or "")}」搬运' + ('，标题注明带中文字幕' if bili.get('sub') else '')
+        res.append(f'<li><span class="res-k">视频</span><a href="https://www.bilibili.com/video/{esc(bili["bv"])}/{"?p=" + str(bili["p"]) if bili.get("p") else ""}" target="_blank" rel="noopener">在 B 站收看</a><span class="res-sub">{note}</span></li>')
     if m.get('mp4'):
         res.append(f'<li><span class="res-k">视频</span><a href="{esc(m["mp4"])}" target="_blank" rel="noopener">原始视频文件</a></li>')
     res.append(f'<li><span class="res-k">档案</span><a href="https://silicon-valley.tech/#v-yt-{esc(m["srcId"])}" target="_blank" rel="noopener">silicon-valley.tech 档案页</a><span class="res-sub">本页视频与文稿数据来自 Elon Musk Archive</span></li>')
@@ -648,7 +665,7 @@ def build_page(i, eps):
     page = EP_SHELL.format(
         title_tag=esc(title_tag), desc=esc(desc), url=url,
         og_title=esc(og_title), og_img=esc(og_img),
-        ldjson=ldjson, css_v=CSS_V, ep_v=EP_V,
+        ldjson=ldjson, css_v=CSS_V, ep_v=EP_V, kit_v=KIT_V,
         theme_script=THEME_SCRIPT, head_extra=HEAD_EXTRA, feed_link=FEED_LINK,
         site_header=SITE_HEADER, site_footer=SITE_FOOTER, umami=umami_tag(),
         h1=h1, orig_line=orig_line, kicker=kicker, dek=dek, byline=byline,
@@ -971,7 +988,8 @@ def build_quotes():
             body = (f'<blockquote class="qy-quote bi"><p class="q-zh">{esc(zh)}</p><p class="q-en" lang="en">{esc(s["t"])}</p></blockquote>'
                     if zh else f'<blockquote class="qy-quote" lang="en">{esc(s["t"])}</blockquote>')
             rows.append(f'<li>{body}'
-                        f'<p class="qy-meta"><span>{esc(s.get("d") or "")}</span>{kind}<span class="qy-src-text">{esc((s.get("src") or "")[:120])}</span>{u}</p></li>')
+                        f'<p class="qy-meta"><span>{esc(s.get("d") or "")}</span>{kind}<span class="qy-src-text">{esc((s.get("src") or "")[:120])}</span>{u}'
+                        f'<button type="button" class="q-copy" data-poster-q>生成海报</button></p></li>')
         sec.append(f'<section class="qy-year" id="y{y}"><h2>{y}<small>{len(by_year[y])} 条</small></h2><ol>{"".join(rows)}</ol></section>')
     title = f'语录 · {SITE_NAME}'
     desc = f'马斯克 {len(sayings)} 条公开语录：从 1998 年的互联网到 AI 与火星，每条注明年份与出处。'
@@ -1009,6 +1027,7 @@ def build_quotes():
 </main>
 {SITE_FOOTER}
 {umami_tag()}
+<script src="/kit.js?v={KIT_V}"></script>
 </body>
 </html>
 """
@@ -1352,7 +1371,9 @@ def _en_docs():
 
 
 def build_trends_page():
-    t = insights.topic_trends(_en_docs())
+    docs = _en_docs()
+    qual = lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0)
+    t = insights.topic_trends(docs)
     INSIGHT['trends'] = t
     n_docs = len(PARAS)
     n_para = sum(t['totals'].values())
@@ -1371,6 +1392,18 @@ def build_trends_page():
     <form class="ng-form" onsubmit="return false"><input id="ngq" type="search" enterkeyhint="search" autocomplete="off" placeholder="例如：火星, 人工智能, 特斯拉" aria-label="要比较的词"><button type="submit" class="ng-go">比较</button></form>
     <div class="chips ng-presets">{chips}</div>
     <div id="ngOut" class="ng-out" aria-live="polite"><noscript><p class="ins-note">这个图需要启用 JavaScript。</p></noscript></div>
+  </section>
+  <section class="ins-sec" id="attention">
+    <div class="ins-h"><h2>注意力分配：他在聊哪家公司</h2><p>每一年提到各家公司的段落，按占比堆成 100%。2023 年推特（X）一下子占了一大半，2025 年以后 xAI 明显变宽。点图例去搜原话。</p></div>
+    {insights.attention_html(docs)}
+  </section>
+  <section class="ins-sec" id="people">
+    <div class="ins-h"><h2>他嘴里的人</h2><p>马斯克和采访者最常提到的人物，从总统、对手到他敬佩的科学家。</p></div>
+    {insights.people_html(docs)}
+  </section>
+  <section class="ins-sec" id="future">
+    <div class="ins-h"><h2>他嘴里的未来</h2><p>文稿里每一次提到「比说话时更晚的年份」都算一次：他最常把哪一年当成目标？</p></div>
+    {insights.future_html(docs, qual)}
   </section>"""
     html = page_html('/trends/', f'马斯克在关心什么 · 话题趋势 · {SITE_NAME}',
                      f'从 {n_docs} 份马斯克英文文稿里统计 26 个话题 1998 年至今的热度变化：火星、AI、特斯拉、推特、DOGE、出生率……也可以输入任意词自己比较。',
@@ -1450,6 +1483,10 @@ def build_stats_page():
   <section class="ins-sec" id="phrases">
     <div class="ins-h"><h2>跟马斯克学英语：他最爱用的词</h2><p>只统计马斯克本人说的话：档案里 {len(adocs)} 场已经分好说话人的对话，共约 {ps['words'] / 10000:.0f} 万词，按每万词出现几次排序。每个词配一句他的原话，点一下跳到视频里那一秒。</p></div>
     {insights.phrases_html(ps, ts_mmss)}
+  </section>
+  <section class="ins-sec" id="books">
+    <div class="ins-h"><h2>马斯克书单：他在访谈里亲口提到的书</h2><p>不是网上流传的「推荐书单」，而是从 {n_tr} 份文稿里找出的、他在镜头前真正说起过的书。每本配一句原话，点一下跳到视频那一刻。</p></div>
+    {insights.books_html(_en_docs(), lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0))}
   </section>
   <section class="ins-sec">
     <div class="ins-h"><h2>中文精读进度</h2><p>AI 基于完整文稿改写的中文长文，正在一篇篇补齐。</p></div>
