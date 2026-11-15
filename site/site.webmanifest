@@ -1,23 +1,77 @@
 {
+  "id": "/",
   "name": "马斯克全访谈",
   "short_name": "马斯克全访谈",
   "description": "马斯克 1998 年至今 651 个公开视频：访谈、发布会、股东大会，附中文精读、预言追踪与语录",
   "lang": "zh-CN",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
+  "categories": ["news", "education", "reference"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "文稿搜索",
+      "short_name": "搜索",
+      "description": "在 588 份文稿里逐段检索马斯克说过的话",
+      "url": "/search/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "预言追踪",
+      "short_name": "预言",
+      "description": "看马斯克的承诺哪些兑现、哪些迟到",
+      "url": "/predictions/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "语录",
+      "short_name": "语录",
+      "description": "556 条中英双语语录",
+      "url": "/quotes/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "话题趋势",
+      "short_name": "趋势",
+      "description": "看他 28 年间关心的话题怎么变化",
+      "url": "/trends/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/pwa-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "首页：651 个视频、中文精读与数据洞察"
+    },
+    {
+      "src": "/assets/pwa-narrow.png",
+      "sizes": "500x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "手机端：搜索、筛选与视频列表"
+    }
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-maskable-512.png",

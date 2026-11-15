@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -274,7 +327,7 @@
 <li data-z="63">区分流量型资源和存量型资源。拿"电池要挖锂"去对比"油车不挖矿"，是把一次投入和每年持续开采放在一起比，结论必然失真。</li>
 <li data-z="64">在团队里做技术选型或投资判断时，把"能源转型"拆成四个可验证的量：终端能耗、储能容量、资本开支、土地占用。四个数字都能对上，方案才值得往下推。</li>
 <li data-z="65">如果要在内部推动这类讨论，直接去找特斯拉那份公开的白皮书，看它的假设和计算过程。用一份假设偏保守、过程可复核的模型开场，比用一份乐观预测有说服力得多。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=C16i8nsIKJ8" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>[Applause] okay [Applause] all right master plan part three so as Zach was mentioning the the thing that I think is we wanted to convey probably more importantly than anything else that we&#x27;re talking about here is that there is a clear path to a sustainable energy Earth it&#x27;s not it doesn&#x27;t require destroying natural habitats it doesn&#x27;t</p><p id="p1"><span class="ts-link" data-t="0:40">0:40</span>require has to be austere and stop using electricity and sort of be in the cold or anything the the story and I think that this holds together quite well and will be actually publishing detailed white paper with all of our assumptions and calculations is that there is that there is a clear path to a fully sustainable Earth with abundance in fact you could support a civilization much bigger than Earth than much more than the the eight billion humans could actually be supported sustainably on Earth and I&#x27;m I&#x27;m just often shocked and surprised by how few people realize this</p><p id="p2"><span class="ts-link" data-t="1:27">1:27</span>most of the smart people I know actually don&#x27;t see a this clear path they think that there&#x27;s there&#x27;s not a path to a sustainable energy future or at least there&#x27;s not one that is sustainable at our current population or that would have to resort to Extreme Measures none of this is true so we&#x27;re going to walk through the calculations for how to create a sustainable energy civilization yeah to set the stage today our energy economy it&#x27;s let&#x27;s be honest it&#x27;s sturdy and it&#x27;s wasteful over 80 percent of global energy primary energy comes from fossil fuels and only one-third of that Global energy actually ends up delivering useful work or heat this is the problem statement but we&#x27;re</p><p id="p3"><span class="ts-link" data-t="2:19">2:19</span>here to talk about the solution yeah it&#x27;s like if for some of this I&#x27;m going to elaborate because there&#x27;s there&#x27;s a very wide range of technical expertise out there from people who are like you know whatever level 9 Wizards in the subject to people who do not do engineering at all so when if you have a gasoline car your your you&#x27;re converting less than a third often maybe only 25 of the energy in</p><p id="p4"><span class="ts-link" data-t="2:51">2:51</span>the gasoline is converted into motion the rest is turning to waste heat that does no doesn&#x27;t do any good at all and there&#x27;s a lot of energy required even to get the oil out of the ground to refine the oil and to transport the gasoline to the gas station so when you when you look at all that for a typical gasoline car is is actually going to be using less than 20 percent fully considered of the energy from the oil actually goes into motion so this is a when when I see people when we see people doing calculations for what does it take to create a sustainable energy Earth they assume that the same energy amount is required for an elect for an electric an</p><p id="p5"><span class="ts-link" data-t="3:32">3:32</span>electrified civilization versus a combustion civilization this is not true that because most of the energy of combustion is waste Heat and even to get the fuel to combust in the first place and get it to the end use there&#x27;s a lot loss along the way I mean this is the primary energy consumption 165 petawatt hours a year petawatt hour is a trillion a trillion kilowatt hours so it&#x27;s a large amount of energy but the nice thing about electrified economy it there&#x27;s a better way we&#x27;re going to talk about it is that through end use efficiency and through efficiency along every step of the way actually the total energy use it halves so this is one of the most</p><p id="p6"><span class="ts-link" data-t="4:14">4:14</span>enabling aspects of electrifying everything is that the sustainable energy economy is that much easier to accomplish it&#x27;s actually half the problem statement of the fossil fuel economy yeah and we&#x27;re being conservative here so it could be better than half but we&#x27;re trying to have assumptions that are reasonable not overly optimistic in fact slightly pessimistic so it&#x27;s really better than half but just say for it&#x27;s it&#x27;s easy to make the argument that we need half as much energy with an electric economy versus a combustion economy yep</p><p id="p7"><span class="ts-link" data-t="4:48">4:48</span>so how the master plan works you want to talk yeah so the the thing that is needed is at very large scale that&#x27;s not currently present is a vast amount of battery energy storage Our rough calculations are that this is about 240 terawatt hours or 240 000 gigawatt hours this is a lot of batteries but it is actually a very achievable amount we&#x27;ll go into details on that so that&#x27;s a combination of electric vehicles and stationary storage so if you&#x27;ve got solar or wind you&#x27;ve got to store the energy when the wind is not blowing the sun is not shining and so we&#x27;re assuming sort of an eight to one ratio of stored energy to power so 30 terawatt hours of power</p><p id="p8"><span class="ts-link" data-t="5:42">5:42</span>three terawatts of power our actual capital expenditure calculation for manufacturing investment is more like a 6 trillion but we you know we made it higher to make it 10 trillion and this is across mining refining you know battery factories recycling vehicle factories all the things that we&#x27;re going to talk about needing to invest in to build the sustainable energy economy yeah now if you look at the total World economy it&#x27;s just under 100 trillion so if this was spread out say over 10 years it would be one percent of the global economy over 20 years it would be half a percent very difficult economy so this is yeah not a big number relative to the global</p><p id="p9"><span class="ts-link" data-t="6:31">6:31</span>economy as Drew mentioned you need about half as much energy with an electric economy versus a combustion economy and in terms of wind and solar how much land would be used it&#x27;s less than 0.2 percent of the land area of Earth I think generally people don&#x27;t realize quite how much energy is reaching us from the sun it&#x27;s roughly a gigawatt per square kilometer and you know the sun doesn&#x27;t shine all the time but it&#x27;s if you multiply that by say for to get the continuous power four or five then that that that gives you the land area of solar and you can put wind and solar often in the same place so a lot of places that currently have wind you could have solar there and you</p><p id="p10"><span class="ts-link" data-t="7:20">7:20</span>double your energy you can also put wind offshore it doesn&#x27;t even need to be on land so wind is even more flexible you could put a solar offshore too yep so Earth is 70 water anyway what is that with a pretty really a remarkably small amount of of Earth&#x27;s land area we can go fully sustainable</p><p id="p11"><span class="ts-link" data-t="7:41">7:41</span>yeah and and and from to the resources and raw materials exist to support this transition we&#x27;ll go through that in detail but we do not see any insurmountable resource challenges at all in fact in the end we should be mining less ore to accomplish this economy than we currently do with the fossil fuel economy and we&#x27;re going to talk through that yeah just to emphasize that again the electrified economy will require less mining than the current economy does yes less not more okay</p><p id="p12"><span class="ts-link" data-t="8:11">8:11</span>so this is the plan and now we&#x27;ll get into a little bit more of the details of the</p></div></div>
       
       
@@ -302,7 +355,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -342,7 +395,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -350,7 +403,7 @@
 <li data-z="101">把高管的公开表态当成滞后指标。广告主回没回来，看内容审核团队的招聘启事比看采访更早。团队在扩，说明品牌方的顾虑在被处理；团队还在缩，说明没处理。</li>
 <li data-z="102">读这类访谈，把"我不知道""我不清楚有谁"这类回答单独标出来。它们通常不是信息缺失，是拒绝给出可被核实的承诺。克莱顿问哪家广告主没回来，马斯克答"我不知道有谁明确说不回来"，这句话没有回答任何问题。</li>
 <li data-z="103">对"结果好就一切都好"这种表述保持警惕。它成立的前提是结果真的好，而结果往往要两三年后才揭晓。听到这句话，记下时间点，到期再对账。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=SKSsnsAEcn8" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>so let&#x27;s get down to business and we start with the exclusive interview that took place in San Francisco between Elon Musk and our technology correspondent James Clayton it is one of his first interviews since he bought Twitter for 44 billion dollars he defended his decision to lay off a massive number of Staff saying that Twitter only had four months to live in less drastic measures were taken these are rough numbers a revenue dropped from four and a half billion to three and expenses went from four and</p><p id="p1"><span class="ts-link" data-t="0:36">0:36</span>a half to six creating a three billion dollar negative cash flow situation and Twitter having a billion dollars in the bank that&#x27;s four months to live so unless drastic action was taken immediately this company is going to die let&#x27;s talk about that drastic action because almost immediately you sacked a lot of Twitter workers yeah and and I I spoke to them it&#x27;s very easy to speak to them when it happened and and the way they said pretty much everyone said is that it felt quite haphazard it was and it felt a little bit uncaring do you do you say uncare you know the issue is like the companies are going to go bankrupt or if we do not cut costs immediately</p><p id="p2"><span class="ts-link" data-t="1:20">1:20</span>this is not a caring uncaring situation it&#x27;s like if whole ship sinks so nobody&#x27;s got a job right yeah but a lot of people just lost their jobs like that and and they went they didn&#x27;t even know they would they&#x27;d lost their jobs often they just they were just frozen out of their accounts what would you do well you might want to give someone some notice I mean you might it&#x27;s by the way I&#x27;m not running Twitter but I know this is the criticism and this is what actual this is what staff members say a little bit of notice you know no I understand if you&#x27;re four months to live 120 days and 120 days you&#x27;re dead so how so what do you want to do how much are you worth</p><p id="p3"><span class="ts-link" data-t="2:00">2:00</span>I don&#x27;t know but I mean we&#x27;re talking about around the 200 billion dollar Mark I mean it&#x27;s not quite you&#x27;re framing it in in a way that that you know it had had a few months to live you&#x27;re quite a rich man I saw a lot of Tesla stock to close this deal but I did not want to sell the Tesla stuff in what was quite a lengthy interview Elon Musk also said he is confident that the social media platform Twitter will become profitable again and advertisers will return let&#x27;s have a listen to this in terms of advertising obviously the Twitter&#x27;s not a private company anymore so we don&#x27;t really know how it&#x27;s how it&#x27;s all going have all the advertisers come back</p><p id="p4"><span class="ts-link" data-t="2:44">2:44</span>not all but most and you can see it for yourself on Twitter even in the for you feed right I mean no sorry in the following don&#x27;t use for you because it sucks rightly [Laughter] that&#x27;s not what I said okay well why don&#x27;t you use for you what&#x27;s wrong with it how is it going is is twittering profit now no Twitter is rough I&#x27;d say we&#x27;re roughly break even at this point and I think you&#x27;ve said before you you see a you see a world where you could be in profit is there a timeline on that do you think I mean depending on how things go if current trends continue I think we could be profitable or I mean</p><p id="p5"><span class="ts-link" data-t="3:31">3:31</span>to be more precise we could be cash flow positive this quarter if things keep going well this quarter as soon as that possibly yeah wow and do you have a message for the advertising I mean can you say which advertisers haven&#x27;t come back I think I think almost all of them have either come back or said they&#x27;re going to come back there are very few exceptions can you say any of the exceptions I actually don&#x27;t know of anyone who said definitively they&#x27;re not coming back they&#x27;re all sort of training towards coming back but there are some that just happened in the water&#x27;s warm it&#x27;s great that&#x27;s your message to the to the advertisers they haven&#x27;t come back yeah</p><p id="p6"><span class="ts-link" data-t="4:11">4:11</span>I mean look you know if if if Disney feels comfortable advertising you know children&#x27;s movies and apple feels comfortable advertising iPhones those are good indicators that Twitter is a good place to advertise I want to talk about if you have any regret regrets and and you know I think you were Buddha Dave Chappelle concert I think your own lawyer said a little a little well some say a little some say a bit more I think our own lawyer said you couldn&#x27;t get a fair trial in San Francisco because there are lots of people that don&#x27;t necessarily like you here yeah but you know I didn&#x27;t say it I was wrong he was wrong I guess the because I was wedded by the San</p><p id="p7"><span class="ts-link" data-t="5:00">5:00</span>Francisco jury unanimously so but I guess but look do you have any regrets about buying Twitter I think it was something that needed to be done difficult you know I&#x27;d say that like the the pain level of Twitter has been extremely high this hasn&#x27;t been some sort of party so it&#x27;s been really quite a stressful situation you know for the last several months not not an easy one but apart from the pay I mean so it&#x27;s been quite painful but I think at the end of the day it should have been done I think tonight were there many mistakes made along the way of course you know and but you know all swell it ends well and so I I feel like we&#x27;re headed to a good place</p><p id="p8"><span class="ts-link" data-t="5:58">5:58</span>you know where roughly break even I think we&#x27;re trending towards being cash flow positive very soon like literally in a matter of of months the advertisers are returning the I think the quality of recommended tweets has improved significantly and we&#x27;ve taken a lot of feedback from people that have looked at the open source recommendation algorithm and we&#x27;ve we&#x27;ve made a lot of improvements even even since that was made open source and we&#x27;re going to keep doing that so overall I think the trend is very good so well let&#x27;s unpack this further with our business reporter Gerald de Silva who joins us from our Bureau in Singapore Joe it was an extraordinary conversation</p><p id="p9"><span class="ts-link" data-t="6:40">6:40</span>you and I were both watching it live you in aubure and Singapore me in the studio here in London he he he had so much to say about so many things but when it comes to Twitter itself and The Business he does sound confident he he is telling us all we&#x27;ll be back in profit soon and advertisers will be back well we&#x27;ll have to wait and see but Elon Musk did sound very upbeat in that interview he talked about daily usage being up and yes the company finally breaking even now that according to him advertisers are back he told James at one point how the situation was Bleak when he first took over accused the previous management of running it as a non-profit saying that the company had</p><p id="p10"><span class="ts-link" data-t="7:25">7:25</span>only in his own words a few months to live and he said that like other internet companies Twitter was facing a massive drop in Revenue all of that to justify of course those controversial Mass layoffs that we saw at Twitter earlier this year he admitted that the head count has gone from 8 000 to 1 500</p><p id="p11"><span class="ts-link" data-t="7:47">7:47</span>under his leadership the thing is many analysts are saying that that medicine might actually be the poison that&#x27;s hurting Twitter many people in the content moderation team have been fired and advertisers fear that increase that increases the likelihood that their products will appear next to toxic content on the platform and we do know that major advertisers like Volkswagen like General Motors deed part did pause their relationship with Twitter earlier this year so we&#x27;ll have to really wait and see whether indeed mask has reason to be optimistic about Twitter&#x27;s future okay Joe thank you very much geralda Silva in Singapore just to say online</p><p id="p12"><span class="ts-link" data-t="8:28">8:28</span>you can see and read more about that exclusive interview you can listen and watch at your leisure as and wish so that&#x27;s BBC online but also the news app as well so do take a look</p></div></div>
       
       
@@ -378,7 +431,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -418,7 +471,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

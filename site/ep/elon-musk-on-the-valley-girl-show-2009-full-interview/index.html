@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -389,7 +442,7 @@
 <li data-z="125">把“通才”当成一个正经的技能目标。公司早期，创始人的核心工作是补位。没人干的活，就是你的活。</li>
 <li data-z="126">给每个概念准备一句话版本。一分钟定义十个词的游戏可以自己练，随便找十个你行业里的词，看能不能不假思索地说完。</li>
 <li data-z="127">定一个十年后看起来夸张的目标，然后接受自己做不到。他说几百万辆，十年后做到了三十几万辆，方向没错，走十年就够远了。目标定低了，连这个都到不了。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=JkCVsw9gi9k" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>hi I&#x27;m like the valley girl I live in Silicon Valley the heart of innovative technology I know where all these awesome companies are but how the heck did they get here that&#x27;s what I&#x27;m here to find out I&#x27;m like the valley girl what do you [Music] do hi I&#x27;m like the valley girl sometimes</p><p id="p1"><span class="ts-link" data-t="0:24">0:24</span>I wish I could be like Superman and fly and then other times I think maybe it&#x27;d be to be like Batman and drive a really cool car our next guest couldn&#x27;t decide so he does both please welcome Mr Elon Musk of Tesla Motors and SpaceX hi Elon how you doing good how you good have a seat tell me what is an entrepreneur to you you know I think somebody that is probably somewhat of a generalist even though they may have specific strengths in certain areas technical or business or wherever and generalists you mean and just kind of like see the bigger picture certainly see the bigger picture but I mean in terms of skills I actually think most people can be a journalist but being a</p><p id="p2"><span class="ts-link" data-t="1:09">1:09</span>journalist means doing some things that you don&#x27;t necessarily like doing I don&#x27;t like doing things that I don&#x27;t like doing all right what does SpaceX do SpaceX we design and manufacture rockets and spacecraft so are you working with NASA or you&#x27;re kind of replacing NASA no no NASA is our biggest customer and what may you want to start this kind of a company well when I was in college there were three areas that I thought would most affect the future of humanity that was the internet you were right about that yeah originally I applied to Netscape they didn&#x27;t respond to me so I have to start a company that you&#x27;re sorry now Netscape the transition to a</p><p id="p3"><span class="ts-link" data-t="1:51">1:51</span>sustainable energy economy okay and the third was space exploration in particular the extension of life beyond Earth what do you personally think is out there that we can find by you know launching Rockets into space well I think there&#x27;s a lot that we can find Al unlikely in our solar system</p><p id="p4"><span class="ts-link" data-t="2:10">2:10</span>it&#x27;s possible maybe some pink ones well m is red it&#x27;s pinkish so yeah I think there&#x27;s it&#x27;s not a question of of necessarily finding things although I do think that finding things is important but it&#x27;s really the it&#x27;s making life multiplanetary growing like getting a summer home on Saturn or something kind of thing it&#x27;s really about backing up the biosphere I think we need to take precautionary measures to ensure that life continues at least Life as We Know It And and the right way to do that is to to back up the biosphere to another planet now well tell me about the first launch the Falcon one was that the first one Falcon one is a small rocket that was kind of</p><p id="p5"><span class="ts-link" data-t="2:51">2:51</span>our test article okay we we got to orbit last year with Falcon 1 okay and then Falcon 9 is a much bigger rocket what happened to all the Falcons in the middle well the the the number refers to the number of engines oh okay so voline is n nine engines on the base yeah okay so how does it work when it takes off like what makes it go high blust the gas from the here you can you can use this to demonstrate sure well makes use of Newton&#x27;s Third Law okay and is that gravity no that&#x27;s for every action there&#x27;s an equal opposite reaction right okay when you shoot gas out the at the end it pushes the rocket in the opposite direction okay conservation of</p><p id="p6"><span class="ts-link" data-t="3:36">3:36</span>momentum basically okay so you&#x27;re shooting gas and then it takes off yeah yeah what do you think is the coolest thing about the rockets that you guys are making the the coolest thing about our Rockets is that they have the potential to be a massive cost Improvement in space Transportation oh so it&#x27;s like cheap transport to space the only way to get to automatic or Beyond in terms of improvement is to make it reusable so right now so make reusable recyclable Rockets reusable we&#x27;ll just like any motor transport cars planes we use all the parts in the No No well you do multiple trips right you don&#x27;t have to buy a car for a single trip all right if a 747 could</p><p id="p7"><span class="ts-link" data-t="4:18">4:18</span>only be used for one flight okay it would be a very expensive flight well hey do you want to do you want to launch it one more time for us three two [Music] one I think it&#x27;s time for a break we&#x27;ll be right back with more fun and Elon Musk after this and we&#x27;re back with Elon Musk of Tesla Motors and SpaceX so Elon tell me a little bit about Tesla well Tesla we make electric cars the Tesla Roadster is the only Highway capable electric car for sale in the United States in Europe not just the only sports car it&#x27;s the only one of any kind it&#x27;s comparable to you know Porsche 911 actually faster than a Porsche 911 okay and 060 of 3.9 seconds and</p><p id="p8"><span class="ts-link" data-t="5:03">5:03</span>it&#x27;s got very good handling and it looks pretty cool have you made a pink one yet you can have any c l really actually I think we have made a pink one you made a pink one yeah oh my gosh so tell me about the S car we&#x27;ve just unveiled the model S we wanted people to know what the car was going to be like and I thought rather than wait for 2 years I&#x27;d rather give people kind of a a preview a teaser yeah yeah well I have an scart teaser for you okay so I&#x27;ve heard people have been saying look at that es cargo right I don&#x27;t get it so I have some es cargo for you okay</p><p id="p9"><span class="ts-link" data-t="5:38">5:38</span>great do you like as cargo I don&#x27;t I&#x27;ll order it often but I&#x27;ve certainly had it I&#x27;ve never had it I don&#x27;t know if I&#x27;m going to like it it doesn&#x27;t taste quite like you&#x27;d expect a s [Music] taste tastes like chicken very good that was a new experience for me yeah it&#x27;s chewy it&#x27;s Chey it&#x27;s good a nice nice job making them what does the escar and escar go have in common not a lot ESO</p><p id="p10"><span class="ts-link" data-t="6:08">6:08</span>are slow which we are not I I don&#x27;t want to I don&#x27;t want to think about the fact I just ate a snail so it was pretty good I just can&#x27;t think about the fact that I&#x27;ve seen them snailing slugging along or whatever right so okay so your cars are you at a bug I&#x27;m just going to forget you said that so are your customers complaining about gas prices the price of gas is not the the main driver of somebody buying a $100,000 sports car Al so do you put gas in the car no it&#x27;s pure electric you just charge it you plug it in like a hairdryer so your cars are all electric yeah so how does it work you plug it in like a hair dryer yeah the charges both into the car okay so just like you plug</p><p id="p11"><span class="ts-link" data-t="6:55">6:55</span>in a laptop or a cell phone or whatever yeah just plug it in and then you need really long extension cords no most people have plugs in the garage I mean like when it drives then you probably need a really long extension cord you could take that approach it&#x27;s in advisable the range is almost 250 Mi oh wow battery yeah okay explain to me I have a hybrid why is it better than a hybrid when you say you have a hybrid you have something which is really maybe 2% electric and 98% gasoline and you need to sort of say okay if all the world had your your car Well we&#x27;d still be 100% dependent on gasoline and the advantage of all electric is that you can then generate</p><p id="p12"><span class="ts-link" data-t="7:35">7:35</span>your your electricity from renewable means like solar wind geothermal and that&#x27;s a sustainable future what&#x27;s the coolest thing about your Tesla probably the acceleration when you&#x27;re on the freeway and you want to pass someone you don&#x27;t have to downshift or anything it&#x27;s just instant acceleration so you&#x27;re like a firefly on the freeway it&#x27;s just amazingly zy wow where do you think Tesla&#x27;s going to be in about 10 years well hopefully at that point we have a complete you know array of products from sports cars all the way down to economy cars and we&#x27;ll be in 10 years I would hope we&#x27;re making millions of cars in 10 years so I have a little activity</p><p id="p13"><span class="ts-link" data-t="8:08">8:08</span>for you are you ready sure okay it is called The Fabulous cup it&#x27;s full of fabulous terms and basically what I want you to do is go through and Define them as fast as you can and you have one minute to try and Define them all ready sure set go aliens well I used to be one until I got my green card Falcon 1 it&#x27;s a rocket made by SpaceX initial rocket golf cart not a Tesla roadsta that&#x27;s definitely a Tesla Solar City the future of solar power in America triplets I have them they&#x27;re awesome I recommend them CEO yeah I do that a lot avocado it&#x27;s great with guacamole</p><p id="p14"><span class="ts-link" data-t="8:53">8:53</span>impossible my middle name I suppose PayPal best way to pay on the internet electricity the future transport that&#x27;s it awesome that was pretty fast for that you get a because you&#x27;re so green you have a fabulous green keychain for all your cool cars and I don&#x27;t know how the spaceship works but maybe we can you know use it for those keys too all right cool well thank you so so much for coming out here Elon this was a lot of fun I&#x27;m like the valley girl and I&#x27;m like Elan musk thanks so much thanks for watching we&#x27;ll see you next time</p></div></div>
       
       
@@ -417,7 +470,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -457,7 +510,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -276,7 +329,7 @@
 <li data-z="111">给自己所在的行业做一次"法规负债"盘点。列出那些因为历史原因存在、今天已经没有实际作用、但还在持续消耗人力的流程和审批。你会发现清单比你以为的长，然后挑一条尝试推掉它，亲身体验一下抗体反应有多强。</li>
 <li data-z="112">判断一项技术会不会真的改变世界，别只看它本身有多酷，看它有没有大幅降低信息或能量的成本。印刷机降低的是复制文字的成本，这条线索比任何一次政权更替都长。</li>
 <li data-z="113">把时间尺度往上调一档。文明 5500 年，地球 45 亿年。这个比例不解决任何具体问题，但它能让一部分焦虑失去分量，也能让另一部分事情显得更值得做。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=swZ2Ngv4oSk" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:02">0:02</span>and we&#x27;ve gotta live within our means. - Do you think politicians, in general, politicians, governments, how much power do you think they have to steer humanity towards good? - I mean, there&#x27;s a sort of age-old debate in history, like, is history determined by these fundamental tides?</p><p id="p1"><span class="ts-link" data-t="0:25">0:25</span>Or is it determined by the captain of the ship? Both really. I mean, there are tides, but it also matters who&#x27;s captain of the ship. So it&#x27;s a false dichotomy essentially. I mean, there are certainly tides, the tides of history. There are real tides of history. And these tides are often technologically-driven.</p><p id="p2"><span class="ts-link" data-t="0:50">0:50</span>If you say like the Gutenberg press, the widespread availability of books as a result of a printing press, that was a massive tide of history, and independent of any ruler. But in stormy times, you want the best possible captain of the ship. - Well, first of all, thank you for recommending Will and Ariel Durant&#x27;s work.</p><p id="p3"><span class="ts-link" data-t="1:17">1:17</span>I&#x27;ve read the short one for now. - Oh, &quot;The Lessons of History.&quot; - Lessons of History. And so one of the lessons, one of the things they highlight is the importance of technology. Technological innovation, which is funny &#x27;cause they wrote so long ago, but they were noticing that the rate of technological innovations was speeding up.</p><p id="p4"><span class="ts-link" data-t="1:40">1:40</span>Yeah, I would love to see what they think about now. But yeah, to me, the question is how much government, how much politicians get in the way of technological innovation and building versus like help it and which politicians, which kind of policies help technological innovation?</p><p id="p5"><span class="ts-link" data-t="1:58">1:58</span>&#x27;Cause that seems to be, if you look at human history, that&#x27;s an important component of empires rising and succeeding. - Yeah. Well, I mean, in terms of dating civilization, start of civilization, I think the start of writing in my view, that&#x27;s my what I think is probably the right starting point to date civilization.</p><p id="p6"><span class="ts-link" data-t="2:21">2:21</span>And from that standpoint, civilization has been around for about 5,500 years when writing was invented by the ancient Sumerians who are gone now. But the ancient Sumerians, in terms of getting a lot of firsts, those ancient Sumerians really have a long list of firsts. It&#x27;s pretty wild.</p><p id="p7"><span class="ts-link" data-t="2:42">2:42</span>In fact, Durant goes through the list of like, you wanna see first? We&#x27;ll show you firsts. The Sumerians were just ass kickers. And then the Egyptians were right next door, relatively speaking. They were like weren&#x27;t that far, developed an entirely different form of writing, the hieroglyphics.</p><p id="p8"><span class="ts-link" data-t="3:02">3:02</span>Cuneiform and hieroglyphic&#x27;s totally different. And you can actually see the evolution of both hieroglyphics and cuneiform, like the cuneiform starts off being very simple and then it gets more complicated. And then towards the end, it&#x27;s like, wow, okay. They really get very sophisticated with the cuneiform.</p><p id="p9"><span class="ts-link" data-t="3:16">3:16</span>So I think civilization is about 5,000 years old. And earth is, if physics is correct, four and a half million years old. So civilization has been around for 1000000th of earth&#x27;s existence, flash in the pan. - Yeah, these are the early, early days. - Very early. - We make it very dramatic because there&#x27;s been rises and falls of empires.</p><p id="p10"><span class="ts-link" data-t="3:42">3:42</span>- Many, so many rises and falls of empires. So many. - And there&#x27;ll be many more. - Yeah, exactly. I mean, only a tiny fraction, probably less than 1% of what was ever written in history is available to us now. I mean, if they didn&#x27;t put it, literally chisel it in stone or put it in a clay tablet, we don&#x27;t have it.</p><p id="p11"><span class="ts-link" data-t="4:03">4:03</span>I mean, there&#x27;s some small amount of like papyrus scrolls that were recovered that are thousands of years old, because they were deep inside a pyramid and weren&#x27;t affected by moisture. But other than that, it&#x27;s really gotta be in a clay tablet or chiseled. So the vast majority of stuff was not chiseled, &#x27;cause it takes a while to chisel things.</p><p id="p12"><span class="ts-link" data-t="4:27">4:27</span>So that&#x27;s why we&#x27;ve put tiny, tiny fraction of the information from history. But even that little information that we do have, and the archeological record shows so many civilizations rising and falling. It&#x27;s wild. - We tend to think that we&#x27;re somehow different from those people.</p><p id="p13"><span class="ts-link" data-t="4:43">4:43</span>One of the other things they do highlight is that human nature seems to be the same. It just persists. - Yeah. I mean, the basics of human nature are more or less the same. - Yeah, so we get ourselves in trouble in the same kinds of ways, I think, even with the advanced technology.</p><p id="p14"><span class="ts-link" data-t="4:59">4:59</span>- Yeah, I mean, you do tend to see the same patterns, similar patterns for civilizations where they go through a life cycle, like an organism, sort of just like a human is sort of a zygote, fetus, baby, toddler, teenager, and eventually gets old and dies. The civilizations go through a life cycle.</p><p id="p15"><span class="ts-link" data-t="5:29">5:29</span>No civilization will last forever. - What do you think it takes for the American empire to not collapse in the near term future in the next 100 years to continue flourishing? - Well, the single biggest thing that is often actually not mentioned in history books, but Durant does mention it is the birthright.</p><p id="p16"><span class="ts-link" data-t="5:59">5:59</span>So like a perhaps to some, like counterintuitive thing happens when civilizations are winning for too long. The birth rate declines. It can often decline quite rapidly. We&#x27;re seeing that throughout the world today. Currently, South Korea is like, I think maybe the lowest fertility rate, but there are many others that are close to it.</p><p id="p17"><span class="ts-link" data-t="6:29">6:29</span>It&#x27;s like 0.8, I think. If the birth rate doesn&#x27;t decline further, South Korea will lose roughly 60% of its population. But every year, that birth rate is dropping. And this is true through most of the world. I don&#x27;t mean to single out South Korea. It&#x27;s been happening throughout the world.</p><p id="p18"><span class="ts-link" data-t="6:49">6:49</span>So as soon as any given civilization reaches a level of prosperity, the birth rate drops. And now you can go and look at the same thing happening in ancient Rome. So Julius Caesar took note of this, I think, around 50-ish BC and tried to pass, I don&#x27;t know if he was successful, tried to pass a law to give an incentive for any Roman citizen that would have a third child.</p><p id="p19"><span class="ts-link" data-t="7:20">7:20</span>And I think Augustus was able to, well, he was the dictator so. (laughs) The Senate was just for show. I think he did pass a tax incentive for Roman citizens to have a third child. But those efforts were unsuccessful. Rome fell because the Romans stopped making Romans. That&#x27;s actually the fundamental issue.</p><p id="p20"><span class="ts-link" data-t="7:48">7:48</span>And there were other things there. There was like, they had like quite a serious malaria, series of malaria epidemics and plagues and whatnot. But they had those before. It&#x27;s just that the birth rate was fallower than the death rate. - It really is that simple? - Well, I&#x27;m saying that&#x27;s- - More people is required.</p><p id="p21"><span class="ts-link" data-t="8:09">8:09</span>- That&#x27;s at a fundamental level. If a civilization does not at least maintain its numbers, it&#x27;ll disappear. - So perhaps the amount of compute that the biological computer allocates to sex is justified. In fact, we should probably increase it. - Well, I mean, there&#x27;s this hedonistic sex, which is, you know, that&#x27;s neither here nor there.</p><p id="p22"><span class="ts-link" data-t="8:33">8:33</span>- Yeah, it&#x27;s not productive. - It doesn&#x27;t produce kids. Well, what matters, I mean, Durant makes this very clear, &#x27;cause he looked at one civilization after another and they all went through the same cycle. When the civilization was under stress, the birth rate was high. But as soon as there were no external enemies or they had a extended period of prosperity, the birth rate inevitably dropped every time.</p><p id="p23"><span class="ts-link" data-t="9:00">9:00</span>I don&#x27;t believe there&#x27;s a single exception. - So that&#x27;s like the foundation of it. You need to have people. - Yeah. I mean, at base level. No humans, no humanity. - And then there&#x27;s other things like human freedoms and just giving people the freedom to build stuff. - Yeah, absolutely.</p><p id="p24"><span class="ts-link" data-t="9:24">9:24</span>But at a basic level, if you do not at least maintain your numbers, if you&#x27;re below replacement rate, and that trend continues, you will eventually disappear. This is elementary. Now then obviously, also wanna try to avoid like massive wars. If there&#x27;s a global thermonuclear war, probably, we&#x27;re roll toast, radioactive toast.</p><p id="p25"><span class="ts-link" data-t="9:55">9:55</span>So we wanna try to avoid those things. There&#x27;s a thing that happens over time with any given civilization, which is that the laws and regulations accumulate. And if there&#x27;s not some forcing function, like a war to clean up the accumulation of laws and regulations, eventually, everything becomes legal.</p><p id="p26"><span class="ts-link" data-t="10:21">10:21</span>And that&#x27;s like the hardening of the arteries, or a way to think of it is like being tied down by a million little strings, like Gulliver. You can&#x27;t move. And it&#x27;s not like any one of those strings is the issue. You got a million of &#x27;em. So there has to be a sort of a garbage collection</p><p id="p27"><span class="ts-link" data-t="10:43">10:43</span>for laws and regulations so that you don&#x27;t keep accumulating laws and regulations to the point where you can&#x27;t do anything. This is why we can&#x27;t build a high-speed rail in America. It&#x27;s illegal. That&#x27;s the issue. It&#x27;s illegal six ways to Sunday to build high-speed rail in America.</p><p id="p28"><span class="ts-link" data-t="11:04">11:04</span>- I wish you could just like, for a week, go into Washington and like be the head of the committee for making, what is it? For the garbage collection, making government smaller, like removing stuff. - I have discussed with Trump the idea of a government deficiency commission. - Nice, yeah.</p><p id="p29"><span class="ts-link" data-t="11:22">11:22</span>- And I would be willing to be part of that commission. - I wonder how hard that is. - The antibody reaction would be very strong. - [Lex] Yeah. - So you really have to, you&#x27;re attacking the matrix at that point. Matrix will fight back.</p></div></div>
       
       
@@ -304,7 +357,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -344,7 +397,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

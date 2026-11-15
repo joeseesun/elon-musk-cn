@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -312,7 +365,7 @@
 <li data-z="82">判断一个过渡方案值不值得投，用两栖动物的框架：它替谁解决了什么问题，这个问题在被替代方案彻底解决之后还会不会存在。会，它就是长期方案；不会，它就是过渡。</li>
 <li data-z="83">给自己的判断加一条检查：如果我不在了，这件事还能不能继续。这条检查在马斯克那里用来决定要不要上火星，在你这里，可以用来判断一个项目、一个团队、一门生意是否真的成立。</li>
 <li data-z="84">遇到一个需要向非专业听众解释的技术，别急着讲原理。先找一个对方已经体验过的参照物，把太空山放在真空管道前面。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=GrECBv7lcSo" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>Elon Musk pleasure to have you on thanks Perry so this is the dragon that goes up into space and is going to go up on Monday correct yeah that&#x27;s our dragon spacecraft version one which is capable of taking cargo to and from the space station including a black biological cargo like fish and - and that kind of thing so when do when do human beings start going up and do you think so we expect a complete version - of Dragon which will have astronaut transport capability in about two years most of what you do now is send satellites up into space right that&#x27;s how you pay the bills exactly but you want to do something much more ambitious with SpaceX yeah I mean the</p><p id="p1"><span class="ts-link" data-t="0:39">0:39</span>long term aspiration is to develop the technologies necessary to transport a large number of people in cargo - Tamar&#x27;s in order to create a self-sustaining civilization there and then that&#x27;s really why I started the company was because it seemed as though to create the possibility for life on other planets yeah exactly I mean it sort of started off when I was thinking about what should you have to PayPal and I had always been interested in space but I didn&#x27;t think there&#x27;s anything that an individual could do in space I mean it seemed like the province of large governments and but I sort of</p><p id="p2"><span class="ts-link" data-t="1:16">1:16</span>started looking into it and I went to the NASA website to say well to find out when we&#x27;re going to Mars it seems like obviously the head is the next thing after the moon and I couldn&#x27;t find anything so like wow what&#x27;s this is seems very strange initially I was under the impression that that it was a then we&#x27;d lost the will to do that and I later came to conclusion that I was quite wrong about that I think the United States in particular as a nation of explorers and do you do you look at it as why did you decide transport was the most important thing I think we would be living on Mars there&#x27;s no that&#x27;s that&#x27;s the relatively easier easier thing yes yes absolutely so we</p><p id="p3"><span class="ts-link" data-t="1:57">1:57</span>could live on Mars just getting there is the problem yes but getting I mean right now getting to Mars is impossible so like it kind of doesn&#x27;t matter what you know what you do when you got you what you do when you get there if you can&#x27;t get there so first orbán&#x27;s is to figure out how do you how to get there and it needs to be in a way that enables large numbers of</p><p id="p4"><span class="ts-link" data-t="2:20">2:20</span>people and cargo can&#x27;t just be like a handful of people because that&#x27;s obviously not going to create a self-sustaining civilization the ana paula was an amazing inspiring thing for all of humanity but the last time we went to the moon was like 1973 l4 I believe so we don&#x27;t want to just have flags and footprints or and and then never go to Mars the game if we just have one mission that that that will also be a super inspiring thing but it&#x27;s not going to fundamentally change the future of humanity so you have this grasshopper rocket which which unlike most rockets which which can&#x27;t you know which I can be usable this one gently comes back down in a kind of vertical and yeah</p><p id="p5"><span class="ts-link" data-t="3:04">3:04</span>absolutely and you can see the videos of this on the SpaceX website the the fundamental breakthrough going back to the point of that developing a Mars transportation system it has to be affordable to go like it can&#x27;t just be like billions of dollars per person to go to Mars then that you you just no way you could establish a base on laws at that cost so we have to develop rockets that are rapidly and as close to completely reusable as possible as an example the</p><p id="p6"><span class="ts-link" data-t="3:41">3:41</span>Falcon 9 cost about sixty million dollars I mean sort of like a yet you know it&#x27;s like but the cost of the propellant is only about two hundred thousand dollars so it&#x27;s just like you can imagine how expensive it would be if you had to buy a new plane every time you went somewhere a very few people would fly but refueling a plane is pretty easy we once talked about airplane travel and I asked you why it is that with all this technological improvement over the last 30 or 40 years the one thing that doesn&#x27;t seem to have improved and it is in the domain of the private sector sort of is Jen from New York to London it takes about as long as it took 40 or</p><p id="p7"><span class="ts-link" data-t="4:21">4:21</span>50 years ago in fact it takes actually that this is it it actually just take longer because in the 70s like my my favorite sort of commercial air airliner is the 747 and because it actually goes quite fast and it&#x27;s actually incredible that that that thing was I mean the first iteration of it was was designed in the 60s I mean since then I don&#x27;t think we&#x27;ve exceeded the seven-point the 747 which is nutty well it for the commercial</p><p id="p8"><span class="ts-link" data-t="4:51">4:51</span>airliner business you essentially have a duopoly between Airbus and Boeing and these big airplane programs are really long term and they&#x27;re quite expensive and I think if you&#x27;re in the senior management of one of those companies it&#x27;s it&#x27;s it&#x27;s a safer bet to take it to just aim for a little incremental improvement than to try to aim for a radical improvement because generally if you if you aim for a radical improvement and you&#x27;re wrong you&#x27;ll you&#x27;ll get fired why doesn&#x27;t SpaceX create the fast the fastest jet plane in the world we&#x27;ve got to focus on rockets when do you think you&#x27;ll be able to achieve the aspiration of SpaceX of actually moving</p><p id="p9"><span class="ts-link" data-t="5:30">5:30</span>people to a place like Mars well I think we could probably send the first person in about 12 years will you be that person only if I&#x27;m confident that SpaceX will be fine if I die that&#x27;s you know if I just maybe if I first confident that the mission would continue if I wasn&#x27;t around then I would do it you&#x27;ve heard all the press about Tesla so let me first give you a chance to get it off your chest they&#x27;re like pistol-whipped three cars caught on fire what&#x27;s your response so the amount of national international</p><p id="p10"><span class="ts-link" data-t="6:12">6:12</span>news headlines are dedicated to three tesla fires that caused no injury is is greater than all of the gasoline fires that occurred in the in the united states and and with all the other cars yeah which from mid last year to today is about a quarter-million gasoline car fires which caused about 400 deaths something like 1200 serious injuries out of three non injurious fires got more national headlines been a quarter million deadly gasoline car fires that&#x27;s mad what the heck is going on I mean I realized like a new technology should just should have a spotlight on it but it shouldn&#x27;t have a laser on it so when you look at Tesla the big concern many people have is scale you&#x27;re</p><p id="p11"><span class="ts-link" data-t="7:08">7:08</span>producing about 30,000 cars a year for two years producing oh yeah well millions so way too much attention and your muscle cap is almost as high as some of these car these cards yeah it&#x27;s good I think the recent weeks but yeah do you think it&#x27;s crazy or do you think it&#x27;s it&#x27;s an appropriate indication of future growth yeah I mean what if you know what it actually said on one on one occasion is that then I thought our valuation was more than we had any right to deserve that we would do our best to</p><p id="p12"><span class="ts-link" data-t="7:41">7:41</span>to fulfill those value expectations and that I thought I thought over time the value test would probably significantly exceed where where it is today or even where it was a relatively high point a few weeks ago but but it would be I think silly for me to assert that Tesla is unequivocally worth at one point where like worth twenty two billion dollars and we&#x27;ll have you know somewhere over two billion dollars in sales this year that that is an enormous amount of credit if you for future execution the heart of what interests you about Tesla at least as I recall when we&#x27;ve talked is that it&#x27;s not a compromise that that a hybrid ism is something of a compromise between an</p><p id="p13"><span class="ts-link" data-t="8:24">8:24</span>internal combustion engine and a battery powered engine and and here you can do it cleanly but batteries just aren&#x27;t that powerful enough for and they don&#x27;t seem to improve enough to imagine a world powered by batteries right III certainly can see that and in fact my opinion is that all transportation with the ironic exception of rockets will be fully electric on vez lanes yes everything when planes trains by when everything it&#x27;ll never be like a 100% conversion like we still have some steam engines and some people still ride horses but it&#x27;s a pretty tiny percentage so I think it&#x27;ll be the same with gastly and I think in the future who will look back</p><p id="p14"><span class="ts-link" data-t="9:08">9:08</span>on the gasoline era the way we look back on the steam era today so you&#x27;re using battery technology your deal you&#x27;re doing Tesla which is an electric car you have solar panel you have an interest in business and solar panels yeah do you think solar energy is the future I think it&#x27;s super obvious in the future absolutely in fact I mean if you think about it the</p><p id="p15"><span class="ts-link" data-t="9:32">9:32</span>world is almost entirely solar powered already in that we would be a frozen ice ball at about 3 or 4 degrees Kelvin when you&#x27;re close to absolute zero without the Sun and the Sun powers our entire system of precipitation the the ecosystem yeah but from the tiny number of exceptions almost all life is solar-powered all right another great technology you&#x27;ve talked about that most people think of as out of a movie explain how it would work let&#x27;s say it&#x27;s new it&#x27;s New York or Boston or LA to San Francisco I get into a achoo and it&#x27;s</p><p id="p16"><span class="ts-link" data-t="10:10">10:10</span>almost like air hockey the way it works is I strap myself into a seat well it&#x27;s it would actually feel maybe like like the Space Mountain ride at Disneyworld and the g-load anywhere I should be less than than what people experience at Space Mountain so if you can handle Space Mountain at Disneyland you can handle which people to handle it the Hyperloop it&#x27;ll feel super smooth because as you mentioned it&#x27;s it would use air skis like it like a air hockey table but with the the air jets on the on the pod side as opposed to the the tube side so it would just be it would be smooth as glass ten years from now what would car travel look like an ten years from now I think there&#x27;s</p><p id="p17"><span class="ts-link" data-t="10:56">10:56</span>gonna be a lot of electric cars in the road well we&#x27;re certainly faster more than there are now driverless I think I think we&#x27;ll be at in the steep portion of the adoption of electric cars in in ten years you think hybrids are a transition that will fade away you leave yeah they&#x27;re like the like a sort of an amphibian yeah I mean is there was a role for amphibians when life was moving from the oceans to land but what&#x27;s but been in the end very few amphibians remain it&#x27;s a good good boy to end on thank you</p></div></div>
       
       
@@ -340,7 +393,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -380,7 +433,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

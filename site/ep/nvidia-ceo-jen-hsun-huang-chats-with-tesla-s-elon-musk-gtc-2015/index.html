@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -280,7 +333,7 @@
 <li data-z="66">看AI监管新闻时，先分清楚讨论的是窄AI还是通用AI。这两类东西的安全标准、监管路径、时间表完全不同，混在一起谈一定谈不出结果。</li>
 <li data-z="67">评估车联网安全，问的问题是"能不能批量攻击"，不是"单辆车会不会被黑"。前者才是系统性风险，后者是个人倒霉。</li>
 <li data-z="68">别用软件行业的节奏去预测硬件行业。三年一代的直觉放到车上，会让你错过所有真正重要的时间窗口。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=ixZF0WorsmE" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:04">0:04</span>[Music] that that artificial intelligence is more dangerous than nuclear weapons and that&#x27;s it potentially and and oh it goes on it goes on you say you say that it&#x27;s like summoning the demon could be how do you consolidate rationalize the the that conflict between artificial intelligence of course deep learning that that obviously is going to be very important to self how you think that well I I don&#x27;t think we have to worry about autonomous cars cuz that&#x27;s sort of like a narrow form of AI and in not something that I think is very difficult actually good to to do autonomous driving to a degree that&#x27;s much safer than a person is much easier than people think I think it&#x27;s</p><p id="p1"><span class="ts-link" data-t="0:54">0:54</span>going to just become normal like it be like an elevator like no they used to have elevator operators and then we you know developed some simple circuitry to have elevators just automatically come to the floor that you you&#x27;re at and you can just press the button nobody needs to operate the elevator the car is just going to be like that and the elevators these days are even smart I mean it knows it knows where to position an elevator so so that if you were to need an elevator it&#x27;s pretty close to you cars in the future will be pretty smart about that too yeah you&#x27;ll be able to tell your car like take me home go here go there anything and it&#x27;ll just do it yeah at</p><p id="p2"><span class="ts-link" data-t="1:34">1:34</span>an order of magnitude safer than a person and in fact in the in the distant future I think it&#x27;s probably going to be if people may Outlaw driving cars because it&#x27;s too dangerous like you can&#x27;t have a person driving a two-time death machine now if we if we have the right type of intelligence in a car we we also don&#x27;t have to make the cars that heavy I would think you know cars are getting heavier and heavier and it&#x27;s got more and more stuff in it because it needs to survive all these incredible collisions and things like that I wonder if if we were to to to design cars that that just simply don&#x27;t Collide as much I wonder if we could we could relax on some of</p><p id="p3"><span class="ts-link" data-t="2:16">2:16</span>those laws and that cause more fuel efficient and lighter and better you could definitely do that if you could count on not not having an accident then you can get rid of a huge amount of the crash structure and the airbags and it we&#x27;re a long way from that because there&#x27;s always going to be some for a very long time there&#x27;ll be some amount of Legacy cars on the road and and I think it is important to just appreciate the size of the automotive industrial base like it&#x27;s not as though like when somebody makes an autonomous car that suddenly all the cars will be autonomous it&#x27;s like there&#x27;s 2 billion of them okay so the the total total number of cars and</p><p id="p4"><span class="ts-link" data-t="2:54">2:54</span>trucks on the road is is 2 billion in climbing the capacity of of car and truck production is about 100 million a year so if tomorrow all cars were autonomous it would take 20 years to replace the fleet assuming the fleet stay at the same size arguably it could get smaller things autonomous but still it&#x27;s it&#x27;s still you know maybe 15 years or something and it&#x27;s not all going to transition immediately it&#x27;ll take quite a while so and it&#x27;s the same for electrification of cars changing that industrial base to electric I mean if if all cars were suddenly if all cars produce were electric tomorrow it would still take 20 years to replace the fleet and right</p><p id="p5"><span class="ts-link" data-t="3:38">3:38</span>now it&#x27;s less than 1% so now you you you&#x27;re you mentioned just now about about self-driving hardly easier than people think now you you have a your vision of of how to go from where we are today now my model my p85d has Lane detection and so it gets a little you know when I get close to a to a lane detects the the the speech signs and uses uses computer vision technology to do that and but and that&#x27;s today&#x27;s ad what is your what is your road map you know how is that different than other people&#x27;s road map how do you think about how to get to self part yeah well you kind of need</p><p id="p6"><span class="ts-link" data-t="4:19">4:19</span>the the hardware Foundation sort of sensor and Computing foundation and then you can keep uploading new software at least you can with a Tesla cuz it&#x27;s it&#x27;s always connected so the the car that you have you noticed like it it&#x27;s the features are steadily improving we now you know have active cruise control so it&#x27;ll it&#x27;ll use radar camera Fusion to track the car in front of you it&#x27;s also looking at with the some of the things that are coming out it&#x27;s it looks at the brake lights so it anticipates that the cars the brake lights are active it&#x27;s going to get basically smer and smarter even with the current Hardware Suite so the current Hardware Suite is 360° ultrasonic</p><p id="p7"><span class="ts-link" data-t="4:57">4:57</span>sensors that go up to about just over M it&#x27;s a Ford camera and a Ford radar so we&#x27;ll we&#x27;ll make even with just that sensor Suite we can actually make huge progress in autonomy we can certainly make the car steer itself on on the freeway you do Lane changes it it&#x27;s really autonomy is about what level of reliability and safety do you want</p><p id="p8"><span class="ts-link" data-t="5:26">5:26</span>even with current sensus we we could make the carg go fully autonomous but only to but but not to a level of reliability that would be safe in say a complex Urban environment at 30 mph where the lane walking is out there and children could be playing and things could be coming at you from the side so in order to solve that you need a u a bigger sensor Suite and you need more Computing car and I think what you&#x27;re doing actually with the the ters in the futures is super interesting and will really be a big enabler for Aon ofous driving we know exactly what to do and we&#x27;ll be there in a few years right just just like mar mar is not quite as that&#x27;s kind of</p><p id="p9"><span class="ts-link" data-t="6:16">6:16</span>the the the the spirit of of innovators I mean in a lot of ways in your mind you kind of you kind of see things solvable or arguably arguably solved and and a lot of it is is really about getting there yeah we&#x27;ll take autonomous cost for granted in quite a short period of time it&#x27;s amazing how comfortable you get and how quickly you comfortable so now what about government government policies like one of the things that I would like to do is I would I would just like to keep working on my email as I&#x27;m driving to work sure you know there&#x27;s there&#x27;s a some people some people do that already like I said I would like to do it without without without breaking</p><p id="p10"><span class="ts-link" data-t="6:58">6:58</span>the law so so where do you where do you think government intervention Falls in in some of this stuff because you know obviously if car drives by itself and it does it even better than people you would like it to drive by itself but largely the laws don&#x27;t allow you to do that today right absolutely so how do we cross that bridge and and and how do you think about government intervention regulations right so I think it it&#x27;ll</p><p id="p11"><span class="ts-link" data-t="7:25">7:25</span>from the point at which a car is definitely safer than a person there&#x27;s probably at least another 2 or 3 years after that before Regulators will allow that to be the case cuz they will want to see a large amount of statistical proof that it&#x27;s not merely as safe as a person but much safer so I think what you can do is you can run run it in Shadow mode and essentially say okay this is this is what the computer would have done in all these circumstances and was there a crash or was there not like what are the false positives false false negatives and then achieve a large population group and then and then make a really clear statistical argument of with the</p><p id="p12"><span class="ts-link" data-t="8:07">8:07</span>regulators and then they&#x27;re going to digest that observe it for a while see if they agree with it and and then I think they will because the evidence will be overwhelming yeah and the evidence is actually already quite overwhelming that if you if you if you would would have noticed a brake light in front of you in the highway and you didn&#x27;t you didn&#x27;t crash into it we were in Collision a lot of s LI or you know IDE ideally hopefully people don&#x27;t don&#x27;t overreact with this with this unknown technology and and</p><p id="p13"><span class="ts-link" data-t="8:38">8:38</span>prematurely regulate no premature regulations well I mean reg I think when it comes to Public Safety I think there&#x27;s there&#x27;s an argument for being you know quite cautious and and making sure that things are okay before before there&#x27;s a change and I mean I don&#x27;t think it&#x27;s the case that right now there&#x27;s a fully autonomous system and Regulators are not approving it that that could really be a substitute for people but there will be in a few years have a mechanical failure of some kind or or a logic failure a fundamental logic failure so you can always overwhelm the the the braking of the car with your foot and you can overwhelm the steering wheel with your</p><p id="p14"><span class="ts-link" data-t="9:24">9:24</span>hands so but but when when there isn&#x27;t a steering wheel there isn&#x27;t you know brake pedal or something like you know many years from now then it&#x27;s really really dangerous you know but even as it is right now what we spend most of our time on is making sure that it&#x27;s it&#x27;s very difficult to do a multi-car hack like if you have direct access to a car just like if you got direct access to a computer or or even a conventional car but that that&#x27;s less of a concern than somebody being able to hack an arbitrary car or multiple cars so that&#x27;s what we we focus on on is making sure that that that way it&#x27;s a lot like a like a cell phone or or a laptop you know you focus on making</p><p id="p15"><span class="ts-link" data-t="10:08">10:08</span>sure that they they can&#x27;t that it&#x27;s very difficult for that to be any kind of systemwide hack so take over all put a lot of evid into that we have third parties try to attack it and and then certain parts of the the car at at the very fundamental level like the Drive Unit controller or the steering controller have an additional level of security M MH so somebody mayble to you know hack something that&#x27;s cosmetic but it&#x27;s much harder to hack something that&#x27;s that&#x27;s actually physically dangerous there&#x27;s multiple levels of security so this way if you if you were&#x27;t able to penetrate maybe the infotainment system it doesn&#x27;t allow you quickly as a result of that right May</p><p id="p16"><span class="ts-link" data-t="10:52">10:52</span>display a funny message or something but it would not you would not be able to then control the steering or the the motor yeah</p></div></div>
       
       
@@ -308,7 +361,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -348,7 +401,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

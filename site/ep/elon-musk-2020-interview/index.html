@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -317,7 +370,7 @@
 <li data-z="85">关注栅格舵、冷气推力器、发动机节流能力这些不起眼的部件。垂直回收能不能成，绝大多数时候卡在这些地方。</li>
 <li data-z="86">向非技术背景的朋友解释航天，直接用"公海线"和"绕地球一圈"这组类比。对方三秒钟就能明白太空和轨道有什么区别。</li>
 <li data-z="87">评估一次发射的成本账，先算助推器占整枚火箭的比例，再问翻修费用。七成这个数字决定了复用的价值上限，翻修成本决定了这条路走得多远。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=7JF7OnshcuI" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>that&#x27;s okay I&#x27;ll take it so you know in a couple of years since you&#x27;ve come you&#x27;ve done some astonishing things in in terms of substantive stuff with your with both of your companies let&#x27;s start talking about space and what you&#x27;ve been doing there obviously you&#x27;ve had some success landing the landing the rocket you&#x27;ve had you know you&#x27;ve done a bunch of other things that were people thought you weren&#x27;t going to be successful talk a little bit about sort of the progress you think you&#x27;ve made with SpaceX sure well I mean there&#x27;s a lot of things where I think I didn&#x27;t think would be successful so the the plate and the most</p><p id="p1"><span class="ts-link" data-t="0:35">0:35</span>significant thing is being able to land in an orbit class rocket Bruce stage and bring it both back to Cape Canaveral land and land and be able to land on a drone ship out in the ocean the there is a bit of an education process that&#x27;s needed to understand orbital dynamics because a lot of people confuse of like why the heck are you landing our ship landing a rocket in a on a ship in the ocean that seems pretty inconvenient and that the reason is because that going up and staying up is actually about velocity horizontal to the earth service so that there&#x27;s a huge difference between space and/or space and or and orbit it&#x27;s like space you could think of</p><p id="p2"><span class="ts-link" data-t="1:25">1:25</span>as like say being the international waters boundary for the Pacific Ocean like if you go you know 100 miles offshore you&#x27;re technically out of coastal waters now you&#x27;re in the Pacific so it&#x27;s like technically you&#x27;re in the Pacific but but it&#x27;s but orbit is like circumnavigating the globe it&#x27;s a really giant difference and the the reason that things go up and stay up is because you&#x27;re zooming around the earth so fast that your outward radial acceleration is equal to the inward acceleration of gravity and so those balance out and you have a net zero gravity so when you see the space station but then this little little sort of counterintuitive is that</p><p id="p3"><span class="ts-link" data-t="2:07">2:07</span>the space station is actually zooming around the Earth at 17,000 miles an hour even though it seems like a gypsy really still you know but it&#x27;s moving really really fast I mean put them to perspective a bullet from a 45 gun you know handgun is is is just below the speed of sound so the space station is going more than 25 times faster than that and that&#x27;s what&#x27;s needed actually to go up and stay up and that&#x27;s why that&#x27;s why that is the term escape velocity not escape altitude there&#x27;s no such thing as an escape altitude there&#x27;s only an escape velocity you need to be a certain speed to escape the gravity of the earth yeah you can think of gravity is kind of</p><p id="p4"><span class="ts-link" data-t="2:51">2:51</span>a funnel in space-time so I think it like a coin funnel like it really it&#x27;s very much like that in you know but it&#x27;s obviously sort of a four-dimensional coin funnel but if you if you spin or spin a marble or a coin on the corn funnel the when it&#x27;s when it&#x27;s far out it sort of spins slowly and then as it gets closer its bends faster and faster and if you want if you want if you were to start at the bottom of the coin funnel and you wanted to to to exit you&#x27;d spin it horizontally and enter which it would spin out and and and that&#x27;s really how you how you get to orbit yeah so how does the gravity well</p><p id="p5"><span class="ts-link" data-t="3:33">3:33</span>is like a funnel why you want to land on the ownership in the ocean because in order to get to orbit you all that matters is your horizontal velocity u altitude is doesn&#x27;t doesn&#x27;t really matter in fact the the the force of gravity at say the sonam &#x27;&#x27;&#x27;l boundary of space 100 kilometres is almost exactly the same as it is on the surface of the earth is it like if it&#x27;s a few</p><p id="p6"><span class="ts-link" data-t="4:01">4:01</span>percent lower than the surface the earth alright so in order to go up and stay up the only thing that matters is how fast are you going horizontal to the Earth&#x27;s surface so you have that outward radial acceleration or think of it like New York tetherball or something like that it&#x27;s really that outward acceleration is the thing that matters and so when the rocket is going to orbit the only reason that&#x27;s going up is to get out of the thick part of the atmosphere because that man at high velocity the atmosphere is thick as molasses and so it goes up very briefly but if you look at a long exposure of the the Rockets trajectory you&#x27;ll see it goes up but it immediately curves over</p><p id="p7"><span class="ts-link" data-t="4:41">4:41</span>and starts going horizontal and so the at the at the point at which the the at the point which the stage is separate those two stages that the primary Bruce stage which is the most expensive part of the rocket one of which that&#x27;s that staging occurs can be as high as Mach 10 but it&#x27;s it&#x27;s</p><p id="p8"><span class="ts-link" data-t="5:07">5:07</span>so it&#x27;s going away from the launch site at 10 times the speed of sound so you know in order to get back to the launch site you would have to have enough I fuel an oxygen to reverse out that velocity and and and boost back all the way to the launch site now and you just don&#x27;t have the physics of it doesn&#x27;t really allow you to have that much it&#x27;s not about saving money on fuel or anything it&#x27;s just physically impossible so because another sort of thing about</p><p id="p9"><span class="ts-link" data-t="5:40">5:40</span>if you&#x27;re if you&#x27;re in space is that there&#x27;s nothing to react against so like where as an aircraft can conserve very easily because it&#x27;s reacting against air in vacuum there&#x27;s nothing to react against so the only way to go back the other direction is to apply just as much energy as it took you to go it if you want to go backwards you have to apply just so much energy as it took you to go forward in fact well twice as much really because you got to zero it out and then you&#x27;ve got a gotta land elsewhere yeah so bottom line is this thing is zing an apt to sting answer yet super at 10 times but it may well be over the ocean because the ocean covers</p><p id="p10"><span class="ts-link" data-t="6:17">6:17</span>most of the oh it&#x27;s it&#x27;s it&#x27;s actually at the point of separation it&#x27;s not that far away it&#x27;s maybe a hundred kilometers away from the launch site but it is going like hell in the opposite you know away from the launch site so the the only way to really land it is to have it continue on that mark that ballistic arc and then land far out to sea on a ship that&#x27;s that&#x27;s pre-positioned to a particular latitude and longitude a very very precise to within about a meter and then the the</p><p id="p11"><span class="ts-link" data-t="6:51">6:51</span>rocket will then go from vacuum through rarefied air at hypersonic velocity in which so what is it when it&#x27;s in vacuum it has to obviously you can&#x27;t use arrow surfaces you have to use nitrogen jets to control the the attitude in position and then as it starts to encounter the air we use grid fins because grid fins</p><p id="p12"><span class="ts-link" data-t="7:19">7:19</span>looked like what sort of like a waffle that they were quite well across a wide regime from both very high velocity hypersonics through supersonic transonic and subsonic so it&#x27;s hard to guess it&#x27;s hard to have Aero surfaces that work well across that entire regime and then so once the air forces become high it uses the before grid fins to sort of control its attitude and land itself yeah it&#x27;s controlling it&#x27;s it&#x27;s controlling pitch yaw and roll with with the grid fins and and then once it and</p><p id="p13"><span class="ts-link" data-t="7:56">7:56</span>those grid friends will then position it to where it&#x27;s fairly close to the ship and then it will light in this case three of the nine engines to arrest the velocity and then drop to one engine for precision right before landing right okay so okay we&#x27;re gonna get that&#x27;s super hard there&#x27;s a video so why why is that important why has that this moment been important for you well</p><p id="p14"><span class="ts-link" data-t="8:28">8:28</span>so in order to reuse the boost age which is about 70% of the cost of rocket so that what would cost is that</p></div></div>
       
       
@@ -345,7 +398,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -385,7 +438,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

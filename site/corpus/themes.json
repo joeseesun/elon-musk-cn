@@ -1,0 +1,191 @@
+{
+ "source": "https://silicon-valley.tech/",
+ "updated": "2026-11-15",
+ "count": 8,
+ "items": [
+  {
+   "key": "ai",
+   "title_en": "Artificial intelligence",
+   "title_zh": "人工智能",
+   "intro_en": "From 2014 he called AI humanity's biggest existential risk and pushed for regulation, co-founded OpenAI in 2015, then launched xAI in 2023 to build it himself.",
+   "intro_zh": "从2014年起，他称人工智能是人类最大的生存风险，并推动对其监管；2015年联合创立OpenAI，随后于2023年创办xAI，亲自打造人工智能。",
+   "paragraphs": 32,
+   "freq_by_year": {
+    "2013": 0.0,
+    "2014": 21.4,
+    "2015": 21.4,
+    "2016": 8.1,
+    "2017": 14.7,
+    "2018": 2.6,
+    "2019": 1.7,
+    "2020": 6.7,
+    "2021": 12.0,
+    "2022": 10.1,
+    "2023": 12.8,
+    "2024": 6.6,
+    "2025": 4.3
+   }
+  },
+  {
+   "key": "mars",
+   "title_en": "Mars & becoming multiplanetary",
+   "title_zh": "火星与成为多行星物种",
+   "intro_en": "The founding idea of SpaceX in 2002: make life multiplanetary as a backup for civilisation. The target date for the first trip has moved many times.",
+   "intro_zh": "2002年创立SpaceX的初衷：让生命成为多行星存在，作为人类文明的备份。首次旅程的目标日期已多次变动。",
+   "paragraphs": 30,
+   "freq_by_year": {
+    "2013": 11.2,
+    "2014": 0.0,
+    "2015": 18.3,
+    "2016": 20.3,
+    "2017": 13.0,
+    "2018": 9.0,
+    "2019": 14.2,
+    "2020": 18.2,
+    "2021": 21.5,
+    "2022": 6.7,
+    "2023": 2.8,
+    "2024": 4.3,
+    "2025": 3.7
+   }
+  },
+  {
+   "key": "birth",
+   "title_en": "Birth rate & population",
+   "title_zh": "出生率与人口",
+   "intro_en": "Once a footnote, falling birth rates became one of his most repeated themes from around 2017, framed as a bigger threat than climate change.",
+   "intro_zh": "出生率下降曾只是不起眼的注脚，但从2017年前后起成为他反复提及的主题之一，并被描述为比气候变化更大的威胁。",
+   "paragraphs": 11,
+   "freq_by_year": {
+    "2013": 0.0,
+    "2014": 0.0,
+    "2015": 0.0,
+    "2016": 0.0,
+    "2017": 0.0,
+    "2018": 0.4,
+    "2019": 0.0,
+    "2020": 0.3,
+    "2021": 1.3,
+    "2022": 3.6,
+    "2023": 1.7,
+    "2024": 1.7,
+    "2025": 1.2
+   }
+  },
+  {
+   "key": "speech",
+   "title_en": "Free speech",
+   "title_zh": "言论自由",
+   "intro_en": "The stated reason for buying Twitter in 2022. The theme grows sharply from that year, along with fights with governments and advertisers.",
+   "intro_zh": "这是他2022年收购Twitter时给出的理由。自那一年起，这一主题显著增多，同时他也与政府和广告商发生冲突。",
+   "paragraphs": 12,
+   "freq_by_year": {
+    "2013": 0.0,
+    "2014": 0.0,
+    "2015": 0.0,
+    "2016": 0.0,
+    "2017": 0.0,
+    "2018": 0.0,
+    "2019": 0.3,
+    "2020": 0.0,
+    "2021": 0.3,
+    "2022": 8.3,
+    "2023": 6.3,
+    "2024": 6.7,
+    "2025": 1.9
+   }
+  },
+  {
+   "key": "energy",
+   "title_en": "Sustainable energy & climate",
+   "title_zh": "可持续能源与气候",
+   "intro_en": "Tesla's mission as he wrote it: accelerate the transition to sustainable energy. He long backed a carbon tax, then spoke more of keeping oil and gas for now.",
+   "intro_zh": "他笔下的特斯拉使命：加速向可持续能源转型。他长期支持碳税，后来更多谈到暂时保留石油和天然气。",
+   "paragraphs": 32,
+   "freq_by_year": {
+    "2013": 58.7,
+    "2014": 10.7,
+    "2015": 33.6,
+    "2016": 28.4,
+    "2017": 16.5,
+    "2018": 8.2,
+    "2019": 18.4,
+    "2020": 9.4,
+    "2021": 12.4,
+    "2022": 6.7,
+    "2023": 1.7,
+    "2024": 1.8,
+    "2025": 1.0
+   }
+  },
+  {
+   "key": "autonomy",
+   "title_en": "Self-driving cars",
+   "title_zh": "自动驾驶汽车",
+   "intro_en": "Promised as near every year since 2015; the most-tracked series of predictions in his career.",
+   "intro_zh": "自2015年以来几乎每年都作出承诺；这是他职业生涯中被追踪最多的系列预测。",
+   "paragraphs": 32,
+   "freq_by_year": {
+    "2013": 11.2,
+    "2014": 10.7,
+    "2015": 27.5,
+    "2016": 51.4,
+    "2017": 13.9,
+    "2018": 12.4,
+    "2019": 27.7,
+    "2020": 17.0,
+    "2021": 28.3,
+    "2022": 8.9,
+    "2023": 3.1,
+    "2024": 2.6,
+    "2025": 1.8
+   }
+  },
+  {
+   "key": "gov",
+   "title_en": "Government & regulation",
+   "title_zh": "政府与监管",
+   "intro_en": "From a CEO wary of red tape to running DOGE in 2025 inside the Trump administration, then leaving it after four months.",
+   "intro_zh": "从一位警惕繁文缛节的CEO，到2025年在特朗普政府内执掌DOGE，四个月后离开。",
+   "paragraphs": 29,
+   "freq_by_year": {
+    "2013": 2.8,
+    "2014": 0.0,
+    "2015": 9.2,
+    "2016": 6.8,
+    "2017": 3.5,
+    "2018": 6.0,
+    "2019": 9.0,
+    "2020": 8.2,
+    "2021": 23.4,
+    "2022": 6.1,
+    "2023": 6.4,
+    "2024": 14.1,
+    "2025": 40.3
+   }
+  },
+  {
+   "key": "meaning",
+   "title_en": "Consciousness & meaning",
+   "title_zh": "意识与意义",
+   "intro_en": "The simulation hypothesis, expanding the « scope and scale of consciousness », and later a growing interest in religion.",
+   "intro_zh": "模拟假说、扩大“意识的范围与规模”，以及后来对宗教日益增长的兴趣。",
+   "paragraphs": 23,
+   "freq_by_year": {
+    "2013": 2.8,
+    "2014": 0.0,
+    "2015": 0.0,
+    "2016": 2.7,
+    "2017": 3.5,
+    "2018": 3.9,
+    "2019": 3.5,
+    "2020": 3.3,
+    "2021": 3.3,
+    "2022": 3.4,
+    "2023": 2.4,
+    "2024": 1.5,
+    "2025": 1.0
+   }
+  }
+ ]
+}

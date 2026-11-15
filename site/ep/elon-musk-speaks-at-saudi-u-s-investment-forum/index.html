@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -315,7 +368,7 @@
 <li data-z="84"><strong>城市交通的问题，想想三维解法。</strong>如果你在做城市规划、地产或基建相关的事，隧道和地下物流这条线值得重新评估。拉斯维加斯已经跑通了概念验证，成本曲线正在往下走。</li>
 <li data-z="85"><strong>留意 Starlink 在海事和航空的落地进度。</strong>沙特批准这两个场景是个信号。接下来看别的国家跟不跟，以及航空公司和航运公司的采购节奏。</li>
 <li data-z="86"><strong>把“我们不知道该问什么问题”这句话记下来。</strong>用 AI 的时候，别只让它回答问题。让它帮你质疑问题本身：这个问题的前提成立吗？有没有另一个问法？这比多要几个答案有价值。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=LyouLvz6iiY" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>want to get to Elon Musk speaking in Saudi Arabia. Please have a seat. Now.</p><p id="p1"><span class="ts-link" data-t="0:06">0:06</span>I&#x27;m sure we can do a better welcome than that to Elon Musk in Saudi Arabia. There you go. That&#x27;s that&#x27;s the spirit. Thank you Elon. My dear friend, we&#x27;re honored to have President Trump. We&#x27;re honored under the sponsorship and guidance of His Royal Highness to celebrate a US, Saudi and a Saudi US relationship that is 92 years old, about how we move from an oil based economy to an innovation based economy, powered by wonderful technologies that definitely you&#x27;re one of the pioneers in this industry. We just showed to His Royal Highness some of your Optimus robots. Yeah, and to President Trump. Let&#x27;s talk about that. Tell me about them. Yes. So we. Just showed. Several of.</p><p id="p2"><span class="ts-link" data-t="0:57">0:57</span>Our Tesla Optimus robots to His Highness and President Trump. And I think they were very impressed. In fact.</p><p id="p3"><span class="ts-link" data-t="1:04">1:04</span>One of our robots did the Trump dance, which I thought was pretty cool. The YMCA. Yeah.</p><p id="p4"><span class="ts-link" data-t="1:09">1:09</span>Yeah, to YMCA. So yeah, robots can dance. They can walk around, they can interact. I think we&#x27;re headed to a radically different world. I think it I think a good world, an interesting world. My prediction, actually, for humanoid robots is that ultimately they will be tens of billions. I think everyone will want to have their personal robot. You can think of it like, as though you had your own personal C-3po or R2-d2 or. But even better, then who wouldn&#x27;t want to have their own personal C-3po? R2-d2? That would be pretty great. And I also think</p><p id="p5"><span class="ts-link" data-t="1:59">1:59</span>it it unlocks an immense amount of economic potential, because when you think of like, what is the output of an economy, it is productivity per capita times population or capita. The once you have humanoid robots, the actual economic output potential is tremendous. It&#x27;s really unlimited. Potentially we could have an economy ten times the size of the current global economy, where no one wants for</p><p id="p6"><span class="ts-link" data-t="2:34">2:34</span>anything. You know, sometimes in AI they talk about universal basic income. I think it&#x27;s actually going to be universal high income, where anyone can have any goods or services that they want. You know, as a science fiction book recommendation that I have, which I think is probably the best envisioning of an AI future is the culture books by Iain Banks. Very highly recommended for a dystopian view of the future. You know, there obviously are some risks, you know, which illustrate perhaps the if we don&#x27;t do this right, you know, you could have like a James Cameron sort of movie, you know, Terminator. We don&#x27;t want that one. But but having sort of</p><p id="p7"><span class="ts-link" data-t="3:29">3:29</span>a Star Trek future would be great. Where we&#x27;re out there exploring the stars, discovering the nature of the universe and, and a level of prosperity and hopefully happiness that we can&#x27;t quite imagine yet. So I&#x27;m very excited about the future and very glad to be here. Thank you for having me.</p><p id="p8"><span class="ts-link" data-t="3:52">3:52</span>It&#x27;s our absolute pleasure. And His Royal Highness was talking to you about his vision and his dream to increase productivity for the Kingdom of Saudi Arabia and power up the region and the whole world with robotics, but also on robo taxis. So how are we doing on robo taxis?</p><p id="p9"><span class="ts-link" data-t="4:09">4:09</span>Yeah. So really, you can think of a car or future cars as being robots on four wheels. And, you know, I think it would be very exciting to have autonomous vehicles here in the kingdom. Indeed, if you&#x27;re amenable.</p><p id="p10"><span class="ts-link" data-t="4:24">4:24</span>You heard it here from Elon. He&#x27;s bringing his robo taxi to the kingdom. Yes. He has another announcement that he.</p><p id="p11"><span class="ts-link" data-t="4:32">4:32</span>Yes, exactly. So. And I&#x27;d also like to thank the Kingdom for approving Starlink for maritime and aviation use.</p><p id="p12"><span class="ts-link" data-t="4:40">4:40</span>Thank you, maritime and aviation. There you go. There you go. So yeah.</p><p id="p13"><span class="ts-link" data-t="4:48">4:48</span>So are you going to bring us robots to help us increase our productivity? Yeah. Robotaxis to make sure that our cars and assets turn to turn into a cash generating unit. Yeah. And Starlink Starlink to reform our aviation and maritime. Yeah. Talk about X.ai.</p><p id="p14"><span class="ts-link" data-t="5:06">5:06</span>Absolutely. And but I just wanted to mention also something that may be worth considering is tunnels. Tunnels. The Boring Company.</p><p id="p15"><span class="ts-link" data-t="5:14">5:14</span>I have this company called The Boring Company, which sounds kind of boring, but it&#x27;s it literally bores tunnels and actually tunnels in order to solve traffic, you really need to go 3D with roads. And by using tunnels, you can essentially create like like a wormhole, like a, like a warp tunnel from one part of a city to another and alleviate traffic. And we&#x27;ve actually already done this proof of concept in Vegas. So they&#x27;re working tunnels in Vegas, in Las Vegas that you can use where that&#x27;ll just it feels like teleporting from one part of Vegas to another. So I always say that, you know, my joke is like tunnels are underappreciated, you know? You</p><p id="p16"><span class="ts-link" data-t="6:00">6:00</span>know, it&#x27;s a bit of a not always a hit, but. So. Yeah. And then I is just trying to solve general purpose artificial intelligence. The goal with XAI is to have a maximally truth seeking AI. And it&#x27;s important to be maximally truth seeking AI in order to understand the universe. So the goal of XAI is understand the universe to understand you know, you know, what is out there.</p><p id="p17"><span class="ts-link" data-t="6:41">6:41</span>Where&#x27;s the universe going? Where did it come from? What questions? In fact, I think maybe the biggest thing is what questions do we not know to ask? Like, once you know the question, the answer is usually the easy part. So the goal of XAI is to help understand the universe. And. Yeah, that&#x27;s</p><p id="p18"><span class="ts-link" data-t="7:08">7:08</span>that&#x27;s the goal. And, you know, help people answer any questions along the way of course. But. I mean, that&#x27;s that&#x27;s my philosophy. My philosophy is one of curiosity, just trying to understand the nature of reality.</p><p id="p19"><span class="ts-link" data-t="7:24">7:24</span>So I know you had a long day, but we also have the honorable president and His Royal Highness hitting the stage soon. So this is a historic day, a partnership about how we could join hands together as we have joined hands in the past 92 years on building a factor based economy to help the world empower up 20% of the energy mix, which is very critical today to the AI and intelligence age, the digital age and how we have reformed and with the intelligent age. And we could not b</p></div></div>
       
       
@@ -343,7 +396,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -383,7 +436,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

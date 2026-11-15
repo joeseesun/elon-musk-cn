@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -341,7 +394,7 @@
 <li data-z="97">当一个新部门或新团队被贴上“削减”标签后，它会迅速变成所有削减的默认解释。听到“是他们砍的”，先确认一手信息，再决定信不信。</li>
 <li data-z="98">想推动任何降本，先看激励结构。如果坚持原则的人承担全部成本、收益归集体，那么“付了吧”永远是默认选项，换谁来做都一样。</li>
 <li data-z="99">读高层发布会时，把可核查的数据、当事人的判断、政治攻防分三层记录。混在一起读，最容易把最响的那句当成最重要的那句。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">语音识别自动转录，可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.rev.com/transcripts/trump-and-musk-press-conference" target="_blank" rel="noopener">Rev.com (transcription humaine)</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:12">0:12</span>Yeah, at times. Woo-hoo. Come on, guys. Yeah. Yeah, absolutely.</p><p id="p1"><span class="ts-link" data-t="14:52">14:52</span>Thank you. Thank you. Thank you. Thank you. Thank you. Thank you. You see the lock? The lock on this is amazing.</p><p id="p2"><span class="ts-link" data-t="15:21">15:21</span>Well, let me say perhaps a few words, that this is not the end of DOGE, but really the beginning. My time as a special government employee necessarily had to end. It was a limited time thing. It&#x27;s 134 days, I believe, which ends in a few days. So, it comes with a time limit. But the DOGE team will only grow stronger over time. The DOGE influence will only grow stronger. I liken to Buddhism. It&#x27;s like like a way of life. So, it is permeating throughout the government, and I&#x27;m confident that, over time, we&#x27;ll see a trillion dollars of savings and reduction, a trillion dollars of waste and fraud reduction.</p><p id="p3"><span class="ts-link" data-t="15:21">15:21</span>The calculations of the DOGE team thus far, in terms of an FY25 to FY26 delta, are over 160 billion, and that&#x27;s climbing. We expect that number will probably go over 200 billion soon. So, I think the DOGE team is doing an incredible job. They&#x27;re going to continue doing an incredible job, and I&#x27;ll continue to be visiting here and be a friend and advisor to the president. And I look forward to, at times, being back in this amazing room. By the way, isn&#x27;t this incredible? Look. I mean, it&#x27;s stunning, I think, how the president has just completely redone the Oval Office. It&#x27;s beautiful. I love the gold on the ceiling.</p><p id="p4"><span class="ts-link" data-t="16:50">16:50</span>Yeah. So- Yeah. The Oval Office finally has the majesty that it deserves thanks to the president. So, I look forward to continuing to be a friend and advisor to the president, continuing to support the DOGE team. And we are relentlessly pursuing $8 trillion in waste and fraud reductions which will benefit the American taxpayer. So that&#x27;s it, really. Thank you, Mr. President.</p><p id="p5"><span class="ts-link" data-t="17:51">17:51</span>A lot of the people, some of the media organizations, in this room were the slingers. Oh, wait. Wait. Wait. New York Times, is that the same publication that got a Pulitzer Prize for false reporting on the Russiagate? Is it the same organization?</p><p id="p6"><span class="ts-link" data-t="18:13">18:13</span>I think it is. I think it is. I think the judge just ruled against New York Times for their lies about the Russiagate hoax and that they might have to give back that Pulitzer Prize. That New York Times? Let&#x27;s move on. Next question. Speaker 1 : That&#x27;s right. Come on. [inaudible 00:18:29]-</p><p id="p7"><span class="ts-link" data-t="22:57">22:57</span>Oh, I am. Speaker 1 : So, do you expect to continue advising- I [inaudible 00:23:02]- Speaker 1 : … the president and DOGE informally, or are you going to sort of shift your focus entirely to your companies? Well, I expect to continue to provide advice whenever the president would like advice, if he-</p><p id="p8"><span class="ts-link" data-t="23:15">23:15</span>I mean, yeah, I expect to remain a friend and an advisor. And certainly, if there&#x27;s anything the president wants me to do, I&#x27;m at the president&#x27;s service. Speaker 5 : Mr. Musk, Mr. Elon- Speaker 6 : Mr. Musk. Mr. Musk, [inaudible 00:23:27]- Speaker 7 : Mr. Musk, on DOGE, you said that there was a trillion-dollar promise for cuts from-</p><p id="p9"><span class="ts-link" data-t="23:32">23:32</span>Yes. I think we do expect over time to achieve the trillion dollars. Speaker 7 : But what have you found, in your time here, was the biggest roadblock to getting those cuts? Was it the Cabinet, or was it Congress, or something else? What was the biggest roadblock from your work?</p><p id="p10"><span class="ts-link" data-t="23:46">23:46</span>It&#x27;s mostly just a lot of hard work. It&#x27;s really not any one person or Congress. It&#x27;s going through, really, millions of line items and saying, &quot;Does each one of them makes sense or does it not make sense?&quot; Obviously, at times, when you cut expenses, those who are receiving the money, whether they were receiving that money legitimately or not, they do complain. And you&#x27;re not going to hear someone confessing that they received money inappropriately. Never. They&#x27;re going to always say that they received money appropriately for an important cause. Naturally, that&#x27;s what you&#x27;d expect.</p><p id="p11"><span class="ts-link" data-t="23:46">23:46</span>It&#x27;s just a lot of work going through the vast expenses of the federal government and just really asking questions, &quot;What&#x27;s this money for? Are you sure it&#x27;s actually being used well?&quot; Many times we can&#x27;t even find anyone who defends it. So, for a lot of the expenses, there is actually no defender at all. And then we have to just work through the process of stopping the spending where there&#x27;s often literally no defender. Nobody even knows why the money&#x27;s being spent. It&#x27;s truly absurd. I mean, we find situations where there are millions of software licenses with zero people using them. Zero. Exactly. This is the quizzical expression.</p><p id="p12"><span class="ts-link" data-t="23:46">23:46</span>You&#x27;re like, &quot;Surely, if there&#x27;s millions of software licenses, someone should be using them.&quot; No. And then we&#x27;ve got to go through the process of saying, &quot;Okay, look, if no one&#x27;s using the software, we need to terminate this software license agreement.&quot; Speaker 8 : Mr. Musk- Speaker 9 : Mr. Musk-</p><p id="p13"><span class="ts-link" data-t="25:18">25:18</span>That&#x27;s everywhere in the government, by the way. Speaker 8 : Mr. Musk, what do you think would be easier, colonizing Mars or making the government efficient? It&#x27;s a tough call, but I think colonizing Mars and making life multi-planetary is harder. And as I said, we do expect to achieve over time the trillion dollars of savings. We can&#x27;t do it in a few months, but if you say by the… I think the official end of DOGE, which the president may choose to extend, is the middle of next year. If you say by the middle of next year, with the support of the president and Congress, could we achieve $20 of savings? I think so. We&#x27;re on track to do so. Speaker 8 : Do you faith that Congress has- Speaker 10 : Elon, Elon, [inaudible 00:25:59]-</p><p id="p14"><span class="ts-link" data-t="26:09">26:09</span>Yes. Speaker 11 : Was it worth it for you? And what would you change?</p><p id="p15"><span class="ts-link" data-t="26:14">26:14</span>Yeah. So, what we found was happening was that if there were any cuts anywhere, then people would assume that was done by DOGE. And so we became like, essentially, the DOGE boogie man, where any cut anywhere would be ascribed to DOGE. A friend of mine&#x27;s daughter who&#x27;s at law school at Georgetown thought that DOGE had cut the internships, the legal internships for the Senate, and we have nothing to do with that. So, if they have been cut, it was not to do with us, just as an example. So, it just became a bit ridiculous where anything, any cut anywhere, was somehow DOGE, including things that made no sense and we would agree made no sense.</p><p id="p16"><span class="ts-link" data-t="26:14">26:14</span>So, there are many things that occur in the government because it&#x27;s the banal evil of bureaucracy. It&#x27;s the, frankly, largely uncaring nature of bureaucracy. As the great Milton Friedman said, money is spent most poorly when it is somewhat else&#x27;s money being spent on people you don&#x27;t know. And that&#x27;s how federal spending is. And then you can&#x27;t really even blame the individuals, because the way the government works is complaint minimization. So, when someone within the government tries to stop money being spent, there&#x27;s usually someone that complains. And then their manager will say, &quot;It&#x27;s not worth the trouble. Just pay it anyway.&quot; That happens over and over again.</p><p id="p17"><span class="ts-link" data-t="26:14">26:14</span>Speaker 11 : So, was it worth it for you?</p><p id="p18"><span class="ts-link" data-t="27:56">27:56</span>I think it was an important thing. I think it was a necessary thing, and I think it will have a good effect in the future.</p><p id="p19"><span class="ts-link" data-t="28:37">28:37</span>I got a little shiner here. Well, I wasn&#x27;t anywhere near France. But- Just making a joke about the [inaudible 00:42:09]. So yeah, I was just horsing around with little X and I said, go ahead, punch me in the face. And he did. Turns out even a five-year-old punching you in the face, actually does-</p><p id="p20"><span class="ts-link" data-t="42:20">42:20</span>Yeah. He&#x27;s with with his mom right now. But I didn&#x27;t really feel much at the time. And then I guess it bruises up, but I was just horsing around with the kids, basically.</p><p id="p21"><span class="ts-link" data-t="43:02">43:02</span>True. If I can add something to that? I think the fundamental moral flaw of the left is empathy for the criminals and not empathy for the victims. Empathy for the criminals, but not empathy for the victims. And there&#x27;s been way too much of that, that needs to stop. To the President&#x27;s point, there&#x27;s been immense judicial overreach that is unconstitutional, that was never intended. And it&#x27;s undermining the people&#x27;s faith in the legal system. It needs to stop. It&#x27;s gone too far.</p></div></div>
       <div class="tab-panel" id="panel-q" data-panel="q"><div class="tr-note">从现场发言里挑出的 5 句原话，附中文译文（AI 翻译，以英文原话为准）。点时间戳可跳到视频对应位置。</div><div class="quotes-list"><blockquote class="quote-item bi"><p class="q-zh">DOGE团队迄今的计算，按2025财年到2026财年的差额算，超过1600亿美元，而且还在攀升。我们预计这个数字很快可能超过2000亿美元。</p><p class="q-en" lang="en">The calculations of the DOGE team thus far, in terms of an FY25 to FY26 delta, are over 160 billion, and that&#x27;s climbing. We expect that number will probably go over 200 billion soon.</p><div class="q-foot"><a class="q-ts ts-link" data-t="15:21" href="javascript:void(0)">▶ 15:21</a><button type="button" class="q-copy" data-copy-q>复制</button><button type="button" class="q-copy" data-poster-q>生成海报</button></div></blockquote><blockquote class="quote-item bi"><p class="q-zh">我们正在不懈追求削减8万亿美元的浪费和欺诈，这将惠及美国纳税人。</p><p class="q-en" lang="en">And we are relentlessly pursuing $8 trillion in waste and fraud reductions which will benefit the American taxpayer.</p><div class="q-foot"><a class="q-ts ts-link" data-t="17:09" href="javascript:void(0)">▶ 17:09</a><button type="button" class="q-copy" data-copy-q>复制</button><button type="button" class="q-copy" data-poster-q>生成海报</button></div></blockquote><blockquote class="quote-item bi"><p class="q-zh">我的意思是，我们发现有些情况下，有数百万份软件许可证，使用人数为零。</p><p class="q-en" lang="en">I mean, we find situations where there are millions of software licenses with zero people using them.</p><div class="q-foot"><a class="q-ts ts-link" data-t="23:46" href="javascript:void(0)">▶ 23:46</a><button type="button" class="q-copy" data-copy-q>复制</button><button type="button" class="q-copy" data-poster-q>生成海报</button></div></blockquote><blockquote class="quote-item bi"><p class="q-zh">所以，政府里发生的很多事情，是因为官僚制那种平庸的恶。坦率地说，那是官僚制基本上漠不关心的本性。</p><p class="q-en" lang="en">So, there are many things that occur in the government because it&#x27;s the banal evil of bureaucracy. It&#x27;s the, frankly, largely uncaring nature of bureaucracy.</p><div class="q-foot"><a class="q-ts ts-link" data-t="26:14" href="javascript:void(0)">▶ 26:14</a><button type="button" class="q-copy" data-copy-q>复制</button><button type="button" class="q-copy" data-poster-q>生成海报</button></div></blockquote><blockquote class="quote-item bi"><p class="q-zh">我认为左派根本的道德缺陷，是对罪犯有同理心，而对受害者没有。对罪犯有同理心，对受害者却没有。</p><p class="q-en" lang="en">I think the fundamental moral flaw of the left is empathy for the criminals and not empathy for the victims. Empathy for the criminals, but not empathy for the victims.</p><div class="q-foot"><a class="q-ts ts-link" data-t="49:07" href="javascript:void(0)">▶ 49:07</a><button type="button" class="q-copy" data-copy-q>复制</button><button type="button" class="q-copy" data-poster-q>生成海报</button></div></blockquote></div></div>
       
@@ -369,7 +422,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -409,7 +462,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -343,7 +396,7 @@
 <li data-z="98">做产品定义时，把「用户会不会主动展示它」当成一个真实指标，美观是可量化的采用率变量，不是附加项</li>
 <li data-z="99">如果你想验证一个新兴硬件品类，去看它的安装环节能不能规模化，交付重人力是这类产品最常见的死因</li>
 <li data-z="100">观察供应链，玻璃瓦这类产品降价靠的是产线上量，盯住产能爬坡的节点，比盯住发布会上的定价更有效</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=26XP6uDk6-0" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:04">0:04</span>yeah no fuzzy jacket this time so the other side of bags talking about the booze no doing this which is as made the thread reaching record co2 levels and global warming is becoming a serious where is a serious crisis and we need to do something about that and the but just like with electric cars where the electric cars originally would they didn&#x27;t look good they hadn&#x27;t arranged they didn&#x27;t have good performance and they&#x27;re like a golf cart and support had a real hard time buying electric cars and I think you know something similar</p><p id="p1"><span class="ts-link" data-t="0:46">0:46</span>needs to happen to solely really need to make solar panels as appealing as as look for cars have become and the your piercing things that has you see around you all so louses if you know that did you notice totally thought that by teach them but the goal is to make have electric solar</p><p id="p2"><span class="ts-link" data-t="1:15">1:15</span>roofs that look better than normal roof Claire electricity at last longer a better insulation and actually have a cost an installed cost that is less than a normal roof plus the cost of electricity so why would you buy anything else so let&#x27;s get into going to get into the details here so obviously sort of the chart they&#x27;re probably familiar with with that trial decay from from NASA about how we&#x27;re vertical climb on co2 levels and we need to do</p><p id="p3"><span class="ts-link" data-t="1:52">1:52</span>everything we possibly can to accelerate the transition to sustainable energy so so the goal of Tessa Tessa importance think Tesla as the electric car company but but really a bit all purpose of Tesla was to accelerate the event of sustainable energy it sounds like it&#x27;s not like there was a shortage of car companies in the world the plenty of good gasoline car companies but they weren&#x27;t good electric cars that&#x27;s that&#x27;s really what was needed so the only three parts to the solution and so we go to</p><p id="p4"><span class="ts-link" data-t="2:28">2:28</span>what is the future that we want it consists of a really appealing solar roof and then combine that with with storage and with little cars so it&#x27;s the thing it&#x27;s a others three-part solution yeah chief a solution is assuring that complicated now you need battery packs because the Sun does not shine at night and the point that worked right now is a factor of the transition which are transitioning from day to tonight it&#x27;s dusk and so what&#x27;s happening is that the</p><p id="p5"><span class="ts-link" data-t="3:10">3:10</span>houses are transitioning from the roof generating power to the battery pack this with the powerwall producing power so during the day you fill up the battery and then at night and that&#x27;s been doing you use the battery and straightforward really it&#x27;s like not that complicated you just need a both/and but if you have a great solar</p><p id="p6"><span class="ts-link" data-t="3:39">3:39</span>roof and you have a battery pack your house and an electric car that&#x27;s the way that scales worldwide that you can you can solve the whole energy equation look at so yeah obviously looks like you so it&#x27;s a look like Jeff just the power 12 but this is a big step above the powerful one and it has twice as much energy and more than twice as much power so it&#x27;s a 14-14 fill at our energy storage seven collect our backrub and just put that in basic terms we can take a four-bedroom house and you can have you can get empowered the refrig the sockets and lights every day and if you have solar on your on your own your house you can power it indefinitely so</p><p id="p7"><span class="ts-link" data-t="4:36">4:36</span>that&#x27;s just with one and and then on the utility side we&#x27;ve got the power back to which similarly doubles the energy so it&#x27;s a turn turn kill at our capability 50 kilowatt power output and this current scale to unlimited size so it&#x27;s a in fact we&#x27;ve recently announced the the biggest utility battery installation</p><p id="p8"><span class="ts-link" data-t="5:08">5:08</span>in the world which is going to be with psychiatry Edison it&#x27;s going next site and so with an 80 megawatt hour battery installation that&#x27;s being broke right now so and then when I was born earlier this year which is 430 in Hawaii during 52 megawatt hours when you see a lot more of these announced over time and I think I think it&#x27;s point to a ship or people appreciate that the solution is both a local power generation and utility power generation it&#x27;s not one or the other sometimes this was the sunroof yes position as a competitor to two utilities but we&#x27;re actually going to need a utility power to increase and we&#x27;re going to need local power generation because if you transition old</p><p id="p9"><span class="ts-link" data-t="6:01">6:01</span>energy to to electric that they&#x27;re roughly triples the amount of electricity that&#x27;s needed so and about a third for transport about a third floor heating about a third for will require use of electricity so the future is bright for Israelis and full for local power generation I&#x27;d expect it to be roughly a third local power generation roughly two-thirds are utility so it&#x27;s a very severe by future full for utilities and Photoshop</p><p id="p10"><span class="ts-link" data-t="6:35">6:35</span>so let&#x27;s look at take a look at some of these works well as initially what we&#x27;re looking for here is how do we have a sunroof that is better than the normal way and that looks better last longer has better insulating effect and where the cost of roof plus electricity is less than that of memory now this is this is sort of the integrator future we&#x27;ve got a electric car a power wall</p><p id="p11"><span class="ts-link" data-t="7:06">7:06</span>and silicon a sunroof and the key is that it needs to be beautiful affordable and seamlessly integrated and I mean if all those things are true why would you go any other direction so yeah so we</p><p id="p12"><span class="ts-link" data-t="7:31">7:31</span>show you this is the before shot of that house there so that&#x27;s what I looked like before now that&#x27;s also yeah we&#x27;ve got some close-up shots let me confer if you look if you look carefully you can actually see those the solar cells behind the glass I&#x27;ll actually pick up I so you can show you what I mean this is a textured glass</p><p id="p13"><span class="ts-link" data-t="8:18">8:18</span>tile if you look carefully you can see the syllabus all cells that see that so that more functionality stick take a look at the next house like so that house is also solar and that&#x27;s a sort of a salad bit of a French slate which is one of the hardest things to do this it&#x27;s considered one of the best groups you can possibly do as a convention roof so well if it can we make a French slate</p><p id="p14"><span class="ts-link" data-t="9:01">9:01</span>roof that&#x27;s so low that looks as good or better than with conventional first lately and we were able to do that as well and less time with hydrographic printing so each tile is unique so that it&#x27;s the production process itself makes each tile as special unique is with special snowflake tile the the nice</p><p id="p15"><span class="ts-link" data-t="9:27">9:27</span>thing is like no two roofs will be the same so it&#x27;s not just cookie cutter you can take any two roofs like that and they will look different because they are different this is the sweat the French like hydrographic looks like let&#x27;s see that</p><p id="p16"><span class="ts-link" data-t="10:03">10:03</span>and then the third house is really transformative just believe it or not that&#x27;s what it looked like before so we changed the roof one is like whoa you put that roof on we&#x27;re going to change the house too so that that you know that tile is is more of a modern work</p><p id="p17"><span class="ts-link" data-t="10:45">10:45</span>if we can really see as the angle changes that you can see the solar cells so here we put a film with microtubules on it so that as as the angle changes it goes from transparent to opaque so from the vantage point of the street or anyone near the house it looks completely opaque but from the Sun it&#x27;s to Tucson it&#x27;s transparent and then</p><p id="p18"><span class="ts-link" data-t="11:29">11:29</span>probably the most price of one is that the testin testin glass so this is also solar panels but we put two versions of the testing Ross approach all of the dark tiles have solar panels so we interleave a dark and light and then the dark ones are the ones with solar panels</p><p id="p19"><span class="ts-link" data-t="12:06">12:06</span>then you can see that the transparency changes quite a bit so as you&#x27;re from the sun&#x27;s matters point which tends to be high angle you can see that the soul of the solar cells but as you change the angle to shallow angle it relates to ISIL vote RG color</p><p id="p20"><span class="ts-link" data-t="12:37">12:37</span>so that so many other advantages of glass is that we can actually make it a lot a lot tougher and lasted longer than a conventional roof so we&#x27;re just as a demonstration video sure what happens if you drop a drop the big weight on a conventional roof tile and one of our glass tiles</p><p id="p21"><span class="ts-link" data-t="13:02">13:02</span>so so the solar point just want to look better last longer provide better insulation and cost less All Things Considered than a conventional roof and that the solar shears walking for the current solar systems because then if you&#x27;re building a new house or you&#x27;re redoing a roof then this is the way to go but if you&#x27;re if you have a new roof then you obviously want to put solar panels on that roof so there&#x27;s there&#x27;s two very distinct markets and it is about at four to five million new roofs in the US over here and I think 20 times that number worldwide so the convention over time as people replace their roofs will soar roofs that the whole neighborhood whatever everyone would</p><p id="p22"><span class="ts-link" data-t="13:57">13:57</span>have solar like why wouldn&#x27;t buy wing to you overtime every every house would become a solar house and it&#x27;s it&#x27;s a neighborhood where the aesthetics actually get better so where you look around your neighborhood and that&#x27;s what you want to have happen so the key is really to make to make solar something desirable where if you install a solely from your house I mean really private you want you want to put it on the most prominent part of the house you want to call your neighbors over and say check up check out the sweet worth like you&#x27;re crazy here often a little</p><p id="p23"><span class="ts-link" data-t="14:39">14:39</span>bit but that&#x27;s that&#x27;s the cuter people people really care about the homes they love their homes and they really want they want food to be better and I think taking this approach it can be so that&#x27;s the best that&#x27;s where we&#x27;re headed and our PP that&#x27;s the future we want</p></div></div>
       
       
@@ -371,7 +424,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -411,7 +464,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

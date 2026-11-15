@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -259,7 +312,7 @@
 <li data-z="56">关注自主对接这类「看不见的升级」。它不改变飞船外观，却决定了飞船能对接什么、能飞多远、能不能脱离地面支持独立作业。</li>
 <li data-z="57">把技术路线和产品时间表分开看。路线图告诉你方向，时间表告诉你现实，两者经常对不上，这是工程常态，不是骗人。</li>
 <li data-z="58">读老发布会别只记住结论，留意它当时的措辞和承诺。哪些做到了，哪些延期了，哪些根本换了方向，这份对照比任何复盘都有用。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=yEQrmDoIRO8" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:09">0:09</span>lift off at the Falcon there we have the dragon in range of the space station</p><p id="p1"><span class="ts-link" data-t="0:50">0:50</span>all right welcome everybody to Hawthorne headquarters of space exploration Technologies we&#x27;re here here to unveil Dragon version 2 dragon version one is right above your heads in fact this is the the first dragon spacecraft that came back from orbit and you can see the The Scorch marks on the on the heat shield the thrusters that are fired it&#x27;s a it&#x27;s a real real</p><p id="p2"><span class="ts-link" data-t="1:18">1:18</span>spacecraft U and I&#x27;ll I&#x27;ll tell you little I&#x27;ll start off by telling you a little bit about the dragon version one before showing you Dragon version two when we first created Dragon version one we we didn&#x27;t really know how to create a a spacecraft we&#x27; never designed a spacecraft before so while there there are a lot of interesting Technologies in version one it does have a relatively conventional Landing approach so it it it it throws out parachutes to land in the water off the coast of California after it comes back from the space station and it does have a life support system but not that can last for a long time or or carry a lot of people and so it&#x27;s it&#x27;s it&#x27;s a it&#x27;s a</p><p id="p3"><span class="ts-link" data-t="2:07">2:07</span>great spacecraft and it was a great proof of proof of concept that showed us what it took to bring something back from orbit which is a very difficult thing to do usually when something comes in from orbital velocity it it it burns up in a big Fireball so but going from from Dragon version one we want to take a a big step in technology really create something that was a step change in in spacecraft</p><p id="p4"><span class="ts-link" data-t="2:35">2:35</span>technology and and some important characteristics of that are the ability to to land anywhere on land propulsively so that&#x27;s one of the things that Dragon version 2 will be able to do so you you&#x27;ll be able to land anywhere on Earth with the accuracy of a helicopter which is which is I think something that a spaceship should a modern spaceship should be able to do and it&#x27;ll be capable of carrying seven seven people Seven astronauts for several days it it has an improved version of our Pika heat shield and it&#x27;s it&#x27;s all around I think a a really a big leap forward in technology it really takes things to the next level so with that let&#x27;s let&#x27;s see</p><p id="p5"><span class="ts-link" data-t="3:16">3:16</span>the dragon version one we&#x27;re going to do the countdown here all right or Dragon version two is 10 9 8 7 6 5 4 3 2 1 zero</p><p id="p6"><span class="ts-link" data-t="4:05">4:05</span>so let&#x27;s we have an an animation that shows you how Dragon version 2 will work so let&#x27;s roll that animation</p><p id="p7"><span class="ts-link" data-t="6:29">6:29</span>so that is how a 21st century spaceship should land a few other things so I&#x27;m going talk about some of the the hardware in Dragon some of the Technologies we&#x27;re going to roll those out and so a few things I I should mention that you saw in the animation but we we don&#x27;t have time to show you today are the there&#x27;s the docking mechanism so the dragon version 2 is capable of autonomously docking either autonomously or arop Pilot docking with the space station or you know with the International Space Station potentially other things and</p><p id="p8"><span class="ts-link" data-t="7:13">7:13</span>without the without needing the a station arm so the current version one makes use of the the the canidon that&#x27;s on the space station Dragon version two is capable of of docking autonomously without the use of the arm so that&#x27;s a significant upgrade as well and although it wasn&#x27;t shown in the video Dragon version 2 still retains the parachutes of dragon version one so that what it&#x27;ll do is is when it reaches a particular altitude just before for landing a few miles before landing it will test the engines verify that if all the engines are working it will then proceed to a propulsive landing if there&#x27;s any anomaly detected with the engines or the propulsion system it will</p><p id="p9"><span class="ts-link" data-t="7:57">7:57</span>then deploy the parachutes to Ure a safe landing even in the event that the propulsion system is not working and even after starting the propulsion system it can afford to lose up to two engines and still land safely and then after the the engines are are started it deploys the the landing legs for for a soft landing and the so the reason that this is really important apart from the the convenience of the landing location is that it enables rapid reusability</p><p id="p10"><span class="ts-link" data-t="8:28">8:28</span>of this of the spacecraft so you can just reload propellant and fly again this is extremely important for revolutionizing access to space because as long as we continue to to throw away rockets and spacecraft we will never have truly true access to space it&#x27;ll always be incredibly expensive you can imagine a scenario where in in aircraft if aircraft were thrown away with each flight that nobody would be able to fly or very few maybe a small number of of of govern customers and and and the same is true of of rockets and spacecraft so that&#x27;s that&#x27;s really why it&#x27;s so important to be able to to land propulsively land on land and be able to to then reload propellant and</p><p id="p11"><span class="ts-link" data-t="9:15">9:15</span>takeoff again so I&#x27;ll I&#x27;ll look at point out some of the the Technologies here this is a a composite over to Titanium sphere and this this contains the ultra high pressure helium that pressurizes the propulsion tanks that feed the the super Draco engine this is the the the Draco engine which is a maneuvering Thruster and this is essentially the same as the the one that&#x27;s or very similar to the one that&#x27;s on Dragon version one and on Dragon version one there are 18 of these thrusters for maneuvering in space as well as controlling the re-entry the the trajectory during re-entry so we have you know a bunch of these on version two as well from a propulsion standpoint the</p><p id="p12"><span class="ts-link" data-t="10:04">10:04</span>biggest single change for Dragon version 2 is the addition of the the super Draco engines so this is really a superpowered version of the the Draco engine whereas the the Draco engine produces about 100 pounds of thrust each of these engines produce 16,000 pounds of thrust so it hence the super</p><p id="p13"><span class="ts-link" data-t="10:30">10:30</span>and they&#x27;re in pairs so that if if one malfunctions it its pair can can take over and increase thrust to compensate for the one that&#x27;s not firing and each one is in a protective shell so if anything goes wrong it&#x27;s contained within that that protectiveness cell this is also get will be the first fully printed engine so this is a it it&#x27;s printed Inc canel which a special high strength alloy and it&#x27;ll be yeah like said the the first time that a rocket a printed rocket engine sees flame and then this is the the propellant tank this a whole series of these spars are around the perimeter of dragon V2 and these These are also</p><p id="p14"><span class="ts-link" data-t="11:18">11:18</span>carbon overa titanium and and they they feed the superj engines which are operating the superj engines are operating at a chamber of pressure of about a th000 PSI and and fed from the these series of of propellant tanks around the perimeter and then we also have version three of the the P heat shield so the base heat shield is the is the third version of our heat shield technology the first version obviously flew on that version one spacecraft up there and and and we&#x27;re now about to fly sort of version two and version version three and with with each one we&#x27;re able to make the reusability of the heat shield better so it it it ablates less as it as it enters</p><p id="p15"><span class="ts-link" data-t="12:03">12:03</span>and and you&#x27;re able to get more flights so that&#x27;s that that&#x27;s Dragon version two although it&#x27; be nice to go inside but for that we will need a comically fast set of stairs</p><p id="p16"><span class="ts-link" data-t="12:55">12:55</span>so have a settled so I&#x27;m sitting here in the sitting here in the pilot seat pull that down so the we we&#x27;ve aimed for something with the dragon version two for the interfaces and for the overall aesthetic of something that&#x27;s very clean very simple and so as a as the pilot you&#x27;re able to interact with the the screens overhead control the spacecraft and then we&#x27;ve got all of the critical functions that are needed in an emergency situation as manual buttons so that&#x27;s what you see in this area here y</p><p id="p17"><span class="ts-link" data-t="14:18">14:18</span>all right that that&#x27;s all a lot easier in zero g by the way so there there you have it so Dragon version 2 capable of carrying up to seven astr propulsively Landing almost anywhere in the world and something that&#x27;s designed as I said to be fully reusable so you can apply this multiple times allowing for potential dramatic reduction in the cost of access to space thank you</p></div></div>
       
       
@@ -287,7 +340,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -327,7 +380,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

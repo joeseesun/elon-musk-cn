@@ -76,6 +76,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -107,16 +109,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -132,6 +185,36 @@
     <p class="ep-dek">651 个视频、401 万个英文词摊开来看：他哪年说得最多、在什么场合说、最爱用哪些词。</p></header>
 
   <div class="bn-row"><div class="bn"><b>651</b><span>个公开视频</span><small>1998–2026</small></div><div class="bn"><b>588</b><span>份英文文稿</span><small>约 464 小时</small></div><div class="bn"><b>401 万</b><span>个英文词</span><small>文稿总字数</small></div><div class="bn"><b>586</b><span>篇中文精读</span><small>覆盖 100% 的文稿</small></div></div>
+  
+  <section class="ins-sec corpus-sec" id="corpus">
+    <div class="ins-h"><h2>把语料打包带走</h2><p>想让 AI 一口气读完整个档案？英文原始语料与本站的中文精读，各有各的下载方式。</p></div>
+    <div class="corpus-two">
+      <div class="corpus-card other">
+        <div class="cc-tag">原始语料 · 来自 silicon-valley.tech</div>
+        <h3>英文原始语料</h3>
+        <p>逐字文稿、X 帖子与回复、预言英文原文，都由档案方提供。本站不重复托管，只指过去——也请你在引用时注明原始出处。</p>
+        <div class="cc-links">
+          <a href="https://silicon-valley.tech/#data" target="_blank" rel="noopener">数据下载页 ↗</a>
+          <a href="https://silicon-valley.tech/llms.txt" target="_blank" rel="noopener">llms.txt ↗</a>
+          <a href="https://silicon-valley.tech/llms-full.txt" target="_blank" rel="noopener">全文单文件 ↗</a>
+        </div>
+        <p class="cc-note">版权归原权利方所有；请注明 Elon Musk Archive。</p>
+      </div>
+      <div class="corpus-card ours">
+        <div class="cc-tag">中文增量 · 本站独有</div>
+        <h3>中文精读语料包</h3>
+        <p>586 篇 AI 中文精读，加上翻译整理后的预言、语录、主题与视频目录。按你的用法挑一个：</p>
+        <div class="cc-links">
+          <a href="/corpus/llms-full.txt">全文单文件 <small>给 RAG / 长上下文</small></a>
+          <a href="/corpus/elon-musk-cn-corpus.zip">完整语料包 ZIP <small>逐篇 Markdown + JSON</small></a>
+          <a href="/corpus/index.md">文件清单</a>
+          <a href="/llms.txt">llms.txt</a>
+        </div>
+        <p class="cc-note">中文精读为 AI 改写、非官方翻译；引用请注明「elon.qiaomu.ai 中文精读」并链接网页版。</p>
+      </div>
+    </div>
+  </section>
+
   <section class="ins-sec">
     <div class="ins-h"><h2>每年留下了多少公开视频</h2><p>档案里每一年的视频数，按场合分色。2022 年收购推特、2024–2025 年投身政治之后，他出现在镜头前的次数明显变多。</p></div>
     <div class="yb-legend"><span><i class="lg k1"></i>对话</span><span><i class="lg k2"></i>发布会</span><span><i class="lg k3"></i>演讲</span><span><i class="lg k4"></i>股东会</span><span><i class="lg k5"></i>其他</span></div>
@@ -297,7 +380,7 @@
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL27448W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL27448W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
   <div class="bk-body"><div class="bk-h"><b>《指环王》</b><span lang="en">The Lord of the Rings</span></div>
     <p class="bk-note">小时候读过很多遍：英雄总想拯救世界</p>
-    <a class="bk-ex" href="/ep/joe-rogan-experience-2404-elon-musk/?p=120&amp;t=2669&amp;hl=lord+the+rings"><span class="ph-s" lang="en">like Wormtongue from <mark>Lord</mark> of <mark>the</mark> <mark>Rings</mark> where he would just sort of whisper <mark>these</mark> terrible things to <mark>the</mark> king, so <mark>the</mark> king would believe <mark>these</mark> things that weren&#x27;t true.</span><span class="ph-src">▶ 2025 · 乔·罗根体验 #2404：马斯克</span></a>
+    <a class="bk-ex" href="/ep/joe-rogan-experience-2404-elon-musk/?p=120&amp;t=2669&amp;hl=lord+the+rings"><span class="ph-s" lang="en">like Wormtongue from <mark>Lord</mark> of the <mark>Rings</mark> where he would just sort of whisper these terrible things to the king, so the king would believe these things that weren&#x27;t true.</span><span class="ph-src">▶ 2025 · 乔·罗根体验 #2404：马斯克</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22lord%20of%20the%20rings%22%7Ctolkien">5 场视频里提到过 →</a><a class="bk-hb" href="https://hackerbooks.qiaomu.ai/book/OL27448W" target="_blank" rel="noopener">黑客书架 ↗</a></div></div>
 </li><li class="bk">
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL1073905W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL1073905W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
@@ -321,7 +404,7 @@
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL24940564W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL24940564W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
   <div class="bk-body"><div class="bk-h"><b>《罗马帝国衰亡史》</b><span lang="en">The History of the Decline and Fall of the Roman Empire</span></div>
     <p class="bk-note">文明会遗忘技术：罗马有道路、水渠和管道，后来却全丢了</p>
-    <a class="bk-ex" href="/ep/elon-musk-interview-2021-clubhouse-cut-version-with-video/?p=5&amp;t=197&amp;hl=decline+and+fall"><span class="ph-s" lang="en"><mark>decline</mark> <mark>and</mark> <mark>fall</mark> of the roman empire <mark>and</mark> how they they had advanced technology in terms of roads aqueducts plumbing…</span><span class="ph-src">▶ 2021 · 马斯克 2021 Clubhouse 访谈（带视频剪辑版）</span></a>
+    <a class="bk-ex" href="/ep/elon-musk-interview-2021-clubhouse-cut-version-with-video/?p=5&amp;t=197&amp;hl=decline+and+fall"><span class="ph-s" lang="en"><mark>decline</mark> and <mark>fall</mark> of the roman empire and how they they had advanced technology in terms of roads aqueducts plumbing…</span><span class="ph-src">▶ 2021 · 马斯克 2021 Clubhouse 访谈（带视频剪辑版）</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22decline%20and%20fall%22">4 场视频里提到过 →</a><a class="bk-hb" href="https://hackerbooks.qiaomu.ai/book/OL24940564W" target="_blank" rel="noopener">黑客书架 ↗</a></div></div>
 </li></ol><details class="bk-more-list"><summary>再看 15 本</summary><ol class="bk-list"><li class="bk">
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL45790W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL45790W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
@@ -333,13 +416,13 @@
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL893414W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL893414W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
   <div class="bk-body"><div class="bk-h"><b>《沙丘》</b><span lang="en">Dune</span></div>
     <p class="bk-note">「谁控制了梗，谁就控制了宇宙」改写自书里的「谁控制了香料」</p>
-    <a class="bk-ex" href="/ep/elon-musk-interview-2021-clubhouse-cut-version-with-video/?p=16&amp;t=644&amp;hl=from+dune"><span class="ph-s" lang="en">…you meant by that and how you became a man well i mean it&#x27;s a i mean it&#x27;s a play on words <mark>from</mark> <mark>from</mark> <mark>dune</mark> who controls the spice controls universe</span><span class="ph-src">▶ 2021 · 马斯克 2021 Clubhouse 访谈（带视频剪辑版）</span></a>
+    <a class="bk-ex" href="/ep/elon-musk-interview-2021-clubhouse-cut-version-with-video/?p=16&amp;t=644&amp;hl=from+dune"><span class="ph-s" lang="en">…you meant by that and how you became a man well i mean it&#x27;s a i mean it&#x27;s a play on words from from <mark>dune</mark> who controls the spice controls universe</span><span class="ph-src">▶ 2021 · 马斯克 2021 Clubhouse 访谈（带视频剪辑版）</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22from%20dune%22%7C%22frank%20herbert%22">3 场视频里提到过 →</a><a class="bk-hb" href="https://hackerbooks.qiaomu.ai/book/OL893414W" target="_blank" rel="noopener">黑客书架 ↗</a></div></div>
 </li><li class="bk">
   <div class="bk-cover" aria-hidden="true"><b>百科全书</b><small></small></div>
   <div class="bk-body"><div class="bk-h"><b>《百科全书》</b><span lang="en">Encyclopaedia Britannica</span></div>
     <p class="bk-note">小时候家里的书读完了，他就去读百科全书</p>
-    <a class="bk-ex" href="/ep/a-candid-interview-with-tesla-ceo-elon-musk/?p=6&amp;t=187&amp;hl=read+the+encyclopedia"><span class="ph-s" lang="en">…see probably age N9 or 10 okay you st well not that I actually wanted to <mark>read</mark> <mark>the</mark> <mark>encyclopedia</mark> but I ran out of things to <mark>read</mark> so in desperation I <mark>read</mark> <mark>the</mark> <mark>encyclopedia</mark> you just really wanted to learn so at an early stage you had…</span><span class="ph-src">▶ 2010 · 特斯拉 CEO 马斯克坦率专访</span></a>
+    <a class="bk-ex" href="/ep/a-candid-interview-with-tesla-ceo-elon-musk/?p=6&amp;t=187&amp;hl=read+the+encyclopedia"><span class="ph-s" lang="en">…see probably age N9 or 10 okay you st well not that I actually wanted to <mark>read</mark> the <mark>encyclopedia</mark> but I ran out of things to <mark>read</mark> so in desperation I <mark>read</mark> the <mark>encyclopedia</mark> you just really wanted to learn so at an early stage you had…</span><span class="ph-src">▶ 2010 · 特斯拉 CEO 马斯克坦率专访</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22read%20the%20encyclopedia%22%7Cbritannica">3 场视频里提到过 →</a></div></div>
 </li><li class="bk">
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL15626798W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL15626798W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
@@ -369,7 +452,7 @@
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL1999873W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL1999873W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
   <div class="bk-body"><div class="bk-h"><b>《创新者的窘境》</b><span lang="en">The Innovator&#x27;s Dilemma</span></div>
     <p class="bk-note">和《跨越鸿沟》一起被他拿来解释：大公司为什么做不了激进创新</p>
-    <a class="bk-ex" href="/ep/interview-with-elon-musk-29-september-2011/?p=27&amp;t=1147&amp;hl=innovators+dilemma"><span class="ph-s" lang="en">…was just not <mark>there</mark> that <mark>there</mark> it&#x27;s you know if <mark>there</mark>&#x27;s people have written books about this like <mark>crossing</mark> <mark>the</mark> <mark>chasm</mark> and you know <mark>innovators</mark> <mark>dilemma</mark> and all that about how it&#x27;s difficult to do radical innovation…</span><span class="ph-src">▶ 2011 · 马斯克专访｜2011 年 9 月 29 日</span></a>
+    <a class="bk-ex" href="/ep/interview-with-elon-musk-29-september-2011/?p=27&amp;t=1147&amp;hl=innovators+dilemma"><span class="ph-s" lang="en">…was just not there that there it&#x27;s you know if there&#x27;s people have written books about this like <mark>crossing</mark> the <mark>chasm</mark> and you know <mark>innovators</mark> <mark>dilemma</mark> and all that about how it&#x27;s difficult to do radical innovation…</span><span class="ph-src">▶ 2011 · 马斯克专访｜2011 年 9 月 29 日</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22innovators%20dilemma%22%7C%22crossing%20the%20chasm%22">在文稿里搜索 →</a><a class="bk-hb" href="https://hackerbooks.qiaomu.ai/book/OL1999873W" target="_blank" rel="noopener">黑客书架 ↗</a></div></div>
 </li><li class="bk">
   <a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/OL59688W" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/books/OL59688W.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
@@ -393,13 +476,13 @@
   <div class="bk-cover" aria-hidden="true"><b>叶卡捷琳娜大帝传</b><small>罗伯特·K·马西</small></div>
   <div class="bk-body"><div class="bk-h"><b>《叶卡捷琳娜大帝传》</b><span lang="en">Catherine the Great: Portrait of a Woman</span></div>
     <p class="bk-note">他说自己早年推文那么「野」，是因为当时正在读这本传记</p>
-    <a class="bk-ex" href="/ep/elon-musk-full-interview-clubhouse/?p=32&amp;t=1278&amp;hl=catherine+the+great"><span class="ph-s" lang="en">…tweets are pretty racy you know like pretty like you know because i was reading this biography of <mark>catherine</mark> <mark>the</mark> <mark>great</mark> you know so</span><span class="ph-src">▶ 2021 · 马斯克 Clubhouse 完整访谈</span></a>
+    <a class="bk-ex" href="/ep/elon-musk-full-interview-clubhouse/?p=32&amp;t=1278&amp;hl=catherine+the+great"><span class="ph-s" lang="en">…tweets are pretty racy you know like pretty like you know because i was reading this biography of <mark>catherine</mark> the <mark>great</mark> you know so</span><span class="ph-src">▶ 2021 · 马斯克 Clubhouse 完整访谈</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22catherine%20the%20great%22">在文稿里搜索 →</a></div></div>
 </li><li class="bk">
   <div class="bk-cover" aria-hidden="true"><b>霍华德·休斯传</b><small></small></div>
   <div class="bk-body"><div class="bk-h"><b>《霍华德·休斯传》</b><span lang="en">a biography of Howard Hughes</span></div>
     <p class="bk-note">旅途中用手机读完，「也许是个警示故事」</p>
-    <a class="bk-ex" href="/ep/elon-musk-rare-interviews-from-the-early-days-3/?p=3&amp;t=106&amp;hl=book+howard+hughes"><span class="ph-s" lang="en">I&#x27;ll I&#x27;ll tell you honestly the <mark>book</mark> the <mark>book</mark> I&#x27;m reading which I was sort of thinking should I say this or not but it&#x27;s it&#x27;s a <mark>book</mark> on <mark>Howard</mark> <mark>Hughes</mark> which you know maybe a cautionary tale.</span><span class="ph-src">▶ 2025 · 马斯克早期罕见采访 #3</span></a>
+    <a class="bk-ex" href="/ep/elon-musk-rare-interviews-from-the-early-days-3/?p=3&amp;t=106&amp;hl=book+howard+hughes"><span class="ph-s" lang="en">I&#x27;ll I&#x27;ll tell you honestly the book the book I&#x27;m reading which I was sort of thinking should I say this or not but it&#x27;s it&#x27;s a book on <mark>Howard</mark> <mark>Hughes</mark> which you know maybe a cautionary tale.</span><span class="ph-src">▶ 2025 · 马斯克早期罕见采访 #3</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22book%20on%20howard%20hughes%22%7C%22howard%20hughes%20book%22">在文稿里搜索 →</a></div></div>
 </li><li class="bk">
   <div class="bk-cover" aria-hidden="true"><b>克伦佩勒日记</b><small>维克多·克伦佩勒</small></div>
@@ -411,8 +494,156 @@
   <div class="bk-cover" aria-hidden="true"><b>富足</b><small>彼得·戴曼迪斯</small></div>
   <div class="bk-body"><div class="bk-h"><b>《富足》</b><span lang="en">Abundance</span></div>
     <p class="bk-note">他认同书名里的判断：AI 和机器人会带来人人富足的未来</p>
-    <a class="bk-ex" href="/ep/elon-musk-and-dr-peter-diamandis-fii8-conversation-on-the-future/?p=22&amp;t=929&amp;hl=book+called+abundance"><span class="ph-s" lang="en">…the good path of AI I think we will be in a future of <mark>abundance</mark> you know obviously you wrote a <mark>book</mark> <mark>called</mark> <mark>abundance</mark> so I think you would agree that that is probably the outcome that that basically anyone will anyone…</span><span class="ph-src">▶ 2024 · 马斯克与彼得·戴曼迪斯 FII8 对话：AI 的未来</span></a>
+    <a class="bk-ex" href="/ep/elon-musk-and-dr-peter-diamandis-fii8-conversation-on-the-future/?p=22&amp;t=929&amp;hl=book+called+abundance"><span class="ph-s" lang="en">…the good path of AI I think we will be in a future of <mark>abundance</mark> you know obviously you wrote a book called <mark>abundance</mark> so I think you would agree that that is probably the outcome that that basically anyone will anyone…</span><span class="ph-src">▶ 2024 · 马斯克与彼得·戴曼迪斯 FII8 对话：AI 的未来</span></a>
     <div class="bk-links"><a class="bk-more" href="/search/?q=%22book%20called%20abundance%22">在文稿里搜索 →</a></div></div>
+</li></ol></details>
+  </section>
+  <section class="ins-sec" id="movies">
+    <div class="ins-h"><h2>马斯克片单：他在访谈里聊过的 24 部电影和剧</h2><p>同样从 588 份文稿里逐条核对出来：他说过喜欢、推荐过，或者常拿来打比方的片子（主持人随口一提、他没接话的不算）。每部配一句访谈原话，点一下跳到视频那一刻；海报来自 <a href="https://www.omdbapi.com/" target="_blank" rel="noopener">OMDb</a>，点海报去豆瓣搜索这部片。</p></div>
+    <ol class="bk-list mv-list"><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E6%98%9F%E9%99%85%E8%BF%B7%E8%88%AA&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0060028.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《星际迷航》</b><span lang="en">Star Trek</span><small class="mv-meta">1966 · 剧集</small></div>
+    <p class="bk-note">「我最喜欢的剧之一」，SpaceX 要做的就是「把星际迷航变成现实」；2013 年还当众推荐了刚上映的新电影版</p>
+    <a class="bk-ex" href="/ep/just-recorded-elon-musk-interviewed-by-jp-morgan-s-jamie-dimon/?p=27&amp;hl=star+trek"><span class="ph-s" lang="en">…fiction — make it real. Go to places that have never been explored before. Make <mark>Star</mark> <mark>Trek</mark> real. That was one of my favorite shows.</span><span class="ph-src">2026 · 刚刚录制：摩根大通杰米·戴蒙专访马斯克</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22star%20trek%22">53 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E6%98%9F%E9%99%85%E8%BF%B7%E8%88%AA&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E7%BB%88%E7%BB%93%E8%80%85&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0088247.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《终结者》</b><span lang="en">The Terminator</span><small class="mv-meta">1984 · 电影</small></div>
+    <p class="bk-note">谈 AI 风险必提：「卡梅隆的电影我都爱，但我们可不想活在《终结者》里」；他还陪儿子重看了《终结者 2》</p>
+    <a class="bk-ex" href="/ep/davos-2026-elon-musk-addresses-the-world-economic-forum/?p=13&amp;t=354&amp;hl=terminator"><span class="ph-s" lang="en">…We don&#x27;t want to find ourselves in a <mark>James</mark> <mark>Cameron</mark> movie. you know <mark>Terminator</mark> he&#x27;s he&#x27;s great movies. Love his movies. But but we don&#x27;t want to be in <mark>Terminator</mark> obviously. but but if you have ubiquitous AI that is essentially…</span><span class="ph-src">▶ 2026 · 达沃斯 2026：马斯克在世界经济论坛演讲</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=terminator%7C%22james%20cameron%22%7Cskynet">44 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E7%BB%88%E7%BB%93%E8%80%85&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E6%98%9F%E7%90%83%E5%A4%A7%E6%88%98&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0076759.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《星球大战》</b><span lang="en">Star Wars</span><small class="mv-meta">1977 · 电影</small></div>
+    <p class="bk-note">他在电影院看的第一部电影；「猎鹰」火箭就是以片中的千年隼号命名</p>
+    <a class="bk-ex" href="/ep/elon-uncut-the-complete-interview-verdict-ep-216/?p=42&amp;t=1695&amp;hl=star+wars"><span class="ph-s" lang="en">Trek the first movie I saw in the theater was <mark>Star</mark> <mark>Wars</mark> so I think it had a profound effect on me I was six years old I think imagine if first movie you ever see in a theater it&#x27;s <mark>Star</mark> <mark>Wars</mark> it&#x27;s…</span><span class="ph-src">▶ 2025 · 马斯克未删减完整专访 | Verdict 第216期</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22star%20wars%22%7C%22millennium%20falcon%22">23 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E6%98%9F%E7%90%83%E5%A4%A7%E6%88%98&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E9%92%A2%E9%93%81%E4%BE%A0&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0371746.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《钢铁侠》</b><span lang="en">Iron Man</span><small class="mv-meta">2008 · 电影</small></div>
+    <p class="bk-note">托尼·斯塔克的现实原型之一，导演来 SpaceX 取过经，他还在《钢铁侠 2》里客串</p>
+    <a class="bk-ex" href="/ep/chm-revolutionaries-an-evening-with-elon-musk-in-2013/?p=11&amp;t=462&amp;hl=iron+man"><span class="ph-s" lang="en">…time you were heavily into Comics I&#x27;m curious to know did you love <mark>Iron</mark> <mark>Man</mark> the comic <mark>Iron</mark> <mark>Man</mark> I did kind of like <mark>Iron</mark> <mark>Man</mark> yeah you did did you ever did you ever imagine that you would be the inspiration for the movie version…</span><span class="ph-src">▶ 2013 · CHM Revolutionaries：与马斯克共度一晚（2013）</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22iron%20man%22%7C%22tony%20stark%22">22 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E9%92%A2%E9%93%81%E4%BE%A0&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E9%BB%91%E5%AE%A2%E5%B8%9D%E5%9B%BD&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0133093.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《黑客帝国》</b><span lang="en">The Matrix</span><small class="mv-meta">1999 · 电影</small></div>
+    <p class="bk-note">聊「我们是不是活在模拟世界里」时常提；也想象脑机接口能像片中那样直接「上传」技能</p>
+    <a class="bk-ex" href="/ep/billionaires-jack-ma-and-elon-musk-debate-at-world-artificial-in/?p=37&amp;t=1658&amp;hl=like+the+matrix"><span class="ph-s" lang="en">think about education i mean down the road with the neural link you can just upload any subject instantly so we like the <mark>matrix</mark> you want to fly a helicopter no problem well helicopters will fly themselves…</span><span class="ph-src">▶ 2019 · 马云与马斯克在上海世界人工智能大会激辩</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22like%20the%20matrix%22%7C%22in%20the%20matrix%22%7C%22from%20the%20matrix%22">15 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E9%BB%91%E5%AE%A2%E5%B8%9D%E5%9B%BD&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E8%9D%99%E8%9D%A0%E4%BE%A0%EF%BC%9A%E9%BB%91%E6%9A%97%E9%AA%91%E5%A3%AB&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0468569.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《蝙蝠侠：黑暗骑士》</b><span lang="en">The Dark Knight</span><small class="mv-meta">2008 · 电影</small></div>
+    <p class="bk-note">夸诺兰的蝙蝠侠「特效、剧本、演员全是顶级」，说教育也该做得这么好看；批评治安时说「这是小丑在管哥谭」</p>
+    <a class="bk-ex" href="/ep/elon-musk-lighthearted-interview-2013/?p=66&amp;t=2260&amp;hl=chris+nolan"><span class="ph-s" lang="en">…much agree with that but yeah so I mean the knowledge is uses like we&#x27;ve seen but like <mark>Batman</mark> like the <mark>Chris</mark> <mark>Nolan</mark> movie like the recent one and it&#x27;s pretty freakin awesome right and you&#x27;ve got incredible special effects…</span><span class="ph-src">▶ 2013 · 马斯克轻松访谈（2013）</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22chris%20nolan%22%7C%22nolan%20brothers%22%7C%22dark%20knight%22%7Cbatman">15 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E8%9D%99%E8%9D%A0%E4%BE%A0%EF%BC%9A%E9%BB%91%E6%9A%97%E9%AA%91%E5%A3%AB&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=007%EF%BC%9A%E6%B5%B7%E5%BA%95%E5%9F%8E&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0076752.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《007：海底城》</b><span lang="en">The Spy Who Loved Me</span><small class="mv-meta">1977 · 电影</small></div>
+    <p class="bk-note">他买下了片中能变潜艇的莲花 Esprit 道具车；新 Roadster 要「比所有邦德车加起来还疯狂」</p>
+    <a class="bk-ex" href="/ep/joe-rogan-experience-2404-elon-musk/?p=111&amp;t=2463&amp;hl=spy+who+loved"><span class="ph-s" lang="en">If you took all the <mark>James</mark> <mark>Bond</mark> cars and combined them, it&#x27;s crazier than that.</span><span class="ph-src">▶ 2025 · 乔·罗根体验 #2404：马斯克</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22spy%20who%20loved%20me%22%7C%22spy%20love%20me%22%7C%22lotus%20esprit%22%7C%22james%20bond%22">9 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=007%EF%BC%9A%E6%B5%B7%E5%BA%95%E5%9F%8E&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E5%B7%A8%E8%9F%92%E4%B8%8E%E5%9C%A3%E6%9D%AF&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0071853.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《巨蟒与圣杯》</b><span lang="en">Monty Python and the Holy Grail</span><small class="mv-meta">1975 · 电影</small></div>
+    <p class="bk-note">「我一直爱 Monty Python，《巨蟒与圣杯》和《万世魔星》都太棒了」；龙飞船首飞的秘密载荷是一块奶酪，致敬他们的「奶酪店」小品</p>
+    <a class="bk-ex" href="/ep/elon-musk-spacex-mars-tesla-autopilot-self-driving-robotics-and/?p=195&amp;t=7880&amp;hl=monty+python"><span class="ph-s" lang="en">six seven for the <mark>Monty</mark> <mark>Python</mark> maybe I always love <mark>Monty</mark> <mark>Python</mark> they&#x27;re great Life of Brian and the quest of Holy Grail are incredible yeah yeah D those serious eyebrows…</span><span class="ph-src">▶ 2022 · 马斯克：SpaceX、火星、Tesla Autopilot、自动驾驶、机器人与 AI｜Lex Fridman 播客 #252</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22monty%20python%22">7 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E5%B7%A8%E8%9F%92%E4%B8%8E%E5%9C%A3%E6%9D%AF&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E8%B0%81%E6%9D%80%E6%AD%BB%E4%BA%86%E7%94%B5%E5%8A%A8%E8%BD%A6&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0489037.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《谁杀死了电动车》</b><span lang="en">Who Killed the Electric Car?</span><small class="mv-meta">2006 · 纪录片</small></div>
+    <p class="bk-note">「拍得不错，值得一看」：通用汽车收回 EV1 拿去压碎，车主们拼命想把车留下</p>
+    <a class="bk-ex" href="/ep/clean-tech-summit-2011-ipo-spotlight-with-elon-musk/?p=14&amp;t=592&amp;hl=who+killed+the+electric+car"><span class="ph-s" lang="en">…retrospect that was an unwise move for General Motors and and you know if you if if you seen the movie it&#x27;s a good movie who <mark>killed</mark> <mark>electric</mark> <mark>car</mark> the the customers that had the ev1 were extremely I mean they love the <mark>car</mark> they…</span><span class="ph-src">▶ 2011 · Clean Tech Summit 2011：马斯克 IPO 焦点对话</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22who%20killed%20the%20electric%20car%22">6 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E8%B0%81%E6%9D%80%E6%AD%BB%E4%BA%86%E7%94%B5%E5%8A%A8%E8%BD%A6&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E7%96%AF%E7%8B%82%E7%9A%84%E9%BA%A6%E5%85%8B%E6%96%AF&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0079501.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《疯狂的麦克斯》</b><span lang="en">Mad Max</span><small class="mv-meta">1979 · 电影</small></div>
+    <p class="bk-note">特斯拉辅助驾驶最激进的跟车档就叫「Mad Max」；他形容火人节是「疯狂的麦克斯遇上拉斯维加斯」</p>
+    <a class="bk-ex" href="/ep/soulpancake-elon-musk-interview-2013/?p=34&amp;t=1355&amp;hl=mad+max"><span class="ph-s" lang="en">…pretty fun you go to Burning Man sure what do you do there just it&#x27;s it&#x27;s just like a crazy sort of <mark>Mad</mark> <mark>Max</mark> meets Vegas meets Alice in Wonderland do</span><span class="ph-src">▶ 2013 · SoulPancake：马斯克访谈（2013）</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22mad%20max%22">6 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E7%96%AF%E7%8B%82%E7%9A%84%E9%BA%A6%E5%85%8B%E6%96%AF&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E8%A0%A2%E8%9B%8B%E8%BF%9B%E5%8C%96%E8%AE%BA&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0387808.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《蠢蛋进化论》</b><span lang="en">Idiocracy</span><small class="mv-meta">2006 · 电影</small></div>
+    <p class="bk-note">被问「看过《蠢蛋进化论》吗」他说看过；后来又自嘲发布会的画面「有点像这部片的开头」</p>
+    <a class="bk-ex" href="/ep/elon-musk-s-tesla-terafab-full-presentation-2026-3-21/?p=47&amp;t=1491&amp;hl=idiocracy"><span class="ph-s" lang="en">This looks a bit like the opening of <mark>Idiocracy</mark> with the Mike Judge.</span><span class="ph-src">▶ 2026 · 马斯克 Tesla Terafab 完整演讲</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=idiocracy">6 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E8%A0%A2%E8%9B%8B%E8%BF%9B%E5%8C%96%E8%AE%BA&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E9%93%B6%E7%BF%BC%E6%9D%80%E6%89%8B&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0083658.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《银翼杀手》</b><span lang="en">Blade Runner</span><small class="mv-meta">1982 · 电影</small></div>
+    <p class="bk-note">「我爱《银翼杀手》，但不想要那样阴暗的未来」；做 Cybertruck 时想的是「银翼杀手会开什么皮卡」</p>
+    <a class="bk-ex" href="/ep/we-robot-tesla-cybercab-unveil/?p=5&amp;t=339&amp;hl=blade+runner"><span class="ph-s" lang="en">the future is is dark and dismal where it&#x27;s not a future you want to be in so you know like I I love <mark>Blade</mark> <mark>Runner</mark> but I don&#x27;t know if we want that future I think we want that that duster he&#x27;s wearing but but but not…</span><span class="ph-src">▶ 2024 · We, Robot | Tesla Cybercab 发布</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22blade%20runner%22">5 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E9%93%B6%E7%BF%BC%E6%9D%80%E6%89%8B&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li></ol><details class="bk-more-list"><summary>再看 12 部</summary><ol class="bk-list"><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E5%85%AC%E4%B8%BB%E6%96%B0%E5%A8%98&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0093779.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《公主新娘》</b><span lang="en">The Princess Bride</span><small class="mv-meta">1987 · 电影</small></div>
+    <p class="bk-note">「伟大的电影」：被问怕不怕得罪广告主，他想起片中复仇那一幕：「给我钱、给我权，我都不在乎」</p>
+    <a class="bk-ex" href="/ep/elon-musk-cnbc-full-interview/?p=61&amp;t=2534&amp;hl=princess+bride"><span class="ph-s" lang="en">you know I&#x27;m reminded of the there&#x27;s a seat in The <mark>Princess</mark> <mark>Bride</mark> great movie great where he confronts the person who killed his father he says I offer me money offer me power I…</span><span class="ph-src">▶ 2023 · 马斯克 CNBC 完整访谈</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22princess%20bride%22">5 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E5%85%AC%E4%B8%BB%E6%96%B0%E5%A8%98&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E6%84%9F%E8%B0%A2%E4%BD%A0%E6%8A%BD%E7%83%9F&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0427944.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《感谢你抽烟》</b><span lang="en">Thank You for Smoking</span><small class="mv-meta">2005 · 电影</small></div>
+    <p class="bk-note">他参与出品的电影，讲烟草说客怎样左右政府；他借它说明监管怎样被利益集团绑架</p>
+    <a class="bk-ex" href="/ep/joe-rogan-experience-1470-elon-musk/?p=98&amp;t=5771&amp;hl=thank+you+for+smoking"><span class="ph-s" lang="en">I mean, several years ago, or maybe longer, 10 years ago, I helped make a movie called <mark>Thank</mark> <mark>You</mark> for <mark>Smoking</mark>.</span><span class="ph-src">▶ 2020 · 乔·罗根播客 #1470：马斯克</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22thank%20you%20for%20smoking%22">4 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E6%84%9F%E8%B0%A2%E4%BD%A0%E6%8A%BD%E7%83%9F&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E9%BB%91%E9%95%9C&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt2085059.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《黑镜》</b><span lang="en">Black Mirror</span><small class="mv-meta">2011 · 剧集</small></div>
+    <p class="bk-note">讲到脑机接口将来能存储、回放记忆，他自己也说「听起来越来越像《黑镜》了」</p>
+    <a class="bk-ex" href="/ep/watch-elon-musk-s-neuralink-presentation-full-working-demo/?p=83&amp;t=2770&amp;hl=black+mirror"><span class="ph-s" lang="en">I mean this is obviously sounding increasingly like a <mark>Black</mark> <mark>Mirror</mark> episode.</span><span class="ph-src">▶ 2020 · 观看：马斯克 Neuralink 演示（完整可运行 Demo）</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22black%20mirror%22">4 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E9%BB%91%E9%95%9C&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E5%AD%A4%E5%9B%BD%E6%98%A5%E7%A7%8B&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt4179452.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《孤国春秋》</b><span lang="en">The Last Kingdom</span><small class="mv-meta">2015 · 剧集</small></div>
+    <p class="bk-note">「很棒的历史剧，大体符合史实」：2021 年在 Clubhouse 上说刚追完</p>
+    <a class="bk-ex" href="/ep/elon-musk-clubhouse-interview/?p=92&amp;t=4704&amp;hl=last+kingdom"><span class="ph-s" lang="en">well we what are you what are you watching on tv what are you reading right now well i just finished watching the <mark>last</mark> <mark>kingdom</mark> which i think is a great piece of mostly accurate historical drama</span><span class="ph-src">▶ 2021 · 马斯克 Clubhouse 访谈</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22last%20kingdom%22">4 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E5%AD%A4%E5%9B%BD%E6%98%A5%E7%A7%8B&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E5%A4%AA%E7%A9%BA%E5%A0%A1%E5%9E%92%E5%8D%A1%E6%8B%89%E7%8B%84%E5%8A%A0&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0407362.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《太空堡垒卡拉狄加》</b><span lang="en">Battlestar Galactica</span><small class="mv-meta">2004 · 剧集</small></div>
+    <p class="bk-note">「好剧」：他想象中的火星殖民船队，就像片中那样上千艘飞船在轨道集结、一起出发</p>
+    <a class="bk-ex" href="/ep/elon-musk-spacex-interplanetary-transport-system-presentation-fu/?p=38&amp;t=1394&amp;hl=battlestar"><span class="ph-s" lang="en">…fleet would depart en masse. They&#x27;re kind of like <mark>Battlestar</mark> Galactica. You&#x27;ve seen that thing. That&#x27;s good good show. So but like that. but it it would actually make sense to to load the spaceships into orbit because…</span><span class="ph-src">▶ 2018 · 马斯克：SpaceX 星际运输系统演示 | 完整活动 HD</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=battlestar">3 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E5%A4%AA%E7%A9%BA%E5%A0%A1%E5%9E%92%E5%8D%A1%E6%8B%89%E7%8B%84%E5%8A%A0&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E7%9C%BC%E9%95%9C%E8%9B%87&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt7221388.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《眼镜蛇》</b><span lang="en">Cobra Kai</span><small class="mv-meta">2018 · 剧集</small></div>
+    <p class="bk-note">「太好看了」：看《龙威小子》长大的人会懂</p>
+    <a class="bk-ex" href="/ep/elon-musk-on-clubhouse-live-stream-high-quality-audio-full-versi/?p=102&amp;t=4236&amp;hl=cobra+kai"><span class="ph-s" lang="en">…drama there&#x27;s <mark>cobra</mark> <mark>kai</mark> which is if if you grow up in it&#x27;s so good it&#x27;s so it&#x27;s so good it&#x27;s such a sick burn that that show my goodness i mean they just like turn the knife constantly and yeah let&#x27;s see what else…</span><span class="ph-src">▶ 2021 · 马斯克 Clubhouse 直播（高质量音频）完整版</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22cobra%20kai%22">3 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E7%9C%BC%E9%95%9C%E8%9B%87&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E7%81%AB%E6%98%9F%E6%95%91%E6%8F%B4&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt3659388.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《火星救援》</b><span lang="en">The Martian</span><small class="mv-meta">2015 · 电影</small></div>
+    <p class="bk-note">原著是他读过的「最写实的火星小说之一」；听说拍成了电影，他担心观众看完不敢去火星了</p>
+    <a class="bk-ex" href="/ep/issrdc-2015-a-conversation-with-elon-musk/?p=54&amp;t=2087&amp;hl=the+martian+andy"><span class="ph-s" lang="en">…yeah yeah it was good what did you think I thought it was it was pretty excellent certainly one of the most realistic books on Mars that that I&#x27;ve read I mean like there were a few things like the wind force on Mars is…</span><span class="ph-src">▶ 2015 · ISSRDC 2015：与马斯克对话</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22the%20martian%22%20andy">2 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E7%81%AB%E6%98%9F%E6%95%91%E6%8F%B4&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E4%BF%A1%E6%9D%A1&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt6723592.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《信条》</b><span lang="en">Tenet</span><small class="mv-meta">2020 · 电影</small></div>
+    <p class="bk-note">「挺好看的」，不过「别想太多，想太多就讲不通了」</p>
+    <a class="bk-ex" href="/ep/elon-musk-on-clubhouse-live-stream-high-quality-audio-full-versi/?p=105&amp;t=4359&amp;hl=tenet"><span class="ph-s" lang="en">…movie yes it&#x27;s pretty good wow okay and did you understand <mark>tenet</mark> well i think if you i think if you think too hard about <mark>tenet</mark> it&#x27;s not gonna make maybe complete sense but i enjoyed the movie it&#x27;s funny because that&#x27;s…</span><span class="ph-src">▶ 2021 · 马斯克 Clubhouse 直播（高质量音频）完整版</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=tenet%7Ctennant%20nolan">2 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E4%BF%A1%E6%9D%A1&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E7%91%9E%E5%85%8B%E5%92%8C%E8%8E%AB%E8%92%82&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt2861424.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《瑞克和莫蒂》</b><span lang="en">Rick and Morty</span><small class="mv-meta">2013 · 剧集</small></div>
+    <p class="bk-note">Neuralink 发布会上致敬了片中「给狗做智力增强」那一集，主创就坐在台下</p>
+    <a class="bk-ex" href="/ep/watch-elon-musk-s-neuralink-show-and-tell-event-live/?p=32&amp;t=3900&amp;hl=rick+and+morty"><span class="ph-s" lang="en">…anyways so actually we have Justin Roiland in the audience says the hi Justin so it&#x27;s a little <mark>Rick</mark> and <mark>Morty</mark> reference here the it was great <mark>Rick</mark> and <mark>Morty</mark> episode about intelligence enhancement of your dog…</span><span class="ph-src">▶ 2023 · 直播：马斯克 Neuralink Show and Tell 发布会</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22rick%20and%20morty%22">2 场视频里提到过 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E7%91%9E%E5%85%8B%E5%92%8C%E8%8E%AB%E8%92%82&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E4%B8%8A%E7%8F%AD%E4%B8%80%E6%9D%A1%E8%99%AB&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0151804.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《上班一条虫》</b><span lang="en">Office Space</span><small class="mv-meta">1999 · 电影</small></div>
+    <p class="bk-note">「我最喜欢的电影之一」：导演迈克·贾奇把硅谷上班族拍得太准了</p>
+    <a class="bk-ex" href="/ep/elon-musk-speaks-about-tesla-and-spacex-at-vanity-fair-s-new-est/?p=29&amp;t=1167&amp;hl=office+base"><span class="ph-s" lang="en">…article so I the I I I thought it was okay the but I think like Mike Judge did an amazing job with <mark>office</mark> <mark>base</mark> like that&#x27;s one of my favorite movies ever and he may be here so be nice great he was here a few…</span><span class="ph-src">▶ 2014 · 马斯克在《名利场》新权势峰会谈Tesla与SpaceX</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22office%20base%22%7C%22movie%20like%20office%20space%22">在文稿里搜索 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E4%B8%8A%E7%8F%AD%E4%B8%80%E6%9D%A1%E8%99%AB&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E7%BE%8A%E6%AF%9B%E6%88%98%E8%AE%B0&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt14688458.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《羊毛战记》</b><span lang="en">Silo</span><small class="mv-meta">2023 · 剧集</small></div>
+    <p class="bk-note">「挺好的剧，我看了」：聊 X 怎样给热门内容配上讨论时顺口推荐</p>
+    <a class="bk-ex" href="/ep/elon-musk-war-ai-aliens-politics-physics-video-games-and-humanit/?p=108&amp;t=5687&amp;hl=silo+series"><span class="ph-s" lang="en">Let’s say in the case of Apple posting an entire episode of this <mark>series</mark>, pretty good <mark>series</mark>, by the way, The <mark>Silo</mark>, I watched it.</span><span class="ph-src">▶ 2024 · 马斯克：战争、AI、外星人、政治、物理、电子游戏与人类 | Lex Fridman 播客 #400</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=silo%20series">在文稿里搜索 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E7%BE%8A%E6%AF%9B%E6%88%98%E8%AE%B0&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li><li class="bk">
+  <a class="bk-cv" href="https://search.douban.com/movie/subject_search?search_text=%E9%A3%9E%E8%A1%8C%E5%AE%B6&amp;cat=1002" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="bk-img" src="/assets/movies/tt0338751.webp" alt="" loading="lazy" decoding="async" width="76" height="114"></a>
+  <div class="bk-body"><div class="bk-h"><b>《飞行家》</b><span lang="en">The Aviator</span><small class="mv-meta">2004 · 电影</small></div>
+    <p class="bk-note">读霍华德·休斯传记时提起：看过这部讲休斯的电影，觉得「也许是个警示故事」</p>
+    <a class="bk-ex" href="/ep/elon-musk-rare-interviews-from-the-early-days-3/?p=4&amp;t=153&amp;hl=the+aviator"><span class="ph-s" lang="en">I I&#x27;ve just been meaning to read a book about him for ages and I I haven&#x27;t and so I&#x27;m broadly aware of of of his sort of the things he&#x27;s done and u I saw the movie The <mark>Aviator</mark> and you know and a few few other things.</span><span class="ph-src">▶ 2025 · 马斯克早期罕见采访 #3</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q=%22the%20aviator%22">在文稿里搜索 →</a><a class="bk-hb" href="https://search.douban.com/movie/subject_search?search_text=%E9%A3%9E%E8%A1%8C%E5%AE%B6&amp;cat=1002" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
 </li></ol></details>
   </section>
   <section class="ins-sec">
@@ -435,7 +666,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>

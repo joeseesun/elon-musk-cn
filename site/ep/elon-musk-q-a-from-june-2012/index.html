@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -377,7 +430,7 @@
   <li data-z="115">时间表切块，别靠意志力平衡。明确哪几天给哪件事，写下来，然后接受这张表很硬、代价很大。</li>
   <li data-z="116">别同时开两家公司。他的原话是“糟糕的主意”，他自己属于被逼的，没有第二个选择。</li>
   <li data-z="117">如果目标是改变一个行业，衡量标准放在行业上，别放在自己身上。份额是结果，转向才是目的。这条尺子会改变你愿不愿意开放、愿不愿意合作。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=X_DuOlugI4U" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>It would probably be best if you wanted to ask me a few questions and I would answer them. and we can, you know, play around with this a little bit and see how it goes. Em. Are you excited? Of course. You&#x27;re getting a 10 out of 10 today, right? Yes, definitely. This is a big day for Tesla.</p><p id="p1"><span class="ts-link" data-t="0:19">0:19</span>Because we are releasing the first 10 production cars for, well, let&#x27;s say, regular customers, and they will go on the roads, where they will be used not under the control of Tesla or our staff. They will, so to speak, find themselves in free swimming. So it&#x27;s a big day, and I hope everything goes well. Did you have any questions?</p><p id="p2"><span class="ts-link" data-t="0:41">0:41</span>Yes. Do you conduct crash tests in this building? we don&#x27;t do crash tests in this building. We use external objects for crash tests. And then we develop and manufacture fixes based on the crash test results in this building and conduct analysis of the tests themselves. But for now, we are conducting crash tests in other places.</p><p id="p3"><span class="ts-link" data-t="1:04">1:04</span>How many Model S do you produce per day? How many cars do you produce? Well, we&#x27;re just starting to produce the Model S. It&#x27;s slow at first because it&#x27;s important to us to make sure the quality of each car is excellent. So, right now we&#x27;re assembling about one car a day. And then, a month later, we&#x27;ll go up to two cars a day, then three, six, and ten. You gradually scale up your production line exponentially. Here&#x27;s how it works.</p><p id="p4"><span class="ts-link" data-t="1:31">1:31</span>So you need to change the line in the process? No, the line is designed to produce 20,000 units per year. At low production rates, processes sometimes go off schedule, not according to the flow principle, but over time we will reach the design capacity. Do you think Solar City and Tesla can combine technologies to install solar panels on cars to generate energy, or will the concentration be insufficient to charge the batteries ? I think that&#x27;s what Tesla and Solar City will do together. But not necessarily on the car itself. well, with regard to, say, solar-powered charging stations, I think that meets consumer needs for sustainable energy production and consumption.</p><p id="p5"><span class="ts-link" data-t="2:26">2:26</span>It is obvious that solar energy provides sustainable production. And the car provides sustainable consumption, and you need both components for the overall future to be sustainable. So, it&#x27;s like two sides of the same coin. How long will I have to wait? Right now, if you make a deposit, you will receive the car around March or April of next year. So, over 10,000 cars are already on the road. yes.</p><p id="p6"><span class="ts-link" data-t="2:58">2:58</span>You have 10,000 cars on the waiting list. Yes. Oh, wow. Actually, there are more than 10,000, but as of our last quarterly report, there were 10,000. Since then, there have been many more new bookings. This is great. Hey, did you know that you and Steve Jobs are on the facade of Draper University? Your portrait and a portrait of Steve Jobs. This is cool.</p><p id="p7"><span class="ts-link" data-t="3:19">3:19</span>You should drive by. This is on Third Avenue in San Mateo. Good. Well, cool. There&#x27;s a big portrait of you and a big one of Steve Jobs. Your faces are just huge. I hope you used a little digital processing. so,.. What do you see Tesla like in 10 or 20 years? Oho. 10 or 20 years. This is almost infinity . But I hope that in 20 years Tesla will be producing maybe millions of cars. That would be really cool. And in 10 years, I hope we will be producing at least half a million cars a year.</p><p id="p8"><span class="ts-link" data-t="4:00">4:00</span>But Tesla&#x27;s main goal is to become a catalyst to accelerate the automotive industry&#x27;s transition to electricity. So, I guess that&#x27;s how I evaluate everything. There are cars that we produce ourselves, there are cars for which we supply power units, and there are examples of electric cars from other manufacturers that we inspire with our own example.</p><p id="p9"><span class="ts-link" data-t="4:26">4:26</span>The most important thing is that in 20 years, most new cars will be electric, whether from Tesla or other companies. This is the main goal. Yes. Do you have any words of support for these guys? They&#x27;re going to change different industries, are there any thoughts that, they should take with them?</p><p id="p10"><span class="ts-link" data-t="4:49">4:49</span>Well, I, I think, I think, it&#x27;s, it&#x27;s, it&#x27;s, it&#x27;s very hard to start companies , and it&#x27;s quite painful. I think that&#x27;s important to remember. I don&#x27;t know if this is, it&#x27;s probably not very encouraging. but, I mean, I have a friend who has a really good saying about startups. It&#x27;s like, it&#x27;s, it&#x27;s like eating glass and looking into the abyss.</p><p id="p11"><span class="ts-link" data-t="5:11">5:11</span>so if, if you go into this expecting it to just be fun, you&#x27;re going to be disappointed. that&#x27;s not true. Hmm, that&#x27;s pretty painful. it&#x27;s much easier to find a job elsewhere. much, much easier, much less stressful. You will have more time for other things. But would you be happier?</p><p id="p12"><span class="ts-link" data-t="5:32">5:32</span>It depends on who you are. You know, would I be happier? no, I wouldn&#x27;t. I would be more unhappy. but, so it&#x27;s really like this: if you&#x27;re like , inclined to do it, then you should do it, but, but otherwise—no. it&#x27;s not, it&#x27;s, you know, it&#x27;s not optimizing your free time or anything like that. This, this is going to be extremely difficult and stressful. So you, you must feel the need to do it.</p><p id="p13"><span class="ts-link" data-t="6:01">6:01</span>let me put it this way. If you need words of encouragement, don&#x27;t do this. Actually, that&#x27;s true. These are beautiful, inspiring words. Would you recommend doing both at the same time? No, that&#x27;s a terrible idea. I really don&#x27;t recommend, doing two things at once. I didn&#x27;t intend to run two companies, but , as it turned out, I didn&#x27;t have much choice.</p><p id="p14"><span class="ts-link" data-t="6:23">6:23</span>You inherited one and started another. Yes. Yes. Well, it&#x27;s, I mean, I, I, I, I mean , I played a role in starting both of them in a way, but, but my intention was, not me, I was hoping I would n&#x27;t have to drive a Tesla. and like with Solar City, I played a role in starting it, but Lyndon and Pete, who are the co-founders, they&#x27;re really so good that they don&#x27;t, they don&#x27;t need much help from me. Hmm, that&#x27;s great. I was hoping that would be the case with Tesla, but unfortunately, that wasn&#x27;t the case.</p><p id="p15"><span class="ts-link" data-t="6:54">6:54</span>Of course. Yes. And what about, how did you feel when, when you docked with the space station, this is SpaceX now, right? How, how was it? Yes, it was an extremely satisfying moment. it felt like I had just lost 100 pounds. Hmm, I felt much better. There was, so much that could have gone wrong that when it all worked out, I felt a huge sense of relief . and I, I definitely felt a sense of elation at some point after that , but at first it was, just like: wow, what a huge relief .</p><p id="p16"><span class="ts-link" data-t="7:25">7:25</span>Yes. Any other questions? He has an important day today, but come on. What is your favorite project? Well, I think, Tesla and SpaceX, they&#x27;re probably equivalent. and, so these are my, these are my two favorite projects... yes. Do you like it better than PayPal? Yes. Yes, I like it.</p><p id="p17"><span class="ts-link" data-t="7:49">7:49</span>This is,..yes. Yes. How do you balance SpaceX, Tesla, and family life? Well, I, it&#x27;s, it&#x27;s definitely complicated, but, my basic, method of working is this: Monday and Thursday are SpaceX, Tuesday and Wednesday are Tesla, and Friday is split between Tesla and SpaceX. And then, I have the kids from Thursday evening until Monday morning.</p><p id="p18"><span class="ts-link" data-t="8:19">8:19</span>so I see them on Thursday nights, take them to school on Mondays, I see them on Friday nights usually, and spend the weekends with the kids. although there are times when I have to come into the office for half a day on the weekend, or sometimes for the whole day. and when I&#x27;m with the kids, they, they only need my attention every now and then. and when I, when I&#x27;m not talking to them, I just check my email on my phone.</p><p id="p19"><span class="ts-link" data-t="8:44">8:44</span>How old are they? Well, the twins are eight, and the triplets are five. Of course. So in about 10-15 years they will all go to Draper University. Yes. The most difficult challenges when creating an electric vehicle company. Sorry. What was one of the most difficult challenges when starting an electric vehicle company?</p><p id="p20"><span class="ts-link" data-t="9:04">9:04</span>The most difficult challenges . well, I think that, probably the hardest thing about, starting an automotive company is that, the regulatory requirements for automobiles are huge. So to be able to make any car, it&#x27;s not just a kit or something like that, there are, there are, capital costs that are huge, and that&#x27;s why there has n&#x27;t been a single successful startup car company in the last 90 years since Chrysler, you know.</p><p id="p21"><span class="ts-link" data-t="9:33">9:33</span>So, the oldest, or rather the youngest, car company in America is 90 years old. and, there is a similar problem in the space business. And whenever you deal with industries that require huge capital , it becomes a certain barrier for startups. This also usually means less innovation, as new companies are often the ones driving innovation in an industry. So, the biggest challenge was to manage all of this with the amount of capital we could afford to raise. So that&#x27;s probably the biggest challenge.</p><p id="p22"><span class="ts-link" data-t="10:11">10:11</span>Of course, there are technological challenges and things like that. But, you know, with enough money, they can probably be solved. But will you be able to cope if you have an amount significantly less than what everyone thinks is necessary? Yes, that was the hardest part. One more question.</p><p id="p23"><span class="ts-link" data-t="10:34">10:34</span>Good. It seems to me that the Tesla brand is almost unknown on the East Coast or outside of California. Yes. I don&#x27;t know if I would call him unknown, but he&#x27;s much weaker there. Yes, definitely. I don&#x27;t know if it&#x27;s because you don&#x27;t have enough production capacity. Do you plan to expand in terms of sales in the future?</p><p id="p24"><span class="ts-link" data-t="10:55">10:55</span>Yes. Or when will it happen ? This will actually happen in the second half of this year. We plan to open several stores in the Greater New York area. Also a few in the Washington and Virginia areas. And a few more in Florida. So regarding the expansion on the East Coast— a lot will happen in the second half of this year.</p><p id="p25"><span class="ts-link" data-t="11:18">11:18</span>We will have four stores in the Greater New York area. I think it will significantly change perceptions when people start seeing Tesla stores in the shopping malls they usually visit. I agree with you that this is a huge untapped market for us. Elon has a very busy day today, so we&#x27;ll let him go. But first, I want to thank you, and I&#x27;ll ask you to join me in counting &quot;one, two, three.&quot; Thank you.</p><p id="p26"><span class="ts-link" data-t="11:53">11:53</span>See you later. Heat. Heat. Heat. Heat.</p></div></div>
       
       
@@ -405,7 +458,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -445,7 +498,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

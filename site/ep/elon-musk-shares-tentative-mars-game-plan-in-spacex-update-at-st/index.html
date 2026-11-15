@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -340,7 +393,7 @@
 <li data-z="96"><strong>做分布式系统的，把二十二分钟当成设计约束。</strong>本地优先、离线可用、异步协同这套思路，在地球的边缘计算和卫星网络里同样成立。晚几年会用到，现在就能练。</li>
 <li data-z="97"><strong>关心水冰分布图。</strong>Arcadia 之所以是首选，是因为冰。NASA 和 ESA 公开的火星地下冰探测数据，是判断未来着陆点最有效的公开信息。</li>
 <li data-z="98"><strong>把「一百万吨」当成一张供应链清单来读。</strong>氧气、水、食物、药品、芯片、机床、备件。任何一项没有本地替代方案，火星就不算自我维持。这张清单上的空位，是未来二十年最实在的技术机会。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=-HojSvdYYCs" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>[Applause] So this gives you an illustration of of how does how does a spaceship go from Earth to Mars. So you got blue Earth there and red Mars.</p><p id="p1"><span class="ts-link" data-t="0:22">0:22</span>And I mean the the the actual distance traveled on the ark is close to like a thousand times further than the moon. So you can&#x27;t just go straight to Mars. You have to create this elliptical orbit with Earth at one point and Mars at the other side at the far end of the ellipse and then time the the where you</p><p id="p2"><span class="ts-link" data-t="0:46">0:46</span>are in that or in that ellipse to intersect with Mars. And this so this is the orbital transfer how how you do orbital transfer from Earth to Mars. And if you look on your Starlink Wi-Fi router, you&#x27;ll see this image because the Starlink Wi-Fi is what is or Starlink internet is what&#x27;s being used to pay for humanity getting to Mars.</p><p id="p3"><span class="ts-link" data-t="1:11">1:11</span>So, I just like to thank everyone out there who bought Starlink because you&#x27;re helping pay helping secure the future of civilization and helping make life multip multilanetary and helping make humanity a space bearing civilization. Thank you. So this is a tentative game plan here where we&#x27;re hoping to that we&#x27;re hoping to achieve where we increase the the cadence of</p><p id="p4"><span class="ts-link" data-t="1:44">1:44</span>flights to Mars dramatically with every launch window. So every every roughly two years we are dramatically increasing the number of of of ships that go to Mars and ultimately try to get to a thousand or 2,000 ships u you know per Mars rendevous. so the the I mean as a rough order of magnitude this just guesses obviously but we we need to get about a thou about about a million tons is my guess to the surface of Mars to make a civilization on Mars self-sustaining and getting to that critical point where if the if the resupply ships from Earth stop coming for any reason, Mars still succeeds.</p><p id="p5"><span class="ts-link" data-t="2:31">2:31</span>Mars can still grow and so you can&#x27;t be missing anything. You can&#x27;t be missing even like the equivalent of vitamin C or anything. You&#x27;ve got to have everything you need for Mars to grow. that&#x27;s that&#x27;s essential. So my guess is that&#x27;s about a million tons, but it might be 10 million tons. I hope it&#x27;s not 100 million tons. That&#x27;d be a lot.</p><p id="p6"><span class="ts-link" data-t="2:50">2:50</span>but we want to try to get to that point and secure the future of civilization as quickly as possible. So we&#x27;re looking at different locations. the lead candidate right now is the Arcadia region. So and Mars has a lot of real estate, but when you combine all of the factors and say, &quot;Okay, we need we can&#x27;t be too close to the poles. We need to be near ice for for to get to get water.</p><p id="p7"><span class="ts-link" data-t="3:21">3:21</span>and can&#x27;t be too mountainous for the rockets. then you you it narrows down to a smaller region. So, Arcadia is it&#x27;s one of my my my daughter&#x27;s name is Arcadia actually. and is one of the the options. So, we got the first starships on Mars, gather critical data. So, the first the first lights there we&#x27;ll we&#x27;ll send with the Optimus robot so we can go out there and explore and kind of prepare the way for humans and that&#x27;ll be a very cool image if we&#x27;re able to achieve it by launching end of next year. would actually technically arrive in 2027. but that would be an epic</p><p id="p8"><span class="ts-link" data-t="4:05">4:05</span>fure to see Optimus walking around on the surface of Mars. And then with the launching two years later, we would be sending humans assuming the first missions are successful and they land successfully, we&#x27;d send humans on on the next mission. and we really start building the infrastructure for Mars. So anyway, might maybe just to be safe and we might just do two two landing episodes with the Optimus and do the third one with humans. We&#x27;ll see. So that that classic picture of the workers on the Empire</p><p id="p9"><span class="ts-link" data-t="4:51">4:51</span>State and then put communications on Mars. we&#x27;ll be using a version of Starlink to provide internet on</p><p id="p10"><span class="ts-link" data-t="5:09">5:09</span>Mars. Yeah. So the the speed of light even at moving at the speed of light your best case scenario is I guess I think around 3 and a half minutes to Mars. and then worst case is 22 minutes or more because Mars is on the other side of the sun from Earth. So anyway, it&#x27;s it&#x27;s quite challenging to do high bandwidth communications with Mars, but Starlink will achieve that.</p><p id="p11"><span class="ts-link" data-t="5:40">5:40</span>yeah, and then we&#x27;ll have the first humans lay the groundwork for permanent presence on the surface. and yeah, the goal, like I said, will be to make Mars self-sustaining as quickly as possible. This is just a sort of rough idea of what things will be like for the first city on Mars. My guess is we&#x27;ll probably put the launch pads a little further away, or the landing pads just in case.</p><p id="p12"><span class="ts-link" data-t="6:13">6:13</span>But, I mean, for Mars, we&#x27;re going to need, a lot of solar power. we&#x27;ll be, you know, since you you can&#x27;t really walk around on the surface of Mars, at least as yet until Mars is terraformed to be like Earth. the you you need to walk around with a Mars suit and be, you know, initially in kind of like glass domes. but it would work. and eventually we can make Mars into an Earthlike</p><p id="p13"><span class="ts-link" data-t="6:45">6:45</span>planet. And we want to get to the point where we&#x27;re transferring over a million tons at every Mars transfer window. And then we that&#x27;s like a serious civilization, a megaton per transfer window. So yeah, it would have a lot of spaceports. I mean, because of the fact that you can&#x27;t fly there continuously and you have to transfer in these windows, you&#x27;d have a gathering of a thousand ships or 2,000 ships or more than that. So we&#x27;re have this kind of like battle star galactica field where all these ships are in orbit waiting to depart and and then they they&#x27;d all depart.</p><p id="p14"><span class="ts-link" data-t="7:30">7:30</span>I look at I think an amazing image of all these ships departing at once and then you&#x27;re going to need obviously a lot of launch pads a lot of landing pads on Mars. or you&#x27;ll need to move the the ships off the landing pad pretty fast. so if you get a you got I don&#x27;t know a few thousand ships inbound, probably need at least a few hundred pads, landing pads. And</p><p id="p15"><span class="ts-link" data-t="8:00">8:00</span>anyway, we&#x27;ll solve that problem later. So yeah, anyway, this is this is like an incredible thing to have like this amazing city on Mars, the first city on another planet, and a new world. and it&#x27;s also an opportunity to, I think, for the Martians to to rethink how they want civilization to be. So, you can maybe rethink like what kind of form of government do you want?</p><p id="p16"><span class="ts-link" data-t="8:39">8:39</span>What new rules do you want to have? there&#x27;s a lot of freedom and opportunity in Mars to do a recompile on civilization which will</p></div></div>
       
       
@@ -368,7 +421,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -408,7 +461,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

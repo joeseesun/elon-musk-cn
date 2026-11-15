@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -262,7 +315,7 @@
 <li data-z="57"><strong>练习用概率说话。</strong>少说"一定有"或"一定没有"，多说"大概率""在什么范围内"。马斯克连对外星人的判断都要先划定"我们这片银河系"。</li>
 <li data-z="58"><strong>记住那组时间尺度：地球 45 亿年，文字 5000 年。</strong>文明能走到今天，时间窗口其实很窄。这个视角对理解太空探索、气候、技术风险都管用。</li>
 <li data-z="59"><strong>下次看到"太空激光"这类标题，先找上下文。</strong>星链的激光是用来传数据的，剪掉后半句，它就成了星球大战。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=T6YGjsEX3Eg" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>which is you know sort of coming from the Fermi Paradox Fermi Paradox is is just where are the aliens if the if the if the universe is really 13.8 billion years old shouldn&#x27;t there be aliens everywhere and if not why not I think it was Carl Sagan who said that that there appear to be either like if there&#x27;s there&#x27;s either a lot of aliens or no aliens and that and and either either one is equally terrifying</p><p id="p1"><span class="ts-link" data-t="0:36">0:36</span>meaning if there are no aliens then what we have here is very rare and then no aliens is more terrifying more terrific I think it&#x27;s more likely though right if the universe is 13.8 billion years old well this is like this is why I call this like this this is like a great physicist Enrico fomi who posed the question of like where are the aliens now a lot of people ask me like what about the aliens have you seen any evidence of aliens I&#x27;ve seen no evidence of alien no hard evidence what about these Pentagon videos</p><p id="p2"><span class="ts-link" data-t="1:10">1:10</span>these videos of the Pentagon released during covet of course but you know like what we&#x27;re like well they didn&#x27;t they just say that there was UFOs like that doesn&#x27;t necessarily mean that the US of the ocean like a UFO could be like alien though no a UFO could mean anything that the government like just couldn&#x27;t be like a Chinese like plane or something wouldn&#x27;t we know like I don&#x27;t know necessarily so like I mean there&#x27;s like Advanced programs that the military has which are classified and they wouldn&#x27;t so you know if they had like some really fast missile or something they even if somebody else in the military saw that then they would still not tell them what it was because of</p><p id="p3"><span class="ts-link" data-t="1:46">1:46</span>classified sure wait didn&#x27;t they release something like it&#x27;s the best of my knowledge I have not seen any evidence of aliens and I think I know why do you think I think there&#x27;s a narrative out there that our first interaction with aliens would be violent do you think that&#x27;s the case well if so I think we&#x27;re in trouble because if they were able to get here and we couldn&#x27;t get there then probably they&#x27;ve got much better technology oh we&#x27;re done yeah</p><p id="p4"><span class="ts-link" data-t="2:13">2:13</span>this is so interesting because it doesn&#x27;t seem like it&#x27;s always like gonna be violent one and two they&#x27;re more advanced than us but why can&#x27;t we they&#x27;re gonna be way more advanced not a little bit more advanced so we&#x27;ll be I would just be totally at their Mercy because if they&#x27;ve got spaceships that can get from other star systems to here yeah we don&#x27;t have anything like that right that&#x27;s true so</p><p id="p5"><span class="ts-link" data-t="2:42">2:42</span>like basically we&#x27;re hopeless like we would just be like children or something you know maybe we have some Area 51 though no some lasers locked in there have you been there but you know there there are you&#x27;ve been there weapons there are actually lots of areas by the way oh I think SpaceX technically leases area 59 or something like that so they&#x27;re numbered I think SpaceX needs to create some [ __ ] lasers so wait is there better we do have space lasers oh really yeah Elon is there better areas than 51 of course what do you think please I don&#x27;t have one I need one how am I gonna protect myself if the invasion happens yeah let&#x27;s call Elon oh yeah</p><p id="p6"><span class="ts-link" data-t="3:27">3:27</span>he&#x27;ll answer we do have a lot of space lasers we use them to communicate between the satellites so those just because there should be lasers should be a fully operational around the end of this year so were those just rumors or fake news about Eisenhower having meetings with the aliens and like I don&#x27;t know what you&#x27;re yeah I should not have meetings with aliens in fact I think it was may have been him or or there was some like Pentagon General who who said who because people kept on bugging him about aliens and stuff and he said listen if if we had any evidence of aliens if I had an alien I would drag an alien body or something I&#x27;d I&#x27;d show you the alien</p><p id="p7"><span class="ts-link" data-t="4:06">4:06</span>body because you know what if I showed you that alien body would get our budget approved instantly yeah she&#x27;s like watch out aliens oh yeah we need more money yeah it&#x27;s like if there was like some scary alien stuff that would be the fastest way to get the biggest possible why can&#x27;t we solve your friends yeah but what do you think we&#x27;d react pretty people go crazy like the human population we go crazy would they I mean I I feel like I don&#x27;t know I feel like aliens the the general population believes in Aliens I think like 20 years ago everyone&#x27;s like no but now it&#x27;s like if you ask anyone like yeah I believe in aliens no but I think everyone just like</p><p id="p8"><span class="ts-link" data-t="4:46">4:46</span>believes there&#x27;s aliens because of movies probably yeah because no but I saw that on Joe&#x27;s podcast too it&#x27;s interesting how in like movies and like since the beginning of time or beginning of entertainment they&#x27;ve always been like pushing on us like aliens aliens aliens like movies like Independence Day yeah just everything like War of the World I feel like we&#x27;ve always been told like there&#x27;s life outside like Earth that&#x27;s the other thing like why is Area 51 so secretive then I don&#x27;t think it was actually all that secretive it just it just like answered the Mythos of and I don&#x27;t know people got carried away I don&#x27;t think there&#x27;s anything sort of</p><p id="p9"><span class="ts-link" data-t="5:28">5:28</span>super interesting in area 51. like there are more advanced weapons that the US has that people don&#x27;t know about but they&#x27;re not like crazy alien weapons so what&#x27;s Your Gut feel and if they exist or not like your gut obviously there&#x27;s no hard evidence but I don&#x27;t think there are aliens at least in our sector of the Galaxy so your guts that they don&#x27;t exist not in our sector of the Galaxy so there might be aliens in like a far away portion of the Galaxy if by aliens I think you mean like with spaceships that could potentially travel to here or something like that no just in general I guess was there any alien you could talk to like or you don&#x27;t mean like microbes</p><p id="p10"><span class="ts-link" data-t="6:16">6:16</span>because every boring alien yeah true like like a tiny like you can&#x27;t like just talk yeah or whatever yeah Plankton yeah sure I guess I guess aliens we could talk to yeah not microbes not like yeah not like okay we found a whatever that would just ruin it like we found aliens and yeah they are what&#x27;s the first thing you would say to alien if you see anything like face to face what&#x27;s the first thing you&#x27;d say to alien welcome I hope you come in peace do you understand English is this oh we&#x27;re just speaking gibberish here or what I&#x27;m interesting if they can understand English then they will have been observing us for a long time you know but anyway I don&#x27;t think</p><p id="p11"><span class="ts-link" data-t="7:13">7:13</span>they&#x27;re like I said I I don&#x27;t think they&#x27;re aliens I think the most would you view these things is like probabilities generally you should think of things as probabilities not certainties so I think there&#x27;s probably not aliens and I think that&#x27;s kind of scary actually because then it what it would suggest is that Consciousness civilization as we know it is extremely rare and and a very precious thing where like our Consciousness is like a small candle in a vast Darkness and we must not let that small candle go out that&#x27;s the theory I saw I was like they&#x27;ve always been kind of plugging aliens on us to make us think that we&#x27;re just this little speck</p><p id="p12"><span class="ts-link" data-t="7:50">7:50</span>but actually it&#x27;s like we&#x27;re the only thing and it&#x27;s like they kind of taught us that to not make us feel special and to not like appreciate human existence you know but it&#x27;s kind of interesting when you think about that like what if humans are the only thing yeah they want us to make us feel like we&#x27;re not feel small we wouldn&#x27;t be smart enough yeah like you ain&#x27;t [ __ ] like there&#x27;s something else it&#x27;s an interesting Theory yeah it is well I mean based on everything we know about history and Archeology and stuff you know so Earth&#x27;s about four and a half billion years old and the first writing is only about five thousand years old that&#x27;s basically</p><p id="p13"><span class="ts-link" data-t="8:22">8:22</span>practically yesterday so so it&#x27;s taking four and a half billion years to get to this point so the window of opportunity to make life multi-planetary and have a base on the moon or Mars is open for the first time in the four and a half billion year history of Earth and that may be open for a long time or maybe open for a short time but I think we should not assume it&#x27;ll be open for a long time</p></div></div>
       
       
@@ -290,7 +343,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -330,7 +383,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

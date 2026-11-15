@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -314,7 +367,7 @@
 <li data-z="83">看发布会时，注意演讲者把时间花在哪。产品讲得多，说明难点在产品；制造讲得多，说明难点在产能。后者往往意味着更长的等待周期和更大的交付风险。</li>
 <li data-z="84">如果你的产品要经历产能爬坡，提前把预期公开降下来。主动讲“接下来会很难”，比事后解释延期要便宜得多。</li>
 <li data-z="85">对早期高价版本的用户，明确告诉他们钱去了哪。让他们知道自己买的不只是一台车，而是下一代产品的一部分，这比打折更能留住人。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=ONSVPbRBEvc" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>hey everybody home patron welcome to the back of Freemont I could imagine a better place to be on a Friday night why you&#x27;re here with me my name is Franz I have defied resusci and I have been waiting a long long time for this moment I don&#x27;t know about you guys all right I thought I just want to say a special thank you to everybody that&#x27;s here in</p><p id="p1"><span class="ts-link" data-t="0:30">0:30</span>Fremont via some guests referral guests here also in the back people at gigafactory our employees all around the world and of course everybody that&#x27;s tuned in and washing online we couldn&#x27;t do it at all and all of you especially our employees that worked and I in and out and just awesome awesome yourselves</p><p id="p2"><span class="ts-link" data-t="0:54">0:54</span>right away I know you&#x27;re not here to hear me talk about how beautiful our cars are you want to see in here hang on so he&#x27;ll be bring you on the face let&#x27;s do for your attention over there here let&#x27;s count it down come on</p><p id="p3"><span class="ts-link" data-t="1:34">1:34</span>Oh down the socket those that are watching us online stick how things are pronounced progressed to the presentation the projectors that is producing that image is powered by a lot less there are no wires so that is a projector on West the asking our College magic sack and that is what&#x27;s producing that that image that</p><p id="p4"><span class="ts-link" data-t="2:53">2:53</span>is the factory like a lot of people mere place that is that is actually part of the factory there&#x27;s not a screen and the people in the audience on people that have to find an engineer and both the model 3 alright good point about what</p><p id="p5"><span class="ts-link" data-t="3:15">3:15</span>good is to amazing Hall 3 it&#x27;s also quick design I progressed late nineties done phenomenal job a turn working through every week you guys are amazing I saw so many others designed it but it&#x27;s about actually they</p><p id="p6"><span class="ts-link" data-t="3:36">3:36</span>exactly of what makes it good but existed we we agonized over every curve over every detail every corner every element of the interior the exterior including things that people probably won&#x27;t even notice we care about every every every part of it but yes expenditure we into something that was a</p><p id="p7"><span class="ts-link" data-t="4:01">4:01</span>very simple clean design because a computer will really do to me now the</p><p id="p8"><span class="ts-link" data-t="4:13">4:13</span>cons will be increasingly autonomous so you won&#x27;t really need to look at an instrument panel all that often to be able to what I do want Phil to watch movie protuberance first leaf every model every Tesla being produced right now model three the mullahs molex has has all the hardware necessary full</p><p id="p9"><span class="ts-link" data-t="4:38">4:38</span>autonomy an appeal of the solar realized that the eight cameras of twelve ultrasonic sonars if the forward radar has got over ten tear-offs of compute capability good marketer so what are the challenges with the car with I think that it&#x27;s smaller than a Model S how do we make a car that is smaller on the</p><p id="p10"><span class="ts-link" data-t="5:03">5:03</span>outside bigger on the inside so we took an idea from the Hmong X which was the the canopy stream of a scale like your future and all that makes like your my helicopters really made me feel I will turn that around put that on the rear of the model three villages will have a greater rear headroom and how to have</p><p id="p11"><span class="ts-link" data-t="5:24">5:24</span>this made in view while being in fluorocarbon one of the toughest design challenges of making long three and then in terms of engineering their car great engineer 3 a lot of features of both the Model S does amazing covers great hearts both so we had to get apart countdown design pool to be light but also made it affordable and the cook</p><p id="p12"><span class="ts-link" data-t="5:49">5:49</span>could achieve done amazing job of that and when this really shows up is innate like safety this thing with the pay-tv of talk online fun it is what is possible</p><p id="p13"><span class="ts-link" data-t="6:24">6:24</span>to the beer and there&#x27;s our positive L PI star and they are suffice are as well as isometric but even though it still something like for a great car very fine Roseanna straight day the Volvo is arguing protective paper car in the world I think it is obvious which party would prefer to pin in an accident so the first form of engineering of the car was</p><p id="p14"><span class="ts-link" data-t="7:00">7:00</span>naked then it was a production B then that&#x27;s going to be a major challenge for us over the next six nine months is how to evolve a huge number of cars the good news and frankly we&#x27;re going to be introduction health after the football killer welcome that&#x27;s going to be where we are for at least six months maybe longer but you</p><p id="p15"><span class="ts-link" data-t="7:33">7:33</span>guys know that your veteran I&#x27;ve been through it so I look forward to working alongside you tuning through health and as the saying goes you&#x27;re going through hell keep going Willie booth is the tenth of the size of Hatcher that the free mark our part where we all right now is the second</p><p id="p16"><span class="ts-link" data-t="7:57">7:57</span>largest footprint building in the world fountain that can ultimately produced half million mole trees and bumper thousands of my essays vehicles and many more written to it but is it a good point you a sense of the scale in the how much has to go right so in a big question I could ask</p><p id="p17"><span class="ts-link" data-t="8:22">8:22</span>I noticed it popping up on on on Twitter fine line where is my mall three sometimes not crazy quite as nicely that well we&#x27;re building the cars as past weekend we&#x27;re going to try this ramp as hard as we possibly can I have carry a chart I serve your work at Ko Olina sleek then this chart will might help you it&#x27;s a good point is to</p><p id="p18"><span class="ts-link" data-t="8:59">8:59</span>give you a sense of how my passion actually works there are 13,000 unique part in among in Moultrie and these are coming from all about two hoods come from North America and about a third from the rest of world Vesna thieves huh with this chart which looks like we&#x27;re being shot with ICBM</p><p id="p19"><span class="ts-link" data-t="9:22">9:22</span>what is the ice cream cart actually or we will command put on anything that goes wrong here in the world if we don&#x27;t have your own confidence of my shame will interrupt of the production progress when you have 10,000 unique items indicate inter-vehicle Ori any any object any one of them I can slow down for us across the quote the</p><p id="p20"><span class="ts-link" data-t="9:56">9:56</span>production of great women&#x27;s bathroom food and least what gives the coating and on the homemade man I thought that we have the gigafactory so this is a solution Ricardo with there being nothing there was just a desert and boats what is now what a locket actually now the largest battery factory in the</p><p id="p21"><span class="ts-link" data-t="10:19">10:19</span>world and when it&#x27;s done I will produce more lifting my batteries than the rest of global production line from one so in fact let&#x27;s go to the good factory life to reconnect to them of all most</p><p id="p22"><span class="ts-link" data-t="10:49">10:49</span>people have rather that helped make the fact the battery pack and the the motors of power train and the giant giant country making venture hacks and our trains giant party making cars and giant suffice rain and soul doesn&#x27;t have to work together in pain in order to get to initial target of five thousand cars a</p><p id="p23"><span class="ts-link" data-t="11:15">11:15</span>week and then probably by the next year towards ten thousand cars and then you probably want to like be able to charge my car well it&#x27;s like fully the second most common question is whether like the supercharged high school what is wrong with you why are you so sure here today it okay sorry okay we are tripling the number of by the end of this year there</p><p id="p24"><span class="ts-link" data-t="11:44">11:44</span>will be three times space utilizes the our state that&#x27;s really and eventually we&#x27;ll be able to go almost anywhere I look very European Australia and Maine causation and the Gulf area Colleen this year especially you will feel anywhere on earth yeah and actually think you can do anywhere code because anywhere where there&#x27;s electricity you can charge your</p><p id="p25"><span class="ts-link" data-t="12:22">12:22</span>car supercharger just about the old Clark orbited family is nuts what about the specs Ford Model 3 there are two main variants to the stand in long range standard well it can be $35,000 for 20 mile range and give you a rhythm at that part so the acceleration was believable under six seconds 131 out my line for</p><p id="p26"><span class="ts-link" data-t="12:44">12:44</span>speed and he will get the long range one our separation we&#x27;re ten miles imagine about roughly five pictures they&#x27;ve been heard on our to speak so this is going to be a really great party I will not be applying a better car gasoline or electric in that question he says anywhere there is a spray the Tenno</p><p id="p27"><span class="ts-link" data-t="13:21">13:21</span>some cars we have the buzz that has opposed any production cars here be charged right now right there</p><p id="p28"><span class="ts-link" data-t="14:04">14:04</span>all right so let&#x27;s take eyes those are actual owners actual production cars there&#x27;s actually no</p><p id="p29"><span class="ts-link" data-t="14:26">14:26</span>possession full of 50 problem cars that we made this month and query which we use for very validation 30 which will be on the road with customers and I went to say those that have lined up for triumph model 3 and and that some cases that date outside of a source to to be personal list</p><p id="p30"><span class="ts-link" data-t="14:53">14:53</span>I just want you know pre we realize that really matters to us I will really care we&#x27;re doing everything we possibly can until your car as soon as possible so we worked a night to to do right by the fiber local a short thank you</p><p id="p31"><span class="ts-link" data-t="15:20">15:20</span>I think a writer got now three powers that is touching that the PSB yes and the three those letters in a line out of your life and the it&#x27;s give a sense if you shorter model to me now you probably get towards the end of next year but because the head and the X are in production if you order them now you can</p><p id="p32"><span class="ts-link" data-t="15:50">15:50</span>get them in about one or two months and as I&#x27;d like to thank all the customers who have to go in a model ethnic and those who revile well as an X because in doing so you make the three possible the money that we we make with with an S X all goes into building model three so thanks for doing a :</p></div></div>
       
       
@@ -342,7 +395,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -382,7 +435,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

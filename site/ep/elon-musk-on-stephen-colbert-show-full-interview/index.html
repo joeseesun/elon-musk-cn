@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -342,7 +395,7 @@
 <li data-z="97">检查你正在使用的名词背后是什么实物。“喷气发动机”里装的是风扇，“智能客服”里坐的是规则树，“AI 助手”里跑的可能是关键词匹配。名词会替产品撒谎，实物不会。</li>
 <li data-z="98">做产品时优先改造那些“用户必须学会一套编码”的环节。任何需要用户先翻译再操作的界面，都是可以重新设计的空间，翻译成本从用户挪到机器上，体验就会跳一个台阶。</li>
 <li data-z="99">记录你每天觉得烦的具体小事，越具体越好。掏线、打字、找插座这类抱怨里藏着真实需求，宏大叙事里什么都找不到。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=70sCMaW7Suk" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>please welcome Alon [Applause] musk thanks so much for coming back all right Mr musk good to see you again good to see you now I can&#x27;t begin to tell you the excitement I get over the things you do great all right Ju Just tell the people who you you&#x27;re one of the founders of PayPal you&#x27;re you&#x27;re a scientist you&#x27;re inventor you you you created the the initial concept for Solar City the largest provider of solar power in the United States as I said before SpaceX and Tesla and PayPal also designed something called the hyperloop which would transport Riders from LA to San Francisco in 35 minutes at what point at what point do you tip over from Visionary to super</p><p id="p1"><span class="ts-link" data-t="0:49">0:49</span>villain and where are you building your secret M Lair I&#x27;m I wondering that myself actually what I love about you is that you saw the future as a kid I imagine yeah let&#x27;s make that happen yeah because because the future you&#x27;re giving us is the future that I thought I want to saw I saw X-Men on Saturday night yeah and then I walked out to my Tesla CU I have a Tesla yeah and it it just it it just greeted me the the the door handles came out and it just felt like it was my friend right yeah I said I don&#x27;t need the damn movie I&#x27;ve got a car yeah we we kind of want the car to be your friend actually in fact with the new version of the software that&#x27;s</p><p id="p2"><span class="ts-link" data-t="1:29">1:29</span>coming out you&#x27;re going to get get to be able to to name your car like it&#x27;s a pet or something yeah really yeah yeah what would you what what would you name your car if you could well I actually I since I have the advanced software I actually I have named my car really yeah I I named it Old Faithful it&#x27;s the second production version yeah oh that&#x27;s nice don&#x27;t name it Old Yeller or you have to shoot it right exactly okay let&#x27;s talk about SpaceX for a second people know you already from Tesla I want to show a little bit of footage here of of one of the test flights you&#x27;ve done for a reusable rocket let&#x27;s take a look at it here [Applause]</p><p id="p3"><span class="ts-link" data-t="3:02">3:02</span>that is one of the most badass things I have ever seen that&#x27;s that&#x27;s that&#x27;s what we were told Rockets were going to be able to do when I was reading all those 50 science fiction books as a kid that&#x27;s what they should do absolutely so why is that so important well the the main reason it&#x27;s important is that we want to achieve full and Rapid reusability with rockets so the way rockets work today is that they&#x27;re they&#x27;re single use and you can imagine that if you had an aircraft or a car that were single well not many people would would use it because it be too expensive so we need to make make the Rockets rapidly and completely reusable such that you just need to</p><p id="p4"><span class="ts-link" data-t="3:38">3:38</span>reload propellant in order to fly a game so this this seems to me is the kind of Rocket we need to be able to go to Mars because you can&#x27;t go there and build another rocket you got to go land suck some hydrogen out of the water in the soil and you know pack it back in and off you go yes the actually you could</p><p id="p5"><span class="ts-link" data-t="3:58">3:58</span>conceivably do go with an Expendable system but you would only be able to send a like a few people maybe on on a on on one or two missions and in order to actually establish a m base that&#x27;s where the reusability is is critical otherwise it&#x27;s simply to expensive people won&#x27;t be able to afford to to move there okay so more immediately than going to Mars we&#x27;ve got to get up to the International Space Station yes and the rookies have said right no more rides for you americanish know Amic I believe the Deputy Prime Minister of Russia suggested that America use a trampoline to get there MH okay this no joke actually did say that it&#x27;s kind of crazy</p><p id="p6"><span class="ts-link" data-t="4:37">4:37</span>you&#x27;re the only company that&#x27;s actually sending payloads up to the International Space Station right now the only private company that&#x27;s doing that what&#x27;s the name of the company that&#x27;s doing that well yeah so it&#x27;s SpaceX and then orbital Sciences is our competitor for bringing well they also take kaga to the space station so two of you are doing it yes although we&#x27;re the only company that&#x27;s bring stuff back in terms of kago back so so if I were going to go up I&#x27;d want to go with you guys because if you want the return Journey right exactly right right right now that the Russians have said they&#x27;re not going to give us rides anymore how good is</p><p id="p7"><span class="ts-link" data-t="5:14">5:14</span>that for you can you step up and take over for the the man flights I mean arguably you know with with enemies like that who needs friends but yeah I suppose Russia is is being helpful yeah probably being helpful did you think about sending them some flowers after they refed to surve sure how long before you&#x27;re sending men up or women yeah so we we we hope to be sending people up in about two to three years with dragon version two the version two of our Dragon spacecraft is is able to land propulsively and with Precision so like that thing just did yeah yeah basically s similar to that although the the it has eight side mounted thrusters and uses</p><p id="p8"><span class="ts-link" data-t="6:03">6:03</span>differential throttling for control instead of gambling the main engine you don&#x27;t have to tell me right can you hold on a second I want to talk a little bit more here for just a second we got to take a commercial break sure we&#x27;ll be right back with more from Elon Musk the ground I&#x27;m here with</p><p id="p9"><span class="ts-link" data-t="6:20">6:20</span>SpaceX and Tesla Motors founder Alon musk the two of us are talking as I said I&#x27;ve got a Tesla and I love the car and it&#x27;s miles at it&#x27;s the best damn golf cart I&#x27;ve ever tried well it really acceleration is incredible it&#x27;s incredibly comfortable they won&#x27;t let me take it on The Links at my club but other than that you recently made all</p><p id="p10"><span class="ts-link" data-t="6:42">6:42</span>the patents for Tesla available to everybody so we&#x27;re not going to prosecute people if they use our patented technology for Tesla why are you giving away the store like that why are you being the Edward Snowden of you right I&#x27;m not sure the the the right analogy exactly but I mean I sort of s like if if if we were on a ship together and and we but and there&#x27;s some holes in the ship and we&#x27;re sort of bailing water out and we we we have a a great design for a bucket then you know even if we if we&#x27;re bailing out way better than everybody else we should probably still share the bucket design cuz we&#x27;re all going to</p><p id="p11"><span class="ts-link" data-t="7:22">7:22</span>sink last question your future man where&#x27;s my Jetpack you know you you can actually if you look on YouTube there&#x27;s a lot of interesting videos I don&#x27;t want to put a cat in a jetp pack I want to get in the jet pack right but have you worked on Jetpack of your own I I haven&#x27;t no no I</p><p id="p12"><span class="ts-link" data-t="7:48">7:48</span>I I&#x27;m not I&#x27;m not sure about jetpacks I mean there&#x27;s some fundamental physics that make it very difficult to have a jetpack cuz they it&#x27; be very noisy and it&#x27;s hard to land a rocket on its tail too true eyes on the prize but you know something I think would be great to have is is that aircraft should be vertical takeoff and Landing you know and the oh like a Harrier or something kind of like a Harrier except that you should really it&#x27;s better to move the move the the fan than it is to to duct the the the the air right now Harrier does it with ducts it do with ducks yeah and and duct tape one imagines yeah fair amount of but I think the Harry is a great plane but I</p><p id="p13"><span class="ts-link" data-t="8:31">8:31</span>think that there&#x27;s there&#x27;s a real opportunity to have a vertical take off and Landing electric supersonic jet that electric jet yeah do it shoot Sparks out the back I don&#x27;t understand how can you have electric jet no you just you use an electric motor to drive a fan yeah oh okay okay yeah my apologies my apologies I should seen actually jeda aircraft are mostly fan driven yeah the the S sorry traditional yeah jet aircraft like when you see something it&#x27;s called like a high high bypass jet engine like on a tri 7 you know it&#x27;s got like that huge yeah yeah huge fat fat it looks huge it looks huge and and that&#x27;s because most of the propulsion is really coming</p><p id="p14"><span class="ts-link" data-t="9:14">9:14</span>from the fan so so there so you need a big fan yeah so it&#x27;s it&#x27;s really it&#x27;s really it&#x27;s really it&#x27;s a prop plane that they&#x27;ve dressed up to look like a jet kind of yes kind of that yes so I&#x27;ve been I&#x27;ve been I&#x27;ve been lied to well there&#x27;s some there&#x27;s some value to to to having ducts but but it&#x27;s actually more efficient to have an open fan if if you just care about sort of efficiency per mile but you can go faster if you have a ducted situation yeah what&#x27;s next what&#x27;s what&#x27;s what&#x27;s the next thing what&#x27;s what are we what are you going to blow my mind with well what what what do you wish there there</p><p id="p15"><span class="ts-link" data-t="9:55">9:55</span>was I I wish I wish there weren&#x27;t any cables I I wish that computers didn&#x27;t have to be typed into I think that I think that that The Mouse and the keyboard is terrible it&#x27;s it&#x27;s terrible it&#x27;s a terrible interface that I could have a relationship with the machine and it would and we I&#x27;d have a discussion of my needs and it would do it and I also think that cables on anything is terrible charging not communication but charging cables as well that I would just walk into my house and things would charge or or just I would have a a subscription service to a charging system and that anywhere I went in the United States there would be a charge that would follow me around right</p><p id="p16"><span class="ts-link" data-t="10:37">10:37</span>right okay okay get back to me yeah no we&#x27;ll do it thank youon thank you thank you so much Alon musk SpaceX Tesla Motors and wireless charging we&#x27;ll be right back thank</p></div></div>
       
       
@@ -370,7 +423,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -410,7 +463,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

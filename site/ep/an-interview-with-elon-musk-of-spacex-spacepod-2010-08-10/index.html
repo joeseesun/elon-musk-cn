@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -270,7 +323,7 @@
 <li data-z="61">判断一个行业是否真的被撼动，去看在位企业花了多少钱和精力去反对新进入者。反应越不成比例，威胁越真实。</li>
 <li data-z="62">如果你关心航天、能源、AI这类长周期议题，去找对应的预算文件和听证记录，看懂钱分给了谁。一百多页的预算文档比一百篇新闻更能说明方向。</li>
 <li data-z="63">把你在意的议题讲给一个完全不了解它的人听。马斯克在2010年说普通人上太空的机会取决于公众是否发声，这句话在任何需要公共预算的领域都成立。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=-xjgAH6tZBM" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>a Skype interview with SpaceX founder Elon Musk on your space pod for August 10th 2010 on this space pod we&#x27;ve got an awesome interview with Elon Musk now we&#x27;re doing this over Skype so please forgive us if we get a few audio dropouts and if you want to see the full interview you can do that by signing into your space vidcast epic account or signing up for Access and I did want to thank you for taking the time out of your day I know you&#x27;re extremely busy you&#x27;ve got a slew of different companies that you work with with and going back to the beginning well a little bit after the beginning after x.com and PayPal you founded three companies at least founded and funded three companies</p><p id="p1"><span class="ts-link" data-t="0:39">0:39</span>SpaceX which does rockets Tesla motors for cars and then you also did Solar City which is a photo voltaics why those three companies sure well it really just goes back to when I was when I was in college I wanted to be involved in things that I thought would really have an impact on the world and the the three Arenas that I thought would have the biggest impact on the future Humanity were the internet</p><p id="p2"><span class="ts-link" data-t="1:05">1:05</span>moving to sustainable energy economy and space exploration particular becoming a multiplet species so I did a couple internet companies that gave me the capital to work on sustainable energy and space exploration and that&#x27;s where really the impetus behind creating those companies tell us a little bit about the future there a little bit of information has been leaking out about and I don&#x27;t know how to pronounce this correctly is it Falcon X or Falcon 10 is that considered Roman numerals or an X well I I think</p><p id="p3"><span class="ts-link" data-t="1:41">1:41</span>it probably Falcon X I suppose I think a lot of it was just really taken out of context there was you know one one of our one of the engineering directors at SpaceX was at a propulsion conference tsed out some ideas those are not official SpaceX policy or plans or anything they&#x27;re just ideas for discussion and then some articles were written that basically made it sound as though that was some sort of official SpaceX plan or policy or what SpaceX was proposing you know I think</p><p id="p4"><span class="ts-link" data-t="2:19">2:19</span>or something in space because it should be possible for SpaceX you know engineering managers to go to a conference and talk about IDE getting too carried away but they did so so I I would not read anything into it that those are just some ideas for for discussion well you know the the good thing about that is one one interesting takeaway is that if the US government were to say something like that we&#x27;d all kind of scoff and go yeah well maybe but when SpaceX comes up and says you know here&#x27;s a potential future we all kind of at this point believe it we you&#x27;re kind of the company that we all look at and go yeah if anyone could do it it&#x27;s them and along those same</p><p id="p5"><span class="ts-link" data-t="3:03">3:03</span>lines that&#x27;s where a lot of the old space Advocates are we&#x27;ll call them established space Advocates when when we pointed at the Falcon 9 flight one launch they they were waiting for that to explode in the air or anything for it to go wrong so they could slam down the proposed fiscal year 2011 plan and then even when you were successful they still found ways to slam it down why are they pointing at SpaceX as the only company for cuz you&#x27;re not the only company under the Cs program but why are they targeting</p><p id="p6"><span class="ts-link" data-t="3:36">3:36</span>SpaceX well I I I think the reality is that there&#x27;s SpaceX is is sort of the only is the the only threat to the incumbent big big aerospace companies that that they&#x27;ve seen in their careers ever you know you&#x27;d have to go back to kind of the early days of of airplanes or something you know to when lock and Boeing were were first getting formed to to really say okay that&#x27;s when they had a serious threat because it&#x27;s been this sort of cozy oligopoly for quite a long time or in the launch business there was a duopoly you know with boing had their launch vehicles and ly had had their so you know it&#x27;s really just a</p><p id="p7"><span class="ts-link" data-t="4:25">4:25</span>situation of that they&#x27;re they&#x27;re attacking the only threat that they that that they&#x27;ve ever seen come do you believe that Mars by 2025 is possible and if so where would funding from that come from yeah I think it&#x27;s it&#x27;s important to be precise in the language I I I hope that people land on Mars by 2025</p><p id="p8"><span class="ts-link" data-t="4:49">4:49</span>you know SpaceX will aspire to help make that happen you know we if if there&#x27;s any way SpaceX can can make that happen we&#x27;ll we&#x27;ll we&#x27;ll will make it happen if it&#x27;s within our power to to influence that that objective we will do so but but I want to distinguish that from it being predictive of it occurring I&#x27;m not saying that it will occur I&#x27;m just saying that we we will to to make it happen and I think it&#x27;s possible that it could happen another question from the Twitter verse was what about the Falcon 1e it seems like we&#x27;ve got a lot of momentum in time going into the Falcon 9 but what about the Falcon 1 well we are upgrading the Falcon 1 that&#x27;ll launch sometime you know</p><p id="p9"><span class="ts-link" data-t="5:37">5:37</span>hopefully next year the Falcon one or you know essentially version two of the Falcon one will make use of of a of an upgraded Merlin engine so we have a m one that&#x27;s an improved version of millin onec and and that&#x27;s the engine that will be the main engine for Falcon the upgraded Falcon 1 so you know we we</p><p id="p10"><span class="ts-link" data-t="6:08">6:08</span>want to get that that engine development done before we do the rest of the upgrades of of Falon one but there&#x27;s whole question we&#x27;re going to get it done and I would expect First Flight perhaps you know late next year or something like that yeah all right awesome like I said I know you need to go but I did want to thank you for your time hopefully you won&#x27;t be a stranger to the show I&#x27;d love to bring you on live sometime so we can get the the internet and Twitter verse as it were to ask their questions directly of you cuz you are a fascinating mind and you&#x27;re doing stuff that is frankly without sounding too cheesy going to Forever change humanity and it&#x27;s it&#x27;s</p><p id="p11"><span class="ts-link" data-t="6:45">6:45</span>really fun to watch well thanks I I certainly I certainly hope it has a profound long-term effect happy to come on your show again in the future I do think it&#x27;s important to sort of rally the people to the cuse of of commercial space because I mean I really feel like this is a situation where like you know the big companies that have you know billions of dollars and and just armies of lobbyists and and PR firms and everything they can really sort of overwhelm the truth in a situation like this and I think that&#x27;s that&#x27;s happened actually because it&#x27;s just crazy that you know that we&#x27;re fighting fighting over a tiny tiny n portion of the NASA Bud budget for</p><p id="p12"><span class="ts-link" data-t="7:31">7:31</span>commercial space you know we&#x27;re trying to get 300 million for commercial space out of 20 half% and and and yet the sort of the dark Forces are doing everything they can to shut that off and just basically they&#x27;re just hoping to starve commercial space to death that that&#x27;s their goal and it&#x27;s it&#x27;s sort of a pretty evil goal and I think what you know one of the ways that we can fight that is is by you know people calling their their congressman and and Senator and that kind of thing and and just kind of going out there and speaking up in favor of of commercial space flight because that&#x27;s the only chance that anyone has of of normal people going to space otherwise it&#x27;s</p><p id="p13"><span class="ts-link" data-t="8:14">8:14</span>always going to be just a small number of of of astronauts you know at extremely expensive cost going to future well no and absolutely you know that&#x27;s that&#x27;s actually a great note to to end this on thank you very much for joining us Elon and and please keep this conversation going don&#x27;t don&#x27;t just talk about this on in the comments on the website and YouTube and whatnot so keep it going on Twitter keep it going on Facebook do it in the water cool do it in person talk about this with your family and friends get space in the Forefront of the consciousness of humanity again it was there when we were on the moon and then it kind of vanished because because you know it St started</p><p id="p14"><span class="ts-link" data-t="9:00">9:00</span>to stagnate well no longer now we&#x27;re starting to do some really cool things start talking about it and as you start talking about it you&#x27;ll find that the Consciousness the global Consciousness becomes more and more educated and I think that&#x27;s very very important getting people excited and engaged about human space flight again and if you want to continue this in person you can do so at the upcoming space up conference in Washington DC [Music]</p></div></div>
       
       
@@ -298,7 +351,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -338,7 +391,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

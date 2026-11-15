@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -281,7 +334,7 @@
 <li data-z="130">关注 2023 年特斯拉的几个节点：Cybertruck 满产进度、财报电话会上的详细更新、Neuralink 的首例人体植入、星舰的轨道试飞。这四个节点，任何一个落地都会改写对应的行业预期。</li>
 <li data-z="131">遇到跟自己直觉相反的判断，先别急着否定，找它的前提。马斯克说自动驾驶会让堵车更严重，前提是出行成本下降会推高总需求。这个前提成立，结论就成立。</li>
 </ul>
-<p data-z="132">访谈结束时，镜头还对着那座工厂。马斯克在里面走来走去，背后是正在运转的产线。他讲的那些判断，无论同不同意，至少都是从这种地方长出来的。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+<p data-z="132">访谈结束时，镜头还对着那座工厂。马斯克在里面走来走去，背后是正在运转的产线。他讲的那些判断，无论同不同意，至少都是从这种地方长出来的。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=nURQQeLn760" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:06">0:06</span>Elon conducts the interview digitally in the Texas Gigafactory, and we can see it in the background. He explains how the office space and the factory are together, and management is not contained in an ivory tower, and management and engineering work as close as possible. Elon starts off by talking about how we have traffic problems on highways, and they will get worse with autonomous vehicles, which is what I have been saying too, there will be more cars on the road when we have autonomy. Elon is asked more about the government, and he replies that the &quot;role of government should be more like a referee, but not a player on the field&quot;.</p><p id="p1"><span class="ts-link" data-t="0:06">0:06</span>This is almost a direct quote from the economist Milton Friedman &quot;Government should be a referee, not an active player&quot;, which I also agree with. I swear everything Elon says about economics concurs with exactly the way I think too. The only thing I ever disagreed with him was Dogecoin, but having said that, it was bitcoin Tesla bought, and briefly accepted as payment. Elon talks about how rules and regulations make business more and more difficult, he says it hardens the arteries of civilization, and that government should be trying to get rid of rules and regulations, that perhaps had some merit at some point, but don&#x27;t have any merit currently, and this is a big problem.</p><p id="p2"><span class="ts-link" data-t="0:06">0:06</span>Again I love him saying this, as I agree so much. This is partly what is referred to as moats, these rules and regulations stop competition coming in, and create moats around the existing players. A large part of which goes back to cronyism, exactly like we are witnessing today, and we go back to Elon&#x27;s quote about the EV Bill &quot;This is written by Ford and UAW lobbyists, as they make their electric car in Mexico, not obvious how this serves the US tax payers&quot;. Elon talks about the subsidies, that Tesla stopped getting years ago, and all Tesla&#x27;s sales that they get have nothing to do with that. And that Tesla makes 2/3s of the EVs in the United States.</p><p id="p3"><span class="ts-link" data-t="0:06">0:06</span>Tesla makes twice as many as the rest of the industry combined, and that Tesla don&#x27;t need the $7500 tax credit to do that, as they exhausted that long ago. Elon is not a fan of this bill. And as I have said in the past, all it will do for Tesla is simply make the waiting lists for their cars increase. They will sell every car either way, he even goes on to say that there is no need for the support of the government for the charging network either, and says we don&#x27;t need support gas stations. Then he says get rid of all subsidies, which he also includes with fossil fuels.</p><p id="p4"><span class="ts-link" data-t="0:06">0:06</span>He says maybe the competition need the subsidies, but remove them anyway, and that when Tesla was started there were no subsidies, and that they only came about from GM lobbying. Elon says he doesn&#x27;t want any of the subsidies ear marked for R &amp; D either. Like I say also, Tesla is doing everything they can as fast as possible, they are not with strained in anyway by money, they were earlier on, but not now. Tesla&#x27;s R &amp; D is more than funded by their profits. Then Elon talks about how crazy government spending is, as the spending is so far in excess of revenue, it&#x27;s insane. This is partly due to modern monetary theory, and why I own bitcoin.</p><p id="p5"><span class="ts-link" data-t="0:06">0:06</span>Elon talks about the anti-billionaire rhetoric, and he is asked about how do you tax a billionaire, Elon says he pays 53% tax, which is true, but Joanna Stern was likely more implying about taxing their level of wealth. Elon then talks about all the other taxes he is subjected to, and is in favor of estate tax. But Elon gets to the real point, about having assets beyond a certain level that are far beyond someone&#x27;s ability to consume. Which is perhaps a first principles way of describing what everyone means by the ultra-wealthy. Which is not talking money for personal expenditures, and what it becomes is capital allocation.</p><p id="p6"><span class="ts-link" data-t="0:06">0:06</span>And if you are to take their wealth from them, it does not make sense, to take the job of capital allocation away from people who have demonstrated a great skill at capital allocation, and to then give it to an entity that has demonstrated a very poor skill in capital allocation, i.e. the government. Elon then says the the government is a corporation with a monopoly on violence, and has no recourse. Which he has stated in the past.</p><p id="p7"><span class="ts-link" data-t="0:06">0:06</span>Elon does further elaborate on that, and does say that he thinks the government should exist, implying he is not an Anarcho-capitalist, neither am I, but I do know some very smart people who are, personally I can&#x27;t quite get there myself, but they do have some great arguments. And Elon even says he&#x27;s not an extreme libertarian, but thinks we should limit what the government does. As the government&#x27;s efficiency on spending is going to be lower than a competitive commercial company by a lot. He gives examples of East vs West Germany and North vs South Korea. Again I am in full agreement with him, economics has taught me this.</p><p id="p8"><span class="ts-link" data-t="0:06">0:06</span>Elon is asked about the Chairman position, which he is actually eligible for again, since his infamous 420 Tweet. And Elon says that all the titles are basically just made up anyway. And Elon&#x27;s title is Techno King anyway, which he officially changed it to, as we know, to illustrate this point. Elon is then asked about any update of the Tesla bot, and he talks about how the car is a robot on four wheels, and that they can simply take that technology and place it in a humanoid robot. Basically the full self driving technology will be replicated with the robots. And he asked about applications for the robot, Elon says it has the potential to become a generalized substitute for labor.</p><p id="p9"><span class="ts-link" data-t="0:06">0:06</span>Which is the biggest industry there could possibly be. Elon then talks about how there are simply not enough people in the world, which we hear him often mention. Especially seeing declining populations. Which is the opposite of many other narratives of people who think the population is growing out of control. And the interviewer has done her homework, and actually asks about 12/9. Elon says it just came out of nowhere, and as far he knows nothing is happening. Which is kind of where I am too, which is why I haven&#x27;t made any videos on it. But who knows, I guess we will find out soon. Then Elon is asked about the cybertruck.</p><p id="p10"><span class="ts-link" data-t="0:06">0:06</span>Its going to be an incredible product, maybe their best product ever. It has a lot of new technology and is thus a hard car to make. And we expect full volume production in 2023, and we will get a more detailed update on the Tesla earnings call next year. In the past Elon has said volume production is 20,000 units a month, so at some stage in 2023 we will see Cybertruck at least at the run rate of around 1/4m units a year. Which is interesting. But yes, that&#x27;s right Elon is going to be back on the earnings call, which we have also heard him say before. Then neuralink, which is working well within monkeys, and a lot of testing and confirming its very safe and reliable.</p><p id="p11"><span class="ts-link" data-t="0:06">0:06</span>And the fact a monkey could play pong telepathically which is quite profound. And Neuralink will be in the first humans next year, with people who have severe spinal cord injuries. Wow I didn&#x27;t realize they were that far with nueralink. Elon is amazing. And he thinks they have a chance of restoring full body functionality to someone who has a spinal cord injury. Implying someone paralyzed will be able to walk again, which is astounding. Then Starship, the biggest rocket ever made, and fully reusable, which there has never before been. This is the fundamental break-through that is necessary for humanity to become a spacefaring civilization. He goes into rockets and space travel more.</p><p id="p12"><span class="ts-link" data-t="0:06">0:06</span>Which is interesting, but not what I specialize in. But basically its the difference between humanity being a single planet species and a multiplanet species. And then it ends with some levity about his sense of humor, which I personally appreciate a lot. Then there are some questions, he is asked about his views on China and the United States. He believes China might have an economy 2 or 3 times the size of the United States, and that China is going to be the biggest kid on the block. And he hopes that will have as positive relationship as possible and work towards a mutual prosperity of humanity as a whole.</p><p id="p13"><span class="ts-link" data-t="0:06">0:06</span>I loved this interview, although there was little more information about Tesla, it was great hearing some of Elon&#x27;s views on economics, and how much they align with my own personal views. I have a feeling with Elon on the earnings call in January, there is going to be some big news, so a lot to look forward to there. Also in the background seeing Texas it looks like its just about ready, so perhaps the opening will be announced very soon. Elon is accomplishing so many amazing things, I hope you realize just how lucky you are to be alive at the same time as his existence. There would be much less in the world to look forward to if he wasn&#x27;t here.</p></div></div>
       
       
@@ -309,7 +362,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -349,7 +402,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -325,7 +378,7 @@
 <li data-z="90">做产品规划时，学会说"短期不做"。列一张不做清单，比列一张要做清单更能保护你的执行资源。</li>
 <li data-z="91">如果你相信某件正在被大量宣传否定的事，别指望用辩论赢。把产品做出来、把成本降下去，是最有说服力的传播。</li>
 <li data-z="92">读十年前的科技发布会，重点看它承诺的产能数字，而不是承诺的功能。功能可以画饼，产能数字是要用钢筋和工人兑现的，十年之后一眼就能验出真假。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=lxiq8RG_KPw" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>we could like maybe take a few questions the audience sure like yeah right now we&#x27;re now right now right now we have never handed we have about a thousand people working on site and with the with the expansion to 150 gigawatt hours we expect there will be some sort of efficiency that that&#x27;s gained but but</p><p id="p1"><span class="ts-link" data-t="0:29">0:29</span>it&#x27;s still probably on the order of 10,000 people working on that yam oh all of all the power walls and power packs that we&#x27;re sending out are built right here today so that&#x27;s operational in the building behind you sir sorry oh yeah so recycling a good point I should mention so we&#x27;ve actually will have recycling at</p><p id="p2"><span class="ts-link" data-t="0:56">0:56</span>the gigafactory itself so all battery packs will be recycled which actually makes a lot of sense because this is a real efficient way to recycle it because we know what the module looks like so we can actually design the recycling machines that are exactly optimized for the battery pack because we&#x27;re not trying to recycle any arbitrary battery pack we&#x27;re recycling an own battery pack so we can be really precise about the recycling yeah</p><p id="p3"><span class="ts-link" data-t="1:23">1:23</span>yeah yeah and recycling is really awesome because most people don&#x27;t don&#x27;t think about this but a lithium battery when we build it and even if you after use it for 15 or 20 years at the end of that time all of the materials that we built into the battery are still in there none of them have been dispersed into the environment we didn&#x27;t burn any of them all the metals all of the interesting materials are still there and today when we make a new battery materials are the most expensive part of that whole process so if we can get that same you know batch of materials back into the factory you know for almost no cost the cost of transporting it there</p><p id="p4"><span class="ts-link" data-t="1:58">1:58</span>you know it&#x27;s a chance to reduce the whole materials budget on that new cell massively so that&#x27;s that&#x27;s kind of what the future holds for recycling and I should mention also that when the game pad Factory is fully operational it will be also completely operate around sustainable energy so we&#x27;re using a geothermal energy geothermal for climate control and then wind which obviously has to be brought in from other places and then solar on the roof and the combination of the wind geothermal and and solar will completely powered the gigafactory so</p><p id="p5"><span class="ts-link" data-t="2:41">2:41</span>sure yeah so the question is like what about putting plants in other parts of the world it&#x27;s definitely going to make sense to have at least the gigafactory and every continent because otherwise the logistics costs and and the energy taken to transport cars halfway around the world is quite high so we&#x27;ll what</p><p id="p6"><span class="ts-link" data-t="3:10">3:10</span>kind of reach a saturation here and then we&#x27;ll we&#x27;re going to establish a factor in Europe and a pact between Asia will in China and perhaps in other parts of Asia as well so so I think it&#x27;s going to make a lot of sense to localize the production to the demand shorten back there yeah so it what percentage of the</p><p id="p7"><span class="ts-link" data-t="3:39">3:39</span>output is likely to be four cars versus for stationary storage batteries in the beginning I think it&#x27;s probably going to be on the order of like roughly a third stationary storage something like that called thirty thirty-five percent but over time I think probably they will roughly equal eyes they&#x27;ll be roughly about as much as many batteries for stationary storage as there are four cars and if you do this sort of really overarching math of like what is it what&#x27;s what&#x27;s needed at a very high level to transition the world to a sustainable energy scenario that better bout works out you need about as much Dean about as much battery capacity and</p><p id="p8"><span class="ts-link" data-t="4:20">4:20</span>cars as you do in stationary storage I didn&#x27;t come yeah well teleportation right model 3 is going well I&#x27;m pretty happy with how it&#x27;s going i&#x27;m really excited by the approach that the Tesla engineering team is taking to production I think people are really taking it to heart within Tesla that it&#x27;s actually even more important to design the factory than it is to design the product itself this is extremely important for making an affordable high-quality car in volume and so I&#x27;m actually feeling really really optimistic about it I mean we completed design a couple weeks ago so it&#x27;s it&#x27;s it&#x27;s designers yeah so it&#x27;s nice design is done and usually in as</p><p id="p9"><span class="ts-link" data-t="5:14">5:14</span>you as you do more testing there&#x27;s there&#x27;s some tweaks required but we are benefiting from a lot of experience with the Model S and X so I I&#x27;m feeling very good about it yeah there there&#x27;s some really cool innovations I we can&#x27;t talk about all the stuff inside of it but it is definitely a third generation of a lot of the components and a lot of the systems that we designed originally you know for roadster and then Model S and X so it&#x27;s come a long way yeah all right</p><p id="p10"><span class="ts-link" data-t="5:41">5:41</span>we&#x27;ll just ops 2 to do a few more questions because I think this could go on for a while all right here sure oh hey no way love no way for me chips for recycling oh oh oh it&#x27;s like chips you eat chips chips yes and so there-there&#x27;s definitely I mean ultimately oh you know all forms of terrestrial transport will will go electric I&#x27;m I don&#x27;t currently</p><p id="p11"><span class="ts-link" data-t="6:18">6:18</span>anticipate Tesla doing ships but if someone else doesn&#x27;t sure right yeah so yeah but the lithium question comes out quite a bit but the nice thing about lithium is it&#x27;s very plentiful so lithium is the third most common element in the universe first being hydrogen second being helium now the hydrogen is all bound up in water on Earth order and hydrocarbons and so you don&#x27;t quite naturally occurring hydrogen on on earth but and then the helium being a noble</p><p id="p12"><span class="ts-link" data-t="7:00">7:00</span>gas just doesn&#x27;t combine with anything and basically floats away but lithium is a metal and does not float away so there&#x27;s an enormous amount of lithium in almost any salty solution there&#x27;s some amount of lithium so snores muscle lithium in the ocean any kind of dried lake bed where there was a salt lake that dried long ago there will be enormous amounts of lithium so the the actual mantle at the mo in the world is far in excess of what&#x27;s needed for electrification or transport lithium only constitutes about two percent of the battery so it&#x27;s it&#x27;s called lithium ion but it&#x27;s sort of the active ingredient but it&#x27;s only about about two percent of the the battery yeah so</p><p id="p13"><span class="ts-link" data-t="7:44">7:44</span>there&#x27;s plenty of lithium to convert every car in the world to electric you know that that won&#x27;t be a constraint at all and and even after that&#x27;s done we can start recycling it so we won&#x27;t using lithium it&#x27;s not like oil or something like that I&#x27;ve heard a lot of those comparisons like peaked lithium which is kind of nonsense because you once you build this this fleet of electric cars you don&#x27;t need any more of it it&#x27;s just you can just keep reusing it reprocessing it forever</p><p id="p14"><span class="ts-link" data-t="8:11">8:11</span>well Tate it&#x27;s just a couple more questions forklift back as well but we do need to focus so we won&#x27;t be doing forklift batteries in the short term because there&#x27;s just we need to kind of stay focused on on the model 3 particularly in the short term and and then the probably compact SUV is the next next priority we have an interesting concept for creating kind of like a mini bus on the Model X platform and it&#x27;s actually quite surprising how many people you can get on a Model X if you make it sort of a look a bit like a little bus so bit bit bit focus is</p><p id="p15"><span class="ts-link" data-t="8:57">8:57</span>critical because there&#x27;s so many things that could be done but if we don&#x27;t focus then it puts risk that we won&#x27;t get anything done I think in terms of how can you help I think just sort of spread the message and you know that like I mean I know you guys think global warming is real but the crazy thing is like a lot of people out there don&#x27;t I blows my mind and and you know an M is</p><p id="p16"><span class="ts-link" data-t="9:24">9:24</span>this this quiet desert there&#x27;s a non-stop propaganda campaign from the fossil fuel industry because you kind of I mean they&#x27;re just defending themselves so it&#x27;s kind of what you what you&#x27;d expect but but they just it&#x27;s nonstop and they have like a thousand times more money than we do so at this is I mean</p><p id="p17"><span class="ts-link" data-t="9:45">9:45</span>this revolution is gonna come from the people that&#x27;s it&#x27;s you know I just like you know five propaganda like that&#x27;s the I things gonna get real nutty with the US election and all that and maybe one more all right we&#x27;ll take one more well we&#x27;d love to do the next roadster but we got a fake we&#x27;re going to focus on on affordable mass-market cars I would love to do the next roaster be kidding me of course but that&#x27;s got</p><p id="p18"><span class="ts-link" data-t="10:31">10:31</span>to be dessert you know are we good there&#x27;s a lot of a lot of stuff to do already on our plate but I think Angry better wrap it up with that so thank you guys very much this is no thank you very much really appreciate it you</p></div></div>
       
       
@@ -353,7 +406,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -393,7 +446,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

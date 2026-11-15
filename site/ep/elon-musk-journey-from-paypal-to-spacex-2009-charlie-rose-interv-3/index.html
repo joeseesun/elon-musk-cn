@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -283,7 +336,7 @@
 <li data-z="68"><strong>每个决定问两遍。</strong>做不做得出来，做出来之后创造的价值是否大于投入的成本。两问都过再动手，只过一问的事最容易变成漂亮的坑。</li>
 <li data-z="69"><strong>把目的地说清楚，然后接受长路径。</strong>17 岁那年他知道自己要去美国，中间先绕了一个加拿大。路径长不可怕，没有目的地才可怕。</li>
 <li data-z="70"><strong>回看这类长访谈，盯住数字，别看口号。</strong>真正有用的部分是他报出的具体数值和判断依据。前面那些被反复引用的豪言，往往是这场对话里信息量最低的部分。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=xP7ftjA2wZ8" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:04">0:04</span>elon musk is here he is chief executive of two startup companies with bowl missions he leads tesla motors the electric car company that has attracted attention from both car enthusiasts and environmentalists as well the company&#x27;s powerful roadster which can travel from zero to sixty in less than four seconds is entirely powered by batteries the company plans to break into the mainstream auto market with an electric sedan as early as 2011. musk is also founder of space exploration technologies a company trying to slash the cost of space travel last year the company signed an agreement with nasa to send cargo to the international space station and if that is not enough he&#x27;s</p><p id="p1"><span class="ts-link" data-t="0:42">0:42</span>also chairman of a growing company called solarcity that installs solar panels on homes and businesses he has thrived in silicon valley one of the co-founders of paypal the online payments company that ebay bought for 1.5 billion dollars in i am pleased to have him here at this table for the first time welcome thank you thanks for having me i&#x27;ve been a big fan of the show for a long time let&#x27;s just talk about you first so that if the audience does not know growing up in south africa yeah yeah and why how did you end up in canada well i guess growing up in south africa i was actually it was very technology-oriented and i told myself how to program computers mostly because</p><p id="p2"><span class="ts-link" data-t="1:23">1:23</span>i wanted to program games and i when i was about 12 i programmed sold my first game and whenever i&#x27;d read about technology and and great innovation it&#x27;s it was coming from from the united states and so i it was you know that&#x27;s where i wanted to be and i tried to convince my parents to move move there and neither of them would they would they would have watched i tried my mother i tried my fun neither would do it my mother later moved back to initially canada and then and then the us and so when i was 17 as soon as i got my canadian passport three weeks later i was in canada so here you are and you come to canada and make it to the united states and</p><p id="p3"><span class="ts-link" data-t="2:01">2:01</span>then you and several other guys come together and create paypal right and then you sell it to ebay for one point whatever it was five billion dollars yeah so after paypal that gave me you know a fair bit of capital and there were there were three areas when i was in college there were three areas that i thought would most affect the future of humanity and and those were the internet the transition to a sustainable energy and transportation sector and the third was space exploration and particularly the extension of life to multiple planets and i didn&#x27;t ever expect to be involved in the third one but but it just that seems to me that&#x27;s something that would</p><p id="p4"><span class="ts-link" data-t="2:36">2:36</span>be very important for the future and with the the capital i got from the sale of paypal i was able to go into both those those areas and and so hence spacex and and in the space and and then in in the sustainable energy and transportation you&#x27;ve got solar city and and tesla talk about space exploration just for a moment how is it going in terms of creating the systems that will engage us in space exploration not just for governments and not just for nasa but for private citizens as well you have to divide the efforts that are going on into what what is an an orbit class effort versus a suborbital class effort and there&#x27;s really a very big difference but the general public</p><p id="p5"><span class="ts-link" data-t="3:21">3:21</span>doesn&#x27;t understand the difference between getting to space and getting to getting to orbit and so it&#x27;s it&#x27;s important to make that distinction to do a sub-orbital flight you need a terminal velocity of about mach 3. right to get to orbit you need a terminal velocity of mach 25. it&#x27;s a huge huge difference and because the energy required to do that scales with the square of the velocity so sub-orbital might be nine units of energy orbit is 625 units of energy so it&#x27;s only about one and a half percent of the energy of orbit is required to get to sub-orbit so so there&#x27;s there are a number of efforts in the sub-orbital category that certainly could grow one</p><p id="p6"><span class="ts-link" data-t="3:58">3:58</span>day to to orbital there&#x27;s jeff bezos has has an effort and i know that that&#x27;s something that that&#x27;s branson involved in this branson absolutely not so much directly from the technology standpoint but from he&#x27;s he&#x27;s funding that development at scaled composites in in california what are you doing so we&#x27;re in we&#x27;re in the in the orbit class and that&#x27;s it&#x27;s a lot more capital and and and that&#x27;s really where you&#x27;re sort of pushing the the ragged edge of what&#x27;s what&#x27;s physically possible and last year we got to orbit with for the first time with with our rocket and that was certainly a huge relief and a milestone yeah and so what&#x27;s the next step you&#x27;re going to rock it into orbit</p><p id="p7"><span class="ts-link" data-t="4:44">4:44</span>yeah so next month we were putting a satellite for malaysia into orbit and then from malaysia former formulation formulation yes the malaysian satellite and but but in the rocket business the rocket company does launch it&#x27;s not like the airline business so you don&#x27;t sell the rocket you sell the launch right and and then later this year we&#x27;ll be launching our big rocket from cape canaveral that&#x27;s the falcon 9 and that&#x27;s the one that&#x27;s going to be servicing the space station among other things is there a philosophy here that somehow the private sector can do a lot more than than it has done in in areas that seem because of them because of the size</p><p id="p8"><span class="ts-link" data-t="5:21">5:21</span>relating reserve for government yeah definitely the the private sector is very good at at optimization and innovation i mean private sector is generally better doing things than the government i think that&#x27;s that&#x27;s that&#x27;s fair to say but you know there are certain things that that that the government that that associated to the government like basic research and that sort of thing but yeah so as far as spacex the the reason that there hasn&#x27;t been a huge number of a huge a big improvement in in the space industry i think it&#x27;s because of of it&#x27;s very difficult for for shipping to create a destruction process to to to come into effect because it is such a</p><p id="p9"><span class="ts-link" data-t="6:10">6:10</span>significant amount of capital that&#x27;s needed to start a rocket company and and it&#x27;s a very difficult technical challenge and the number of people that that really understand rock between the world is a very small number so it&#x27;s just it&#x27;s really a huge barriers to entry and and that&#x27;s why we haven&#x27;t seen the forcing function of improvement that there should have been over the years and your understanding came from sort of from this was not what you studied in college well i studied physics studying physics and studying rocket science right yeah no it gives you the basics gives you the basics good framework good analytical framework so but no i picked it up along the</p><p id="p10"><span class="ts-link" data-t="6:49">6:49</span>way yeah but what is your core competence you think you i i think it&#x27;s technology technology yeah yeah technology yeah if if if something has to be designed and invented and then and you have to figure out how to ensure that the the value of the of the thing you create is greater than the cost of the inputs then that&#x27;s that&#x27;s probably my core skill</p></div></div>
       
       
@@ -311,7 +364,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -351,7 +404,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

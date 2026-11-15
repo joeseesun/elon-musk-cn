@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -404,7 +457,7 @@
 <li data-z="129"><strong>看订单数，更要看交付能力。</strong>11.5万张订单在24小时内产生，真正的考验在两年后的产能爬坡。评估任何「爆单」新闻时，问一句：交付跟得上吗？</li>
 <li data-z="130"><strong>补能网络要算进产品定义。</strong>超充标配解决的是「我能不能开它去远方」这道心理门槛，跟充电本身关系不大。任何依赖基础设施的新产品，都得把基础设施当成产品的一部分来规划。</li>
 <li data-z="131"><strong>一个能复述的画面，胜过十个精确数值。</strong>「能塞下一块七英尺冲浪板」比「后备厢容积425升」传播力强得多。讲参数时，先想清楚用户会怎么转述它。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=Tq4QRDw9t0g" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>well welcome everyone welcome everyone to the model 3 unveil we have we have an amazing product to show you tonight I think you&#x27;re going to be blown away and but I want to start talking just just preface this by talking about why why are we doing this why is Tesla why does Tesla exist why why are we making electric cars why does it matter it&#x27;s because it&#x27;s very important to accelerate the transition to sustainable transport it really really really is this is this is really important for the future of the world we have record high CO2 levels we we recently passed over four 403 parts per million of CO2 in the atmosphere you can see the chart and it</p><p id="p1"><span class="ts-link" data-t="0:48">0:48</span>looks like a vertical line and it&#x27;s still climbing and the last time it it there there was this level of carbon concentration was 11 million years ago okay that was approximately when primates started walking upright the world was very different we do not want to return to that situation and and what that CO2 increase results in is a steadily increasing temperature so we&#x27;ve already increased by 2° in fact that doesn&#x27;t tell the whole story because the extremes of temperature increased by as much as 20° and that line is is going to keep going for some time into the future it&#x27;s really important it makes a difference if we accelerate the transition to</p><p id="p2"><span class="ts-link" data-t="1:31">1:31</span>sustainable transport and Beyond the Beyond global warming there&#x27;s just the fact that combustion cars emit toxic gases and according to an MIT study there there are 53,000 deaths per year in the us alone from auto emissions so it stands to reason that if if a if a vehicle is spewing toxic gas that&#x27;s obviously bad for your health and so to to address this what we came up with the Tesla was what we call the secret master plan</p><p id="p3"><span class="ts-link" data-t="2:09">2:09</span>so so this is the the first blog that I I ever wrote for the company and it was originally a three-step it&#x27;s originally a Trilogy now it&#x27;s a four-part Trilogy as it turns out but it it needed to we needed to figure out how could we as a as a tiny company with very few resources actually make a difference and the the only way to do this was to start small to start with a low volume car which is why we started with the the Tesla</p><p id="p4"><span class="ts-link" data-t="2:42">2:42</span>Roadster so with any new technology it takes multiple iterations before and multiple iterations and it takes economies of scale before you can make it make it great and affordable so step one was was was the Roadster the Roadster was high price and and low volume but what where where it really made a difference was that it showed people that you it showed the world that you could make a compelling electric car you could make a great electric car what was what was unique about the roast was it was the first really great electric car and before the road to people thought an electric car would be would be slow and ugly and low range and have bad</p><p id="p5"><span class="ts-link" data-t="3:25">3:25</span>performance and we had to break that mold it was incredibly important to to show that wasn&#x27;t true and so we made the Roadster which is fast it&#x27;s beautiful it&#x27;s great great performance for those of you who who bought the Roadster thank you so and we only made 500 units a year because that&#x27;s all all we really could make for for for the Roadster but it had a very leveraged effect in fact Bob LZ the vice former Vice chairman of GM actually credits the Roadster with the Chevy vol program which led then led to the Nissan Leaf program and really even though we were making very few cars it actually had a quite a huge leverage effect on the Auto industry but there was still a lot</p><p id="p6"><span class="ts-link" data-t="4:14">4:14</span>more to do and a lot of people said well the road is nice but it&#x27;s sort of a toy and it&#x27;s very expensive and you couldn&#x27;t really make a car that people would use every day or a car that could really compete against the great combustion sedans of the world so we said okay we&#x27;re going to make the model S</p><p id="p7"><span class="ts-link" data-t="4:38">4:38</span>so so do it again do it again so so the model S any of you Drive Model S oh yeah thank you so then you know it&#x27;s it&#x27;s it&#x27;s a great it&#x27;s a great sedan it had it can seat up to seven people five adults and two kids it&#x27;s tested by radent track and and Motor Trend and others as the the fastest four-door car in history ever</p><p id="p8"><span class="ts-link" data-t="5:14">5:14</span>and it it&#x27;s got great handling it&#x27;s got great technology it&#x27;s got things like autopilot and and it really it was rated by by almost every group as as the as the best in its year and by Consumer Reports as the best car ever yeah you again it was it was super the reason for that is is is not just to to achieve some superlative in cars but to to show what an electric car can do because nobody believed that an electric car could do this so what was really important was was to to show the reason it was was important is not not to achieve you know Awards or anything like that it was to just show the car industry show the world that an electric car really can be the best car that</p><p id="p9"><span class="ts-link" data-t="6:02">6:02</span>that&#x27;s what really really mattered and now for for cars about half the market wants a sedan and about half the market wants an SUV so we thought well we&#x27;ll extend the the model as platform into the model X the both of these are very important because the revenue from the model S and the x is what&#x27;s needed to velop the model 3 so the model 3 with very high volume and and all the engineering needed to achieve the the cost reductions and the capabilities it cost billions of dollars so the S and the X are what pay for that model 3 development so I just want to say for all of you who who bought an s or an X thank you for helping pay for the model</p><p id="p10"><span class="ts-link" data-t="6:55">6:55</span>3 so the model 3 is is is happening because of because of you and so so we actually have an S and an x on the side there and has of course the Falcon wig doors which did cause us some challenges but now they working so now then going from the the S and the X we finally come to we come to to to step three the final step in the in the master plan which is a mass maret affordable affordable car it was only</p><p id="p11"><span class="ts-link" data-t="7:34">7:34</span>possible to do that after going through the prior steps U but but we&#x27;re here and we&#x27;re here to show that to you tonight so okay so I&#x27;m I&#x27;m going to I&#x27;m going to describe some of the the aspects of the model 3 and then and and then and we&#x27;ll yeah so let&#x27;s let&#x27;s move to describing well so let&#x27;s let&#x27;s show the master plan again okay so that&#x27;s the M plan with with steps two and 2.5 and now going to to to the model 3 first of all I want to start off by saying the model 3 is going to be an incredibly safe car we really believe at Tesla that safety has to come first we we care about you we want you to be safe we want your friends and family to be safe this is Paramount the model 3</p><p id="p12"><span class="ts-link" data-t="8:23">8:23</span>will be not just be five star on average be five star in every category and even the base model of even the base model three will do 0 to 60 M hour or 0 to 100 km an hour in less than 6 seconds at Tesla we don&#x27;t we don&#x27;t make slow cars okay and and of course there will be versions of the model 3 that go much faster all right and in terms of range the the range will be at least an EPA rating of</p><p id="p13"><span class="ts-link" data-t="9:04">9:04</span>miles I want to emphasize these are minimum numbers we we hope to exceed [Applause] them it will also all model 3es will come standard with autopilot hardware and all autopilot safety features will be present in in every C that you don&#x27;t you won&#x27;t need to buy an option the autopilot safety features will always be there so the the model 3 also fits five adults comfortably now that comfortably is the important part here okay The</p><p id="p14"><span class="ts-link" data-t="9:43">9:43</span>Challenge obviously with building a smaller car is how do you how do you still make it comfortable with a bunch of people inside so there there are two important design steps we did with the model three to achieve that one was to move the instrument panel or the firewall there really isn&#x27;t a firewall we don&#x27;t have a big combustion engine in front we we move the front seats forward and compress the instrument panel when you when you do your rides tonight you&#x27;ll see what I mean you&#x27;re sitting a little further forward it actually feels great on the front seats that&#x27;s what get gives you the leg room to have five adults and so you the first and second row have plenty of leg leg room</p><p id="p15"><span class="ts-link" data-t="10:19">10:19</span>then on on the the the rear roof area is actually one continuous paint of glass and that that that the reason that that&#x27;s great is because it gives you amazing head room and a feeling of openness so it it it has I think by far it&#x27;s the best feeling best roominess of any car in the size then then in addition it has just just like the model it has a front and rear trunks so you you can it has more Cog capacity than any gasoline car of the same external dimensions and yeah and</p><p id="p16"><span class="ts-link" data-t="10:58">10:58</span>you can actually somebody asked me this question recently is can you fit a 7ot long Surfboard on the inside the answer is yes you can then with respect to supercharging all model 3s will come with supercharging [Applause] standard so the reason supercharging is very important as as many of you know is that it gives you freedom of travel okay it means you can conveniently go where you want where you want how you want and a lot about having a car is it&#x27;s about Freedom it&#x27;s about do going where you want to go that&#x27;s it and and then in terms of price well of course it&#x27;ll be</p><p id="p17"><span class="ts-link" data-t="11:49">11:49</span>$35,000 and and I want to emphasize I want to emphasize that the the even if you buy no options at all this will still be an amazing car you will not be able to buy a better car car for $35,000 or even close even if you if you get no options so it&#x27;s it&#x27;s it&#x27;s a really good car even with no options so do you want to see the car well we we don&#x27;t have it for you</p><p id="p18"><span class="ts-link" data-t="12:15">12:15</span>tonight I&#x27;m I&#x27;m just kidding of course it&#x27;s April pool somewhere all right let&#x27;s bring him out [Applause] [Music] w [Music]</p><p id="p19"><span class="ts-link" data-t="13:06">13:06</span>[Applause] [Music] all right so what do you think you like the car good all right and this is this is kind of crazy but I I just learned I was just told that the total number of orders for the model 3 in the past 24 hours has now passed 115,000 [Music] [Applause] so it thank you that&#x27;s a lot yeah</p></div></div>
       
       
@@ -432,7 +485,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -472,7 +525,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

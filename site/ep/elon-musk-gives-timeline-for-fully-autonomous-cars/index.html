@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -281,7 +334,7 @@
 <li data-z="66">把行业预期定在“事故率降低80%”而不是“零事故”，这是ARK给出的现实及格线，也是公众该建立的预期。</li>
 <li data-z="67">读创始人的预测，时间点往后再推，方向看他的资源配不配，两件事分开下判断。</li>
 <li data-z="68">留意一家公司有没有远程接管兜底，这决定了它的技术路线是求稳还是求彻底，风险结构完全不同。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=h6zK5YwH4hk" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>Elon Musk is no stranger to making bold predictions on the future of autonomous cars in an interview with arc invest must give a timeline of what he expects from fully autonomous cars we&#x27;ll be ready to hit the road before we take a listen to that though I want to bring in Tasha Keaney she&#x27;s an analyst at arc investments who was with Elon Musk when he said this so first of all tell us like how this whole podcast came about yeah so actually through Twitter musk favorite platform he saw a clip of me talking about Tesla arc at arc we do a lot of original research and we focused a lot on their autonomous data advantage so he he messaged me and he said great</p><p id="p1"><span class="ts-link" data-t="0:42">0:42</span>analysis and then I asked him to be on our podcast he messaged you he did yeah like a DM yes the DM z-- open what did you do so we asked him to be on the podcast and you know to our tourist surprise and and Happiness he agreed but he&#x27;s he&#x27;s also he&#x27;s familiar with arc because we&#x27;ve been very vocal about Tesla for a long time Kathie our cio had written a letter when they were thinking of going private so he was and asking them not to go private it&#x27;s one of your biggest Holdings you have to like balance and make sure you know all that kind of stuff so and you are a huge bowl on the stock you have a $4,000 long-term</p><p id="p2"><span class="ts-link" data-t="1:21">1:21</span>price targets no fair to say yes it&#x27;s one of our top positions just to get that out there okay so now let&#x27;s dive into what Elan actually said here is a clip from your guys podcast my guess as to when we would think it&#x27;s safe for somebody to essentially fall asleep and wake up the destination probably towards the end of next year that&#x27;s that&#x27;s one when I would think it&#x27;s most likely it will be safe enough for that I don&#x27;t know when regulators will agree I thought it was interesting how much he talked about regulation actually and you guys asked him about regulation as well he is very optimistic on how autonomous</p><p id="p3"><span class="ts-link" data-t="2:01">2:01</span>is going I just said he thinks somebody&#x27;s gonna be able to fall asleep in the car and be okay at another point he said like this year you could be picked up in the parking lot by your car why so much focus on regulation from you guys and also in his mind yeah you know I think well as we add more autonomous features regulation becomes it comes into play a bit more and I think in general musk has been a little bit more balanced on what he&#x27;s been saying about autopilot so I think that&#x27;s why he wanted to highlight that aspect but you know overall in the u.s. we&#x27;ve seen a lot of positive things on the regulation side I mean we&#x27;re really the first country to allow companies to test</p><p id="p4"><span class="ts-link" data-t="2:38">2:38</span>on public roads and that&#x27;s huge I mean you need that in order to teach a car to drive so I think luckily will be one of the first countries to get autonomous driving and Tesla could be one of the first companies to bring it to us now something else that I thought was interesting is you know he again reiterated what she said a few times that it&#x27;s just simply safer for people to not be driving cars then all the data backs it up and I think we all intuitively know that I mean driving is pretty dangerous it&#x27;s gotten a lot safer but humans are really not that good at driving cars but it kind of is related to something else he said which is that he&#x27;s an engineer right he&#x27;s not like a</p><p id="p5"><span class="ts-link" data-t="3:12">3:12</span>finance guy and I think I guess I would just ask like when you talk to him does he is he aware of the fact that like everyone does know self-driving cars are safer but there&#x27;s just that like emotional thing of like if there&#x27;s a death in a self-driving car it seems like it&#x27;s more important than a death in a car a human&#x27;s driving even though it happens at an infant tesam alrea Ella t&#x27;v two vehicle deaths you know in in human operated car accidents yeah you know I think I think must being an engineer really shines through it I mean not just in in talking with him but in the company strategy the fact that there they started as a software company</p><p id="p6"><span class="ts-link" data-t="3:51">3:51</span>they&#x27;re highlighting the technology so much he clearly spends a lot of time with autopilot team I think you know in in terms of the death in an autonomous car so at arc we&#x27;ve predicted that looking at the accident rate in airplanes that fully autonomous driving will reduce accidents by 80% that&#x27;s not 100 percent I think Tesla is acutely aware of this because they every time a Tesla crashes it&#x27;s a big deal it doesn&#x27;t even matter if autopilot is on or not it&#x27;s a Tesla cross it crashes it&#x27;s in the news way more so than any other automaker so so I think that they&#x27;re they&#x27;re aware of that fact you know that the more important thing again what regulars want to regulators</p><p id="p7"><span class="ts-link" data-t="4:31">4:31</span>want to see and what Tesla has said their discussions have been with those regulators is you need to prove that it&#x27;s safer than a human so Tesla&#x27;s really uniquely set up to do that because they have all this data that no one else has they billions of miles of data soutache I&#x27;m curious to hear about what your takeaway was in terms of the biggest concern that Elon has at the moment is he focused a lot you know primarily on the safety end of things because another thing that kind of folds into this is just the production right Tesla has very ambitious scale that they would like to build in China and domestically here in the US but obviously there are</p><p id="p8"><span class="ts-link" data-t="5:03">5:03</span>reliability concerns we&#x27;ve seen some of the headlines with the model three and the reliability today even what&#x27;s the kind of feel that you got from Elon in terms of where his focus is kind of are right now so you know I think you&#x27;re absolutely right the model three is a big focus for Tesla right now they just started delivering cars to Europe and China in terms of safety I mean that Tesla cars have proven themselves to be much safer certainly than a gas powered car in many ways I mean even just the design of having the battery sort of at the bottom of the car helps with that it allows you to put in more components that that help in a crash basically they</p><p id="p9"><span class="ts-link" data-t="5:36">5:36</span>have a larger crumple zone so I I think they&#x27;re they&#x27;re really focused on production of the Model 3 and they should be we want them to get as many cars on the road as possible because they act as R&amp;D centers and then they&#x27;ll eventually enable autonomous driving so when you were talking about trying to get as many cars on the road as possible I mean some of his estimates were even above what you guys are modeling for did you find that surprising gee is it believable I don&#x27;t find it surprising because Elon Musk he has a very aggressive estimates for the company he sets very aggressive goals and they fallen short of those goals in the past but they still achieved the impossible I</p><p id="p10"><span class="ts-link" data-t="6:16">6:16</span>mean they&#x27;re still doing these incredible things they might do them a month or two late but they do them so he takes point with that he says like oh I just do it but I&#x27;m six months late and doing something exponentially recall that it wasn&#x27;t yeah something about how like if you if you&#x27;re two weeks late it calendar breaker telling a breakpoint right exactly exactly exactly so we&#x27;re used to that so in our models you we might put a twenty to fifty percent margin on the time line of what he says but I mean if you achieve fully autonomous driving that&#x27;s still an amazing technological breakthrough so we don&#x27;t care if he&#x27;s a month or two late because it&#x27;ll probably be first still so</p><p id="p11"><span class="ts-link" data-t="6:53">6:53</span>I mean this happens to pretty much every interview we do you walk out and you say oh I really wanted to ask him that question I forgot what did you really want to ask him that you didn&#x27;t get to well there are so many questions that we have for Tesla so you know it well the one you&#x27;re kicking yourself about the one I&#x27;m kicking myself about well one thing that&#x27;s pretty unique about Tesla is they don&#x27;t have a remote operator Network planned for their autonomous cars so this is something that company is like active for instance the Delphi spin-off have talked about it&#x27;s basically like a tella operation center that helps the car in times of need when</p><p id="p12"><span class="ts-link" data-t="7:28">7:28</span>you go to full autonomous tells doesn&#x27;t talked about that before we didn&#x27;t get to that question but and you know there&#x27;s millions of questions that we could have asked about batteries that&#x27;s also big focus for us at our can bus but we tried to keep it to autonomous driving yeah one day and Elon will answer all of our questions when one day I come on the show maybe we hope all right in our Batphone yeah tasha keaney i confess thank you so much great podcast really good to see you thanks for having me</p></div></div>
       
       
@@ -309,7 +362,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -349,7 +402,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

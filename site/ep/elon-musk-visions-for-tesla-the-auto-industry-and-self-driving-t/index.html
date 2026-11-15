@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -365,7 +418,7 @@
 <li data-z="109">读一家公司的战略，先看它把壁垒放前面还是把使命放前面。这个顺序决定了它面对竞争时的动作。</li>
 <li data-z="110">做长期市场预测，先算存量换血的物理速度。车的寿命、设备的更换周期，是不会被情绪改变的硬约束。</li>
 <li data-z="111">判断一个行业有没有真的起来，找一个没法修饰的指标，比如路边数车。指标越简单，越难被包装。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=bl5vLC3Xlgc" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:04">0:04</span>he is one of the most talked-about CEOs in the world right now the main behind companies such as SpaceX and Tesla mr. musk it&#x27;s a great pleasure to have you in Copenhagen yeah thanks for having me I&#x27;m glad to be back what brings you to Denmark well I&#x27;m here to see the Tesla Danish team I&#x27;m</p><p id="p1"><span class="ts-link" data-t="0:26">0:26</span>actually visiting a number of countries on this visit I just came from Luxembourg and I&#x27;m headed to Germany and Netherlands and Belgium so here here to see the team so you could see how things are going talk to some of the people in government and so forth what message do you bring to show Denmark oh well I think the most important message is that is that Denmark is a great leader in renewable energy with wind and I think that there&#x27;s an opportunity to be a leader in sustainable transport as well but although Denmark is doing incredibly well on on wind that if you look at how many cars going down the road or electric there&#x27;s very few well under 1%</p><p id="p2"><span class="ts-link" data-t="1:12">1:12</span>so I think it&#x27;s it&#x27;s very important that government policy continue to support electric vehicles and and you know as more wind energy is generated it didn&#x27;t make sense to put that into sustainable transport I think it&#x27;s but there&#x27;s sort of two very important halves of the same problem so I think it&#x27;s it&#x27;s a Denmark an interesting and market for for Tesla a small country like Denmark yeah I think the Forte for Denmark</p><p id="p3"><span class="ts-link" data-t="1:44">1:44</span>I think they&#x27;re more conserve as an example to the rest of the world to say what can be done with the sustainable transport so with with larger countries it&#x27;s difficult to make a big impact but with smaller countries you can say hey this this is what it can be like to to other countries to say you know with the right policies you can have a significant number of electric vehicles on the road so I think demo can be an important leader in the world as an example in this regard you mentioned when Denmark has the world&#x27;s largest windmill maker Vesta large production of sustainable energy right but we do have trouble storing the wind energy yeah can you help us with</p><p id="p4"><span class="ts-link" data-t="2:24">2:24</span>that absolutely so the electric vehicles themselves can be obviously a great recipient to buffer a wind energy so depending upon where what level of wind energies is being generated you can actually have the pricing of electricity very so that people can charge their electric cars depending upon if there&#x27;s a large amount or small amount of energy being generated from the wind then in addition Tesla has a battery pack a stationary battery pack that is under development or going to significant production later this year and so combining wind energy with a stationary storage is very powerful because that provides a complete solution would you consider setting up a facility in</p><p id="p5"><span class="ts-link" data-t="3:06">3:06</span>Denmark even yeah that that is that is certainly something under consideration yeah Tesla is improving battery technology really fast how do you expect your battery technology will change the auto sector as well as the energy sector in the coming years well for the battery technology both for for electric vehicles and for stationary storage is a critical piece of the equation for a long-term future of sustainable energy so you need to have sustainable energy generation which i think is going to be primarily as wind and solar and then you combine that with stationary storage which is needed because of the intermittent nature of renewable energy</p><p id="p6"><span class="ts-link" data-t="3:46">3:46</span>generation and then you can and then the third piece of the equation is electric transport so if you have all three of those pieces sustainable generation storage and electric vehicles then you have a complete solution for the future and then we have a good future but how do you feel about taking on such large industries as the audience industry and the energy industry well it&#x27;s definitely it can be quite difficult at times the you know the big car companies and the big energy companies have quite sharp elbows so they try to you know first times they try to squash small companies like Tesla but I think we you know we have the support generally of of where</p><p id="p7"><span class="ts-link" data-t="4:25">4:25</span>the popular support and everywhere a team at Tesla so man it&#x27;s hard but I think you know we&#x27;re making good progress Tesla is really getting sales going really getting cars out there you&#x27;ve been able to get a head start on other electric car makers but they&#x27;re really coming along now what I think is great yeah yeah what what is yours response to to the new competing electric sports car such as Porsches new electric car yeah well you know the reason that we&#x27;re doing Tesla is to try to accelerate the advent of sustainable transport to have there be more electric cars in the road and and to that end we actually open sourced all of our patents so we said</p><p id="p8"><span class="ts-link" data-t="5:06">5:06</span>you know any car company can use our technology it&#x27;s no problem that I didn&#x27;t have to pay a fee to us so so for us you know we&#x27;re very philosophically motivated you know we care about at the advancement of electric vehicles because we think you&#x27;re and unless there&#x27;s sustainable transport it&#x27;s going to be the future is going to be terrible so so I&#x27;m glad to see these announcements of these other companies I hope they they move even faster than they announced but don&#x27;t you expect you may be your investors to expect you to fight off these competition rather than embracing it well yeah I mean I did say</p><p id="p9"><span class="ts-link" data-t="5:43">5:43</span>that when we were in public even I said look your Tesla has a strong ideological motivation so they shouldn&#x27;t invest if they disagree with that so they know from the beginning I&#x27;ve always been very clear about that but as long as we make compelling products I think Tesla will do ok so it&#x27;s it&#x27;s not you we shouldn&#x27;t</p><p id="p10"><span class="ts-link" data-t="6:06">6:06</span>do ok just because the competition failed I mean we should do okay because we make good cars that&#x27;s the only reason I want to get into your vision for missions for electric cars musk am when will we break the thousand kilometer range you mark for an electric car a thousand kilometers hmm well it depends under what circumstances for a thousand kilometers as it is the record right now for Model S is 800 kilometers that&#x27;s the furthest that anyone has driven a Model S so we could be close yeah we&#x27;re pretty close now in order to do that they did drive at a relatively slow speed so you know we&#x27;re talking I think they drove maybe at 40 or 50 kilometers an hour or something like</p><p id="p11"><span class="ts-link" data-t="6:50">6:50</span>that but I I think my guess is probably we could break a thousand kilometers within a year or two okay yeah so within 2016 maybe even I say if you say 2017 I&#x27;d say 2017 for sure how fast there sorry how far can attest like hard drive on a single charge in 2020 Oh in 2020 is we could probably make a car go 1,200 kilometres okay it&#x27;s that kind of the pace going forward moving battery so yeah if you think maybe you know five to ten percent a year something like that okay yeah do you have any current plans for a self-driving Tesla we do I mean the they can tell me about that yeah sure so the the Tesla that is</p><p id="p12"><span class="ts-link" data-t="7:44">7:44</span>currently in production has the the ability to do automatic steering or order pilot on highways and that&#x27;s currently being but beta tested and we&#x27;ll go into wide release hopefully next month so we&#x27;re probably only a month away from having autonomous driving at least for highways and for relatively simple roads I mean my guess</p><p id="p13"><span class="ts-link" data-t="8:11">8:11</span>for when we will have full autonomy is about three years three years approximately three years however regulators will probably not allow full autonomy for maybe at least one to two years may 1 to 3 years after that so it depends on this on the particular market some markets will be the regulators will be more forward-leaning than others but in terms of technic winner will be technologically possible I think three years what kind of costs are we driving twenty years from now I hope</p><p id="p14"><span class="ts-link" data-t="8:45">8:45</span>civilization is still around in 20 years if it is yeah exactly I think in 20 years I think you will see hopefully a very long percentage of cars being electric probably all cars being built will have full autonomy in 20 years but it but it is important to bear in mind like sometimes people think I think of cars like consumer products like a phone or something like that but in the case of a phone the the average ownership time for a phone is is 2 or 3 years but for a car a car typically lasts 20 years before it is finally scrapped so the the total fleet of cars</p><p id="p15"><span class="ts-link" data-t="9:29">9:29</span>and trucks in the world is about 2 billion and that fleet is increasing probably to two and a half billion and the new car production is is about a hundred new cars and trucks about a hundred million per year so in order to change the fleet if if all cars become electric say immediately then it would take more probably more than 20 years to change the fleet for autonomous driving that may be less because if a town was driving means that fewer cars and trucks are needed then it&#x27;s a probably a smaller period of time but it&#x27;s probably still at least 10 to 15 years okay so</p><p id="p16"><span class="ts-link" data-t="10:08">10:08</span>that&#x27;s an important consideration we think when thinking about how fast can things changing in cars and as I mentioned earlier the if you want to say how how we&#x27;re doing in terms of electric cars in terms of sustainable transport you know I&#x27;d say just look at the cost going down the road count how many electric cars out of a hundred and that&#x27;s that tells you how many how much progress has been made been made and even in a place like Denmark which is relatively forward-leaning less than one percent what can we do here in Denmark - - well help you reach the goal of the sustainable future sure well I think it&#x27;s it&#x27;s it&#x27;s it&#x27;s formerly for for all electric all</p><p id="p17"><span class="ts-link" data-t="10:48">10:48</span>companies making electric cars Tesla being one of them it&#x27;s really important particularly in the early days of electric cars to have the incentives remain in place they don&#x27;t have to be there forever but but if the if the rug is pulled too quickly for electric cars then you have a industry which is just a baby it&#x27;s just a little tiny tiny thing and it&#x27;s it&#x27;s I think too early to sort of pull pull incentives for a industry that isn&#x27;t in its infancy and in the future no problem but now would be difficult</p></div></div>
       
       
@@ -393,7 +446,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -433,7 +486,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

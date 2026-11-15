@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -347,7 +400,7 @@
 <li data-z="99">看这类政治场合的发言，分清三种内容：可核实的事实（比如利息数字）、待核实的指控（比如"死人在领工资"）、以及场面话（比如"最好的内阁"）。三种内容的可信度完全不同，混在一起看容易被带节奏。</li>
 <li data-z="100">如果你在组织里做管理，可以借鉴那封邮件的思路：把"确认在岗"和"评估绩效"分开做。先做脉搏检查，再做绩效评估，两件事混在一起，效率最低，误伤最多。</li>
 <li data-z="101">留意"快速回滚"这个机制。任何大规模削减行动都该配一条纠错通道，出错不可怕，出错了不认、认了不改才可怕。看一个团队靠不靠谱，只需要看它犯错之后多久回滚。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=9DLtwUFwpTY" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>and based on many things the Border but also based on balancing budgets and getting our country back into shape and this is a big part of it so Elon if you could get up and explain where you are how you&#x27;re doing and how much we&#x27;re successful guy he&#x27;s he&#x27;s really working so hard and he&#x27;s got businesses to run and in many ways they say how do you do this and you know it&#x27;s he sacrificing a lot and take getting a lot of Praise I&#x27;ll tell you but he&#x27;s also getting hit and we would expect that and that&#x27;s the way it works so I&#x27;d like to have Elon Musk please say a few words thank you thank you Mr President well I I actually just call myself humble tech</p><p id="p1"><span class="ts-link" data-t="0:44">0:44</span>support here because this is actually as crazy as it sounds that that that is almost a literal description of the work that the Doge team is doing is helping fix the government computer systems many of these systems are extremely old they don&#x27;t communicate there are a lot of mistakes in the systems the software doesn&#x27;t work the so we are actually t a v it&#x27;s it&#x27;s a it&#x27;s ironic but it&#x27;s true the the overall goal here with the Doge team is to help address the enormous deficit we simply cannot sustain as a country $2 trillion deficits the interest rates just the interest on the national debt now exceeds the defense department spending we spent a lot on the defense department</p><p id="p2"><span class="ts-link" data-t="1:32">1:32</span>but we&#x27;re spending like over a trillion dollars on interest if this continues the country will go become de facto bankrupt it&#x27;s it&#x27;s not an optional thing it is an essential thing that that&#x27;s that&#x27;s the reason I&#x27;m here and taking a lot of flack and getting a lot of death threats by the way I mean I&#x27;m like stack them up you know but if we don&#x27;t do this America will go bankrupt that&#x27;s why it has to be done and I&#x27;m confident at this point knock on wood you know knock on my wooden head the go a lot of wood up there that we can actually find a trillion dollars in savings that would be roughly 15% of the $7 trillion budget and obviously that can only be done with the support of</p><p id="p3"><span class="ts-link" data-t="2:19">2:19</span>everyone in this room and I&#x27;d like to thank everyone for for your support thank you very much this this can only done with with with your support so this is It&#x27;s really doge is a support function for the president and for the the the agencies and departments to help achieve those savings and to effectively find 15% in reduction in</p><p id="p4"><span class="ts-link" data-t="2:41">2:41</span>fraud and and waste and and we bring the receipts so people say like well is this real just go to Doge duck up we we line item by line item we specify each item so and we and I I should say we also we will make mistakes we won&#x27;t be perfect but when we make mistake we&#x27;ll fix it very quickly so for example with usaid one of the things we accidentally canceled very briefly was Ebola Ebola prevention I think we all want Ebola prevention so we restored the Ebola prevention immediately and there was no interruption but we do need to move quickly if we&#x27;re if we&#x27;re to achieve a a trillion dollar deficit reduction in in financial year 2026 it requires saving $4 billion per day</p><p id="p5"><span class="ts-link" data-t="3:30">3:30</span>every day from now through the end of September but we can do it and we will do it thank you would you have any questions of Elon while we&#x27;re on the subject ofas we&#x27;ll finish off with that and if you would have any questions please we&#x27;ll finish off with that and if you would have any questions please ask you could ask me or Elon go ahead please thank you Mr President thank you Mr M I just wanted to ask you that President Trump put out a truth social today saying that every body in the cabinet was was happy with you I just wondered if that if you had heard otherwise and if so what are you doing to address those any dissatisfaction let the cabin speak just</p><p id="p6"><span class="ts-link" data-t="4:12">4:12</span>for a second is anybody unhappy with him if you are will throw them out of here I have a lot of respect for Elon and that he&#x27;s doing this and some disagree a little bit but I will tell you for the most part I think everyone&#x27;s disagree a little bit but I will tell you for the most part I think everyone&#x27;s not only happy they&#x27;re thrill so go ahead grateful ever literally so I and I do not give false praise this this is an incredible group of people I don&#x27;t think such a talented team has actually ever been assembled I think it&#x27;s literally the best cabinet that the country has ever had and I think the company should be incredibly appreciative of the people in this</p><p id="p7"><span class="ts-link" data-t="5:07">5:07</span>room yeah good Mr President thank you Mr musk are there about half of the government employees so far appear to have responded to your request for what they&#x27;ve been doing over the past week is there a timeline in place for next moves for people being fired and when can the American people expect to see results of that yes well to to be clear like</p><p id="p8"><span class="ts-link" data-t="5:31">5:31</span>the I think that email perhaps was best interpreted as a performance review but actually it was a pulse check review do you have a pulse do you have a pulse and two neurons so if you have a pulse and two neurons you can reply to an email this is you know I think not a high bar is what I&#x27;m saying this is a should be anyone could accomplish this but what we are trying to get to the bottom of is we think there are a number of people on the Govern payroll who are Dead which is probably why they can&#x27;t respond and and some people who are are not real people like they&#x27;re literally fictional individuals that are collecting paycheck well somebody&#x27;s collecting paychecks on a fictional</p><p id="p9"><span class="ts-link" data-t="6:13">6:13</span>individual so we&#x27;re just literally trying to figure out are these people real are they alive and can they write an email which I think is a reasonable expectation for the you know the American public would have at least that expectation of someone in the public sector Mr M roughly a million employees it&#x27;s not far guys come on roughly a million employees have responded so far to this email does that mean that the remaining 1 million or so federal employees now risk being terminated and is it your understanding and expectation when you post a directive on X that the cabinet secretaries will follow that order because several agencies have instructed employees that this is</p><p id="p10"><span class="ts-link" data-t="6:50">6:50</span>voluntary or or not to respond yeah well I mean so I guess there was a like last week the president en encouraged me via truth social and also via phone call to be more aggressive and I was like okay you know yes sir Mr President we will indeed do that the president is command asks so and I said can we</p><p id="p11"><span class="ts-link" data-t="7:18">7:18</span>send out an email to everyone just saying what did you get done last week and the president said yes so it did did that and you know we we got to a partial response we we&#x27;re going to send another email but our goal is not to be capricious or or unfair it&#x27;s we want to give people every opportunity to send an email and the email could simply be what I&#x27;m working on is too sensitive or classified to to describe like literally just that would be sufficient you know I think this is just common sense and what is your target number for for how many workers employees you&#x27;re looking to cut total we we wish to keep every one who is doing a job that is essential and doing</p><p id="p12"><span class="ts-link" data-t="8:03">8:03</span>that job well but if if they&#x27;re if the job is not essential or they&#x27;re not doing the job well they obviously should not be U on the public Peril a minute wait wait I&#x27;d like to add that those million people that haven&#x27;t responded though Elon they are on the bubble you know I wouldn&#x27;t say that we&#x27;re thrilled about it you know they haven&#x27;t responded now maybe they don&#x27;t exist maybe we&#x27;re paying people now maybe they don&#x27;t exist maybe we&#x27;re paying people that don&#x27;t exist don&#x27;t forget we just got here this group just got here but those people are on the bubble as they say you know they maybe they&#x27;re going to be gone maybe they&#x27;re not around maybe</p><p id="p13"><span class="ts-link" data-t="8:46">8:46</span>they have other jobs maybe they moved and they&#x27;re not where they&#x27;re supposed to be a lot of things could have happened I wouldn&#x27;t say that Biden ran a very tight Administration they spent money like nobody&#x27;s ever spent money before wasted money the green news scam all of the different things they spent money on and you&#x27;ve seen that you&#x27;ve seen that with some of the things that I read in speeches I read them and people can&#x27;t believe when I read them 20 million here 30 million here for you know a little educational course on something circumcision right circumcision $20 million to inform the people of such and such a country on a things and other</p><p id="p14"><span class="ts-link" data-t="9:30">9:30</span>things other than that so yeah those people are right now we&#x27;re trying to find out who those people are that haven&#x27;t responded now there&#x27;ll be some agencies like Marco has people within state that are right now doing very classified very confidential work and we understand that we&#x27;ve talked and you know we&#x27;re being a little more</p></div></div>
       
       
@@ -375,7 +428,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -415,7 +468,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

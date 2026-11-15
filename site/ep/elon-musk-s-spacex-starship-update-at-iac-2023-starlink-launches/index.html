@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -251,7 +304,7 @@
 <li data-z="51">评估火星时间表时，先在地球和火星26个月窗口的日历上标出节点，再看马斯克说的“三到四年”落在哪个窗口。错过一个窗口，整体往后推两年多，这个换算比记年份有用。</li>
 <li data-z="52">看“可重复使用”的宣传时，追问一句翻修周期是几天还是几小时。Falcon 9 的助推器能飞17、18次，但两次之间要整备几天；星舰想做到的是几分钟到几小时，这两个数字才是成本差异的真正来源。</li>
 <li data-z="53">关注发射许可的审批进度。星舰的试飞节奏多次受制于监管，许可批得慢，工程进展再快也上不了天，这个变量值得单独盯。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=inCc4WMxoNw" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>but we have we have a giant custom designed Tower with massive mechanical arms that will literally try to catch the booster and catch the ship which it sounds insane I mean I haven&#x27;t even seen a sci-fi movie that does this you know but Theory it should work let&#x27;s just say success isn&#x27;t a set of possible outcomes I&#x27;m not so I&#x27;m sure what the probability is but success is somewhere in that it&#x27;s a success possible yes I think it&#x27;s possible in terms of catching it I think</p><p id="p1"><span class="ts-link" data-t="0:37">0:37</span>well for this for the ship side we obviously want to make sure that it actually comes in a fully intact and and lands at a precise location in the Pacific before we try to catch it at the launch site because we we we&#x27;re taking every proportion we can for so we do not risk any any human lives or destruction of property so it&#x27;ll be a few flights so so for the ship it&#x27;ll be when we see the ship landing at a precise position in the in the water that&#x27;s when we will try to catch the ship with our mechazilla on the tower the booster obviously booster fights we&#x27;ve done many times on falcon 9. so we&#x27;re much more familiar and have much higher confidence with booster recovery</p><p id="p2"><span class="ts-link" data-t="1:23">1:23</span>we&#x27;ve actually had the booster boost back to land and land at Cape Canaveral Air Force Base many times so I&#x27;ll be with Landing legs not with the max alarms so booster I I I I I think I think there&#x27;s a decent chance depending on when our licenses are granted that we would catch the booster within the next year or maybe less than a year and then hopefully if you get lucky we won&#x27;t catch the ship towards the end of next year and where does the catch take place is it Willie Mays in the middle Outfield over her shoulder or is it Florida somewhere no it&#x27;s so the the both the booster and the ship come back to the launch site okay fantastic yeah that&#x27;s what I mean by the the the</p><p id="p3"><span class="ts-link" data-t="2:14">2:14</span>in fact I mean the the thing that is Success we need a giant Tower with customized arms to lift the booster and the ship onto the launch pad we&#x27;re gonna absolutely need it we can technically do it with with humongous cranes on a low wind day but that&#x27;s quite unwieldy the the the Tower with the arms is capable of lifting the booster and the ship even on on a on on a very windy day oh moderately windy day so then it just seems to me that well if we can lift the the ship and the booster the ship onto the onto the launch stand or the Boost front of the launch stand and the ship onto the booster with those same arms we should be able to catch the</p><p id="p4"><span class="ts-link" data-t="3:03">3:03</span>the Boost ownership with those same models you know we&#x27;ve gotten pretty good with with with the thruster-based landing and in fact we can make this we can make the the rocket hover in mid-air in fact we were able to do that many years ago if you look at the old Falcon 9 test videos which we were called grasshopper where we&#x27;d actually take the Falcon 9 booster and we&#x27;d have it just go up and and hover at 100 meters and then translate over another 100 meters then translate back and then come back and land so we&#x27;re able to do that really over a decade ago it&#x27;s it&#x27;s not obviously very efficient we&#x27;re propellant to have a rocket hover but it can be done</p><p id="p5"><span class="ts-link" data-t="3:48">3:48</span>so that was I was like okay let&#x27;s just have the rocket come back and you know hop up briefly and have the then the arms come together and catch it so that&#x27;s that&#x27;s the general idea is going back to what I was saying it&#x27;s not it&#x27;s not just reusability it&#x27;s rapid reusability and and it doesn&#x27;t get more rapid than bringing it back to the launch site and so in principle the booster comes back very fast by the way one way or another that booster is coming back to land or it&#x27;s going to land fast because with with the high thrust to wait that we&#x27;re waiting for which is sort of on the order of 1.3 to 1.4</p><p id="p6"><span class="ts-link" data-t="4:30">4:30</span>and and a staging ratio which is currently about three to one in favor of the booster so propellant to they&#x27;re propellant on booster to propel my chef is about three to one on on the current version but it&#x27;s trending closer to two to one on with future versions it means that we&#x27;re shifting more and more of the Delta V rodent to the ship side but that means the the booster actually uses up its propound quite quickly and we&#x27;ll Trend towards about only about 100 seconds or so of a booster flight and the booster will immediately flip around boost back to their site and land and so it really we&#x27;re talking about the booster being back at the lower site in</p><p id="p7"><span class="ts-link" data-t="5:21">5:21</span>about four or five minutes which is pretty pretty wild I think it&#x27;s like five five if you know if a five minute boost so basically it&#x27;s about it&#x27;s it&#x27;s it&#x27;s it&#x27;s landed somehow with see the crashed or it&#x27;s landed on the it&#x27;s been caught by the arms one of the two and within five minutes and so so so then you then Lance back on launch stand and you can then refill propellant the the booster there&#x27;s a short side obviously is going to take a minimum of an hour and a half to get around the planet something pretty fast but you go to Circle globe and and obviously that depends on what inclination and so what once you launch Azimuth what&#x27;s your inclination</p><p id="p8"><span class="ts-link" data-t="6:06">6:06</span>of the booster as to whether it has a flight coming back over the launch site or not if it it is technically possible to do a single orbit depending upon your launch inclination very good so please come back in an hour and a half sorry the ship could come back in about an hour and a half any any prediction on when you&#x27;re gonna start deploying satellites with Starship yeah I think we will start deploying</p><p id="p9"><span class="ts-link" data-t="6:42">6:42</span>I think there&#x27;s a good chance we start deploying starlink V3 satellites next year in roughly roughly a year from now because we we before we are confident that the ship like I said the the the the hardest part about this or the part that will take the longest is this is is solving for ship safe ship reentry and landing and but before we solve</p><p id="p10"><span class="ts-link" data-t="7:12">7:12</span>that we can launch the satellites because in any case with Falcon 9 the the upper stage is expendable so you know it&#x27;s actually fine to start launching satellites even before we saw for worship reusability that that is the hardest part of the equation so with Falcon 9 we&#x27;ve gone pretty far with reusability you know the the booster it&#x27;s now highly unusual for the booster to not come back and land it&#x27;s it&#x27;s gotten quite normal for the booster to come back to land we now have a couple of boosters that are I&#x27;ve done 17 I think 18 flights at this point and and and the fairing is also recovered so the fairing reusability is also solid but but the Falcon 9 design does not</p><p id="p11"><span class="ts-link" data-t="8:01">8:01</span>allow for a reusability of the upper stage so and without Falcon 9 just it while reasonably rapid if you especially if you&#x27;ve got a return to launch site Landing still takes at least a few days to refurbish before you can play the game and so with with with Starship actually more profound than the size is the fact that it is fully it is designed to be fully and rapidly reusable the reason for the Absurd size is that we&#x27;re trying to build something that is capable of of creating a permanent base on the moon and a city on Mars that&#x27;s that&#x27;s why it is so large otherwise we can make it much smaller any predictions on when Starship might land on Mars without crew maybe a crude</p><p id="p12"><span class="ts-link" data-t="8:54">8:54</span>flight any any prediction there well I think three or four years four years yeah something like all right I have to check with the Earth Mars you know otherwise the you know get have orbital synchronization about every 26 months so you can&#x27;t just go apply to Mars when it&#x27;s on the other side of the sun from Earth that&#x27;s unwieldy so roughly every 26 months the orbits</p><p id="p13"><span class="ts-link" data-t="9:35">9:35</span>are in the right relative position and then you then you have the Mars transport window so I I think you know but I think it&#x27;s sort of feasible within the next four years to do a an uncrewed test test Landing there yeah</p></div></div>
       
       
@@ -279,7 +332,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -319,7 +372,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

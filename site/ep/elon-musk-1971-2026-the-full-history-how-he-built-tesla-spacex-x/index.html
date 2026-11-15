@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -352,7 +405,7 @@
   <li data-z="102">给冷技术找一个能被记住的符号。如果你的项目需要说服非专业的人，别做第17页的参数表，去做一个 Starman，或者一段10秒能看完的落地视频。注意力是最便宜的融资渠道。</li>
   <li data-z="103">对公开表达的代价定价。一条"资金已到位"的推文，代价是罚款加董事长头衔。你手上如果有对外披露义务的身份，把想说的话先过一遍合规，再去发。</li>
   <li data-z="104">长期项目按十年看，不按季度看。这条线上每一个关键节点都在最初被判断为不可能的那一侧：2008年的合同、2015年的回收、2020年的盈利。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=NJkTHh-otTQ" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>This is the entire history of Elon Musk. We&#x27;re going from a bullied kid in South Africa to the first trillionaire in human history. And yes, we&#x27;re covering all of it. The rockets, the cars, the Twitter chaos, and the moments he almost lost everything. Now, most people see Elon one of two ways. Either he&#x27;s a real-life Iron Man who wakes up and invents the future, or he&#x27;s a rich guy who got lucky and tweets way too much.</p><p id="p1"><span class="ts-link" data-t="0:25">0:25</span>So, you&#x27;d think this story is about genius or about money. It&#x27;s not. The real story is about a guy who kept betting everything he had again and again and somehow survived every time. In late 2008, he was days away from losing both of his companies. Three of his rockets in a row had failed. His electric car company was almost out of cash, and his marriage was falling apart. What happened that Christmas changed everything, and we&#x27;ll get to it.</p><p id="p2"><span class="ts-link" data-t="0:51">0:51</span>So, here&#x27;s the plan. We start with a kid in Pretoria, then go through the dot-com money, the rockets, the cars, the Twitter takeover, and where he is today. Everything in this video is real and documented, and some of it sounds so insane, you&#x27;ll think I made it up. Let&#x27;s go. Elon Musk was born in 2971.</p><p id="p3"><span class="ts-link" data-t="1:10">1:10</span>Wait, no. 1971 in Pretoria, South Africa. And as a kid, he was not the main character. He was quiet, always buried in books, and he got bullied hard. One time, a group of kids threw him down a flight of stairs and beat him so badly, he ended up in the hospital. Rough start, right? But while other kids were playing video games, he was making them. At 12 years old, he taught himself to code and sold a game called Blast Star to a magazine for around $500. 12.</p><p id="p4"><span class="ts-link" data-t="1:38">1:38</span>At 12, my biggest achievement was not getting caught on my phone in class. At 17, he left South Africa alone and moved to Canada with basically nothing. He worked odd jobs, including farm work and cleaning boilers, then ended up at the University of Pennsylvania, where he studied physics and economics. After that, he got into a PhD program at Stanford and quit after about 2 days because the internet was exploding and he didn&#x27;t want to miss it. Remember that. Leaving, quitting, betting on the next big thing. It becomes a pattern.</p><p id="p5"><span class="ts-link" data-t="2:11">2:11</span>And his first big bet is where it gets interesting. In 1995, Elon and his brother Kimball started Zip2, basically an online city guide for newspapers. The whole startup ran on one computer. Peak startup energy. 4 years later, Compact bought Zip2 for about $307 million and Elon walked away with roughly $22 million.</p><p id="p6"><span class="ts-link" data-t="2:32">2:32</span>So, what does a 28-year-old do with that?</p><p id="p7"><span class="ts-link" data-t="2:34">2:34</span>He buys a McLaren F1, sure, but he puts almost all the rest into a new company called x.com, an online bank.</p><p id="p8"><span class="ts-link" data-t="2:42">2:42</span>x.com merged with another startup and became PayPal. And here&#x27;s the plot twist. In 2000, while Elon was on a flight to go fundraising and start his honeymoon, the board kicked him out as CEO. He&#x27;s in the air, newlywed, and gets fired from his own company. Imagine the group chat.</p><p id="p9"><span class="ts-link" data-t="2:59">2:59</span>But he kept his shares and when eBay bought PayPal in 2002 for $1.5 billion, Elon&#x27;s cut was about $175 million. Most people would have bought an island and logged off forever. Not him. He split most of it across three companies that everyone said would fail. About 100 million into SpaceX, 70 million into Tesla, and 10 million into SolarCity.</p><p id="p10"><span class="ts-link" data-t="3:23">3:23</span>If you&#x27;re enjoying this, subscribe to CEO Zone because we break down the entire history of the biggest companies in the world one at a time. But remember, those three bets almost destroyed him. SpaceX started in 2002 with a ridiculous question. Why is going to space so expensive? Elon flew to Russia to buy old missiles to launch a plant to Mars.</p><p id="p11"><span class="ts-link" data-t="3:46">3:46</span>And the Russians basically laughed at him and the prices were insane. On the flight home, he did the math and realized the raw materials for a rocket cost only a tiny fraction of what rockets sold for. So, he figured, &quot;Why not just build them myself?&quot; A guy with zero rocket experience decided to build rockets. And the universe responded with a big old no.</p><p id="p12"><span class="ts-link" data-t="4:07">4:07</span>The first Falcon 1 launch in 2006 failed seconds after lift off. The second one in 2007 failed. The third one in 2008 failed. Three failures, and SpaceX had money for exactly one more try. Meanwhile, Tesla wasn&#x27;t going great, either. Quick fact, Elon didn&#x27;t start Tesla. He came in as the lead investor in 2004, became chairman, and later took over as CEO. By 2008, the Roadster was over budget and late. The financial crisis was hitting, and the company was weeks from not being able to pay people.</p><p id="p13"><span class="ts-link" data-t="4:42">4:42</span>On September 28th, 2008, the fourth Falcon 1 launched, and it worked. It became the first privately built liquid fuel rocket to reach orbit. But, SpaceX was still running out of money. Then came December. On December 23rd, NASA announced a $1.6 billion contract for SpaceX to fly cargo to the space station. And on Christmas Eve, Tesla closed a last-minute funding round, just days before it would have run out of cash. Two lifelines, two days apart. If either one had gone the other way, there&#x27;s no Starlink, no Model Y, and no Starship. And that&#x27;s the thing. He didn&#x27;t win because he was safe. He won because he was willing to be one launch away from zero. After that, things</p><p id="p14"><span class="ts-link" data-t="5:26">5:26</span>started moving. Tesla went public in 2010. SpaceX became the first private company to send a spacecraft to the space station in 2012. And then Elon decided to try something every expert called impossible. Landing a rocket booster upright so you can reuse it. It took a lot of attempts, and a lot of those ended in giant fireballs. SpaceX has a phrase for that, rapid unscheduled disassembly, which is the fanciest way ever to say it exploded. But, in December 2015, a Falcon 9 booster came back down and landed perfectly. And honestly, that one moment changed the economics of space.</p><p id="p15"><span class="ts-link" data-t="6:04">6:04</span>Then in 2018, he launched the Falcon Heavy, the most powerful rocket flying at the time. And for the test payload, he put his own cherry red Tesla Roadster in space with a dummy driver named Starman. A car in space playing David Bowie. Is that a flex or the most chaotic thing ever done? Both.</p><p id="p16"><span class="ts-link" data-t="6:24">6:24</span>Back on Earth, Tesla was fighting for its life again. The Model 3 went into what Elon called production hell in 2017 and 2018. He was sleeping on the factory floor, and the company was bleeding cash. He also got in serious trouble in 2018 after tweeting that he had funding to take Tesla private at $420 a share, and the SEC came after him for it.</p><p id="p17"><span class="ts-link" data-t="6:46">6:46</span>He paid a fine and stepped down as chairman, but then it all turned around. Tesla posted its first full-year profit in 2020, joined the S&amp;P 500, and by early 2021, Elon had passed Jeff Bezos as the richest person in the world. The same guy who&#x27;d been days from bankruptcy was now number one.</p><p id="p18"><span class="ts-link" data-t="7:03">7:03</span>But, he wasn&#x27;t done making headlines. In April 2022, Elon offered $44 billion to buy Twitter. Then, he tried to back out. Then, Twitter sued him. Then, he bought it anyway. That October, he showed up at the headquarters carrying a kitchen sink with the caption, &quot;Let that sink in.&quot; Yeah, we saw that coming, right? What followed was chaos.</p><p id="p19"><span class="ts-link" data-t="7:26">7:26</span>He cut about half the staff within weeks, changed how the platform worked, and in 2023, he killed the famous blue bird and renamed Twitter to X. He&#x27;s also dipped into politics, working with the Trump administration on government spending cuts in 2025, then having a very public falling out with Trump, then, plot twist again, getting close again. We could do a whole video on that, but let&#x27;s just say it&#x27;s a lot.</p><p id="p20"><span class="ts-link" data-t="7:50">7:50</span>Meanwhile, he started an AI company called XAI in 2023, which made the chatbot Grok. And this is where the story catches up to right now. In February 2026, SpaceX bought XAI, creating a combined company valued at about $1.25 trillion dollars. Then on June 12th, SpaceX went public on the NASDAQ in the biggest IPO in history, raising tens of billions of dollars. The stock hit a two trillion dollar valuation and Elon became the first trillionaire ever. And just this month, he said the AI division, now called SpaceX AI, is getting renamed again to SpaceX SI.</p><p id="p21"><span class="ts-link" data-t="8:30">8:30</span>He renames things faster than I change my phone wallpaper. Also, Tesla shareholders approved a pay package worth up to a trillion dollars, the largest in corporate history. So, let&#x27;s zoom out. You probably started this video thinking Elon was either a pure genius or a lucky billionaire. But look at what actually happened. A bullied kid who coded at 12. A guy who got fired from his own company on his honeymoon.</p><p id="p22"><span class="ts-link" data-t="8:53">8:53</span>Three failed rockets, a car company weeks from bankruptcy, and then in one week, two rescues that saved everything. That&#x27;s not luck and it&#x27;s not just genius, either. It&#x27;s a guy who kept putting everything on the table, nearly lost it, and refused to quit. You can love him, hate him, or just scroll past his tweets, but nobody&#x27;s built anything like this. And the wildest part? He says we&#x27;re still at the beginning.</p></div></div>
       
       
@@ -380,7 +433,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -420,7 +473,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

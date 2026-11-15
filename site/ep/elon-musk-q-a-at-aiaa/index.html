@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -308,7 +361,7 @@
 <li data-z="81">把鲁棒性当成性能指标来打分。低升阻比换来的是控制失效也能落地，这类“坏情况下的表现”在载人系统里的权重高于标称性能。</li>
 <li data-z="82">跨环境的产品要留通用性。在地球大气里调优出来的气动外形，搬到火星就失效，设计文档里必须写清楚适用边界。</li>
 <li data-z="83">读技术访谈时盯住数字和条件句。数字能验证，条件句里藏着边界，形容词基本不携带信息。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=JDmjYmoyIyk" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>and and then returning to Earth as well and but I think we&#x27;ll take this in steps certainly something like Falcon heavy could deliver you know decent payload to the surface of Mars it&#x27;s sort of on the order of 12 to 15 metric tons so that that&#x27;s not bad I I think you probably want a vehicle that can deliver something in the orderer of 50 metric tons you know and be able to do that in a fully reusable manner then then the whole equation Works and there&#x27;s more than one way to skin that cat but yeah yeah that that&#x27;s that&#x27;s what I think yes I have a question on the reusable vehicle that you talked about I I&#x27;ve seen a lot of studies of these vehicles and the key to to making it</p><p id="p1"><span class="ts-link" data-t="0:54">0:54</span>work seems to be to get on the order of two or 300 missions a year keep the cost down what do you see as the the Commercial Drive that will will result in the need for two or 300 launches a year yeah I mean it that&#x27;s always a tough question to answer and and I suspect in the early days of of airplanes people didn&#x27;t imagine that there would be this many airplane trips but I I think the biggest driver for that is is really a base on mars or you know potentially base on the moon I don&#x27;t think there&#x27;s really a need for that many satellites for example and I I I also don&#x27;t think it&#x27;s that there&#x27;s a rational basis for like you know doing things like mining helium 3</p><p id="p2"><span class="ts-link" data-t="1:44">1:44</span>on the moon and or really I have a hard time imagining mining anything anywhere and bringing it to Earth because Earth has got a lot of stuff Earth&#x27;s crust has got almost every I mean Earth is Big but I do think there is a market for people who would want to move to the moon or move to Mars and and and that</p><p id="p3"><span class="ts-link" data-t="2:08">2:08</span>that I think is is is interesting and it could support a huge number of flights thousands of flights a year can you tell us your plans for theing capsule and sure question just about our Dragon spacecraft and what we&#x27;re going to do with respect to carrying transporting astronauts and whatnot so the we actually designed the Falcon line and dragon to meet the</p><p id="p4"><span class="ts-link" data-t="2:48">2:48</span>published NASA human rating design guidelines so you know things like subd designing to a 1.4 factor of safety instead of a 1.25 having a multi being multi faure to tolerant so Dr a Dragon for example can lose any two engines at any at any time and still be safe with respect to the space station can still translate and rotate as needed and we actually have a sort of a secondary heat shield behind the primary heat shield the the</p><p id="p5"><span class="ts-link" data-t="3:23">3:23</span>avionics all two fairly tent all that sort of stuff it&#x27;s it&#x27;s got Windows so the question is what doesn&#x27;t it have really the main thing is just the Escape system so that so in terms of upgrading it we need to add a launch Escape and in this we&#x27;re taking a a sort of a different path than has been done before which is to tap the onboard propellant which is ANH as Escape propellant and because you either need to maneuver on orbit or you need to escape you don&#x27;t need to do both and this this makes for a very efficient Mass efficient design and it also means that you can carry High Velocity Escape capability all the way to orbit as opposed to having to dump a launch Tower kind of</p><p id="p6"><span class="ts-link" data-t="4:12">4:12</span>early on and and then a sort of optional bonus is we can use those same engines to land propulsively now we&#x27;re still going to retain redundant parachutes on dragons so you still have redundant redundant you know parachutes so effectively you&#x27;d have almost four levels of redundancy because the The Landing engines</p><p id="p7"><span class="ts-link" data-t="4:41">4:41</span>are themselves redundant and then you&#x27;ve got redundant main parachutes so like four things would have to fail before actually only on yeah the yeah four things in a row would have to fail in for loss of life but then the neat thing about that is you could use it to propulsively land in other places like Mars or Moon or somewhere so I think it&#x27;s it&#x27;s got potential as a generalized science delivery platform for for other you know missions in the solar</p><p id="p8"><span class="ts-link" data-t="5:16">5:16</span>system so question is where do I see electric propulsion I I think that&#x27;s actually for sure a good idea for interplanetary travel particularly since you know you&#x27;re going to need a lot of energy once you&#x27;re on the surface of Mars so you may as well use that energy while you&#x27;re in transit to to speed up the journey and yeah so I think electric propulsion definitely is a good idea and it would be kind</p><p id="p9"><span class="ts-link" data-t="5:47">5:47</span>of a waste not not to do electrical propulsion on the way there the you know the the trick is you you want to obviously have electric propulsion with enough thrust to matter you know that that that&#x27;s that&#x27;s pretty important so yeah I think that&#x27;s that&#x27;s and and needs to be fairly efficient in terms of the energy per you know per per Newton like guess</p><p id="p10"><span class="ts-link" data-t="6:14">6:14</span>what whats of energy to to Newton of force so so I mean the capsule is does have an lvd you know that it has a depending upon where we put the the the lateral Center Mass we can adjust the LV to as High as3 so that that gives us a pretty good accuracy in fact drag landed to within about a mile of its Target on on the flight in December and</p><p id="p11"><span class="ts-link" data-t="7:08">7:08</span>you there&#x27;s there&#x27;s not an obvious reason I think to to have more elev than that yeah nothing that I can think of and then you know the problem with with having more complex lifting bodies is that then it it gets kind of weird if you going if you want to go to Mars you know and you see if you Mars has a you know much lower en atmospheric density particularly in the lower atmosphere so you know something that worked well on Earth would necessarily work well on Mars it obviously would be completely useless on the moon so so I think you know something with a you know 02 to3 LOD is is is is I</p><p id="p12"><span class="ts-link" data-t="7:52">7:52</span>think good enough and it&#x27;s very robust as well you don&#x27;t have to worry about maintaining a specific angle of attack or something going wrong with your control systems or anything even if the if Dragon Control Systems totally malale functioned and then were just dead you you&#x27;d still you still survive because it&#x27;s going to naturally Orient with the main heat shill down your G you&#x27;ll experience higher G&#x27;s you know you might see eight or nine G&#x27;s instead of four to five but that&#x27;s the only downside U and you can literally you can manually pull the shoots so so it&#x27;s very very very robust in that</p><p id="p13"><span class="ts-link" data-t="8:38">8:38</span>sense sure yeah so the for Falcon heavy to to the cross feed between the the outer cores to the center is is pretty helpful you know it gives roughly 20 to 30% more payload and we have an advantage here in that because there are nine engines we can control flow to those engin engines</p><p id="p14"><span class="ts-link" data-t="9:12">9:12</span>individually so so the way we we do cross feed is is to basically draw propellant for for the engines that are adjacent to the core from from the you know so the engines that so the center core engine is is pulling from from its side core on either side and and then we we can shut prev valves to those engines so that it&#x27;s not sucking it down from the side course you can&#x27;t do this you&#x27;ve got one engine or or if if you know but you can do it if you have if you have mult you know nine engines it&#x27;s a lot easier but but the the the cross speed is is is is really an option for a really big payload so for customers that that don&#x27;t need the cross feed we would we would not</p><p id="p15"><span class="ts-link" data-t="10:05">10:05</span>enable cross feed yeah it&#x27;s just it&#x27;s just but it&#x27;s helpful for Missions to they out that either big missions toor or missions to the outer solar system you so we&#x27;re talking with tenas about some potential missions that that go out you know to 150 or 200 Au so you&#x27;re sort of way out past past Pluto and stu</p><p id="p16"><span class="ts-link" data-t="10:48">10:48</span>yeah well his question was just generally how&#x27;s it gone with reusability well so far it has sucked really I mean it extremely difficult and there&#x27;s a reason that nobody has invented a fully reusable rocket before it&#x27;s super damn hard [Music] but we have learned a lot and we did recover Dragon so if you sort of think of dragon as a third stage we have recovered dragon and we recovered in a condition that you could easily refly it with with changing nothing you know repack the shoots and you can fly it again but but but but the thing is we can&#x27;t afford to give a dragon level of protection to the booster or the booster would get no payad orbit so the real</p><p id="p17"><span class="ts-link" data-t="11:37">11:37</span>tricky thing here is essentially you know constructing a suit of armor that is just exactly tailored to the forces it&#x27;s going to need to resist on re-entry and then so and those forces are higher than we anticipated it&#x27;s even for the first stage because of the trajectory the first stage it comes in at a pretty steep angle so the force is is is very high it&#x27;s basically belly flopping on the atmosphere and so something has to be done to to shed velocity so you we&#x27;re looking at you know potentially restarting the engines to do U to sh shed some velocity and and give it a a more benign re-entry weight against increased structure you know margins and and increased</p><p id="p18"><span class="ts-link" data-t="12:33">12:33</span>the and a better thermal Shield it&#x27;s a tough trade on propellant versus dry mass and I I think you know we&#x27;ve got something that on paper closes and we&#x27;ll see if that if that turns out to be reality as well</p></div></div>
       
       
@@ -336,7 +389,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -376,7 +429,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -323,7 +376,7 @@
 <li data-z="87">判断一家硬科技公司能不能活，别只看技术，看它有没有一份在正确时间落地的合同。SpaceX活下来靠的是第四次发射加一份NASA商业货运合同，两个条件缺一不可。</li>
 <li data-z="88">下次听到有人说某件事"不可能"，先问一句：说这话的人掌握的信息是什么，赔率是多少。2008年的质疑是理性的，活下来靠的是运气加执行，两样都不能少。</li>
 <li data-z="89">如果你在带团队做长周期项目，学一件事：把终极目标写进公司使命，然后允许团队用商业业务养活自己。SpaceX发了十几年卫星，才有钱做星舰。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=Ed0EW2278gg" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:03">0:03</span>oh I&#x27;d like to just yeah acknowledge the incredible work of the people at SpaceX and NASA and everyone in creating this technology and in in what is culminated in this incredible launched today of getting astronauts back to orbit after almost a decade I think this is something that should really get people I mean right on the heart of anyone who is has any spirit of exploration and the United States is a distillation of the human spirit of exploration I think this is something that&#x27;s particularly important in the United States but appeals to everyone with the throughout the world who has within them the spirit of exploration so I mean I&#x27;m really</p><p id="p1"><span class="ts-link" data-t="0:55">0:55</span>quite overcome with emotion in this day so it&#x27;s kind of hard to talk frankly they&#x27;ve been eighteen years working towards this goal so it&#x27;s hard to believe that&#x27;s happened when we haven&#x27;t quite yet doctored with the space station and of course we it&#x27;s bring them back safely and we need to repeat these these missions and have this be a regular occurrence so it&#x27;s a lot of work to do but it&#x27;s it&#x27;s just incredible I</p><p id="p2"><span class="ts-link" data-t="1:25">1:25</span>think this is something that everyone you know it&#x27;s this is a craft made by humans you know for humans this is like something that I think humanity should be excited about and proud of occurring on this day Elon Gwynne Shotwell said right before liftoff that she had her stomach and her throat she was super nervous I&#x27;d like to know how you were feeling in the minutes leading up to liftoff today your emotions your feelings of having to stand there and watch all this unfold thank you well I</p><p id="p3"><span class="ts-link" data-t="2:00">2:00</span>mean just being straight from the heart on Wednesday during the first first countdown I&#x27;d say that my adrenaline was railed at 100% and when the launch was called off went does 0% it was like I just basically collapsed and slept though the longest time I&#x27;d slept in probably a year they&#x27;re gnarly enough today I don&#x27;t know I feel like just the fates were aligned and I didn&#x27;t feel didn&#x27;t feel nervous didn&#x27;t feel just but if I like if I like it&#x27;s gonna work and I felt like the right thing was gonna happen so for whatever reason I did not I don&#x27;t know if you&#x27;re nervous say something</p><p id="p4"><span class="ts-link" data-t="2:44">2:44</span>real quick I just got a note moments ago Doug Hurley announced that the crew dragon is named endeavour and we are going to look forward to hearing a few words from them shortly thank you yeah they&#x27;ve been flying it around actually it&#x27;s cool it they they they they took it off automatic and and just wouldn&#x27;t manually flying the craft around it&#x27;s gotta be pretty fun yeah just zipping around space and yeah space craft everyone&#x27;s childhood dream yes I&#x27;d like to ask you on I realized mission isn&#x27;t over but it&#x27;s a significant achievement at this point what&#x27;s the impact of success for this program on SpaceX as a whole including development of starship</p><p id="p5"><span class="ts-link" data-t="3:33">3:33</span>well I think this this is obviously a trance compliment for SpaceX in partnership with NASA and a number of critical spires in fact if I think about the total number of people involved in this mission successful probably adds up to a hundred thousand so I just like to just to express a word of appreciation and graduations again for to everyone involved making this successful and</p><p id="p6"><span class="ts-link" data-t="4:03">4:03</span>actually and just a special special words that administrator Cathy and you know it&#x27;s just a everyone involved it&#x27;s just wow anyway it is a little hard to process I think at this point am so whatever come by emotion to try to come up with cohesive you know sentence does that make any sense is quite difficult but I think the</p><p id="p7"><span class="ts-link" data-t="4:32">4:32</span>that this is hopefully the first step on a journey towards a civilization on on Mars because of life that coming multiplanetary you know based on the moon and expand expanding beyond earth and life becoming a multi-planet species live becoming multiplanetary for the first time in the four and a half billion year history of Earth I think this is hopefully the first step on that journey but will require a tremendous</p><p id="p8"><span class="ts-link" data-t="5:03">5:03</span>amount of innovation and technology development to make going to orbit and ultimately beyond overt a routine matter where thousands and perhaps ultimately millions of people can travel to other planets that&#x27;s that&#x27;s what we really need to achieve over time we&#x27;re and that that&#x27;s that&#x27;s obviously a very difficult goal but that&#x27;s it&#x27;s that seeming increasingly real with what happened today but getting people to over it finally after eighteen years if we if we</p><p id="p9"><span class="ts-link" data-t="5:39">5:39</span>are able to increase out the rate of innovation then life can become multiplanetary this is the goal which is rifle thanks guys for taking my call I really appreciate it and thanks you on for the trampoline quote that was classic Ilana if I could ask you you put the window in the car go dragon as a symbol of your ambition of flying people I wonder if you can talk a little bit about how over these very long years you kept your team focused on human spaceflight as the ultimate goal even though obviously they&#x27;ve been working on so many other things along the way thanks and Congrats</p><p id="p10"><span class="ts-link" data-t="6:22">6:22</span>yeah human spaceflight was was always the goal the fundamental goal SpaceX well it like said to create the technologies or help create the technologies necessary to make life sustainably multiplanetary I can&#x27;t emphasize I cannot emphasize this enough this is the thing that we need to do we must make life sustainably multiplet multiplanetary it&#x27;s not one planet to the exclusion of another but to extend life beyond Earth we our life&#x27;s agent in this regard all the creatures that and the plants and everyone that that exists here on earth we can bring them to other planets and it&#x27;s very important that we do so as soon as possible I think well while the window of opportunity is open</p><p id="p11"><span class="ts-link" data-t="7:07">7:07</span>I call upon I call upon the public to support this goal and to think about this goal and think about how important it is and how fundamental it is to the future we got to get it done the launching satellites is it&#x27;s nice of course and it keeps the coat you know we&#x27;ve got to bring in more money than we spend this is important but it&#x27;s ultimately all about life beyond Earth</p><p id="p12"><span class="ts-link" data-t="7:41">7:41</span>hello thank you and congratulations my question is for Elon you said last week that you had told Bob and Doug&#x27;s two little boys that you would do everything you can to bring them home safely even with a safe launch out the way that must still weigh on you throughout the mission and I wondered if you can share some personal insight into what it&#x27;s like to have that responsibility not just with your SpaceX hat on but as a dad thank you</p><p id="p13"><span class="ts-link" data-t="8:14">8:14</span>well it really hit home you know when you meet somebody&#x27;s kids and and the the vehicle that they were responsible for you know that their life&#x27;s at stake it&#x27;s it&#x27;s I really hits home so you know there&#x27;s still so much look at a duck with space station we still got a cigar returned I think it was an argument that the return is more more dangerous in some ways than the ascent so we don&#x27;t Eclair victory yet we need to bring them home safely make sure that we we&#x27;re doing everything we can to minimize that risk of reentry and and return of the we</p><p id="p14"><span class="ts-link" data-t="9:05">9:05</span>were able to do that with the demo1 vehicle so we were able to retire a lot of risk with the reentry there that that&#x27;s a big deal but yeah that that and I get a choked up here so it it&#x27;s it really this yeah I&#x27;m getting choked up sorry I I&#x27;m not sure I can answer the question and more than that except yeah we&#x27;re gonna do everything we can so make sure he gets home safely I think we would not have achieved this level of safety without the tremendous support from NASA and your team this is this it that there&#x27;s it that NASA made us way better than we would otherwise have been and obviously couldn&#x27;t even have got started without NASA so thank you very</p><p id="p15"><span class="ts-link" data-t="9:54">9:54</span>much for your support let&#x27;s let&#x27;s celebrate safety when we get them home let&#x27;s do that thank you very much a question for you Lana could you expand on the starship development about when you expect you if you will go around the moon well I tend to be a little optimistic about schedules [Laughter] so I&#x27;ve been optimistic in general so I guess that extends to schedules too I don&#x27;t know I mean I I guess I would I</p><p id="p16"><span class="ts-link" data-t="10:34">10:34</span>would wish that we could do it in two years I don&#x27;t know that might mean for but I think I don&#x27;t know what I think it&#x27;s not out of the question that it could be two years I would be surprised if it took more than four this is for Yi LAN you&#x27;ve been working toward this moment for 18 years and have certainly encountered some resistance along the way I think even a NASA at one point what would you say to those who doubted SpaceX could do this do you have a message for them and then your last conversation with Bob and Doug can you can you tell us what you what you talked about what you said thank you my plugs I didn&#x27;t hear the first question properly</p><p id="p17"><span class="ts-link" data-t="11:20">11:20</span>Dave yes I&#x27;m sorry could you couldn&#x27;t hear the question yeah can you repeat it please yeah sorry about that so this was for you I said you&#x27;ve been working toward this moment for eighteen years and you&#x27;ve certainly encountered a lot of resistance along the way even I think from NASA at the very beginning what would you say to those who doubted SpaceX could do this do you have a message for them and then what was your last conversation with Bob and Doug like what did you what did you talk about where was it thank you so much it&#x27;s do I have a message for those who doubted okay I was like okay maybe I just blank out the word doubt so no I mean I treat totally</p><p id="p18"><span class="ts-link" data-t="12:08">12:08</span>Frank I doubted us too so I thought we you know had maybe weren&#x27;t starting SpaceX maybe had a temps and chance of reaching orbit so so you know to those who who doubted us it was like well I think you probably right you know I mean the number of times that I was sold like because he always taken the money I earned from for him PayPal and and rolling into to create SpaceX and Tesla and and as in our spending at all it wasn&#x27;t the attention but and and and almost both companies went bankrupt frankly 2008 was a tough year you know</p><p id="p19"><span class="ts-link" data-t="12:46">12:46</span>took us took us four attempts just to get to orbit with Falcon one and so but a lot of times I was you know I fear would tell me this joke like how do you make a small fortune in the rocket industry you start with a large one is the punchline and I was like okay I already heard that joke twelve thousand times you know so anyway and it was it</p><p id="p20"><span class="ts-link" data-t="13:12">13:12</span>almost came true you know we just barely made it there that fourth launch of Falcon one that&#x27;s all the money we had for that fourth launch and then and that wasn&#x27;t even enough to save the company we also then had to win the national car go we supply contract so that that came a little laughter you know a little bit later or at at the end of 2008 those are the two key things that that saved SpaceX otherwise we would have we would have you know not made it so so hey I think those doubters</p><p id="p21"><span class="ts-link" data-t="13:44">13:44</span>were there probably the assessment was correct but fortunately Vader smiled upon us and for us to this day</p></div></div>
       
       
@@ -351,7 +404,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -391,7 +444,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

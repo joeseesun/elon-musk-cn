@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -326,7 +379,7 @@
 <li data-z="90">如果你在做硬件或医疗产品，把「台架测试、加速寿命测试、橡胶假脑」这套顺序抄下来。先在最便宜的介质上把风险榨干，再让成本最高的环节上场。</li>
 <li data-z="91">看动物实验相关的说法时，把发布会上的展示和第三方伦理审查记录分开对待。前者是态度，后者是证据。</li>
 <li data-z="92">刷到任何技术突破视频，问三句：能不能量化、能不能复现、能不能拆掉。三句都答得上，才值得往下追。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=qatNpM3o74w" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>difficult Journey from prototype to product and I&#x27;ve often said that prototypes are easy production is hard it&#x27;s really I&#x27;d say a hundred to a thousand times harder to go from to go from a prototype to a device that is safe reliable Works under a wide range of circumstances is Affordable and done at scale it&#x27;s it&#x27;s insanely difficult</p><p id="p1"><span class="ts-link" data-t="0:33">0:33</span>and there&#x27;s an old saying that you know that it&#x27;s one percent inspiration 99 perspiration but I think it might be 99 or 99.9 perspiration you know the best example I could give of an idea of being easy but the execution being hard is going to the Moon it&#x27;s the idea of going to the Moon easy going to the Moon very hard</p><p id="p2"><span class="ts-link" data-t="0:56">0:56</span>so and we&#x27;ve been working hard to all right be ready for our first human and obviously we want to be extremely careful and certain that that it will work well before putting a device in a human but we&#x27;re we&#x27;re submitted I think most of our paperwork to the FDA and we&#x27;re we think probably in about six months we should be able to have Outpost neural Link in a human so [Music] [Applause]</p><p id="p3"><span class="ts-link" data-t="1:33">1:33</span>but as I said we we do everything we possibly can to test the devices before not even not even going into a human before even going into an animal so we do bench top testing we do accelerator accelerated life testing we have a fake brain simulator that has the the texture and it&#x27;s like emulating a brain but it&#x27;s sort of rubber and so any before we would even think of putting a device in an animal we we do everything we possibly can with rigorous bench up benchtop testing so we&#x27;re not Cavalier and putting devices into animals we&#x27;re extremely careful and we</p><p id="p4"><span class="ts-link" data-t="2:19">2:19</span>always want the device whenever we do the implant if it&#x27;s in a sheep or a pig or a monkey to be confirmatory not exploratory so that we look we&#x27;ve we&#x27;ve done everything we possibly can with benchtop testing and only then would we consider putting a device in an animal and yeah we&#x27;ll actually show you a demo later today of in a few hours really of of implanting in a brain</p><p id="p5"><span class="ts-link" data-t="2:53">2:53</span>proxy and if anyone in the audience wants to volunteer with a robot right there so let&#x27;s see instance since the page of demo we&#x27;ve expanded to work with a troop of six monkeys we&#x27;ve actually upgraded pager they do varied tasks and we do everything possible to ensure that things are stable and replicable and that things like that the device lasts for a long time without degradation so and what you&#x27;re seeing there is it looks like the Matrix but that that&#x27;s actually though that&#x27;s a real output of of neural signals so that that&#x27;s that&#x27;s not a simulation or just a screensaver or something that those are actual neurons firing that is one of the what one of the</p><p id="p6"><span class="ts-link" data-t="3:45">3:45</span>readouts looks like and here you can see sake it&#x27;s one of other monkeys typing on a keyboard now this is telepathic typing so to be clear this is the he&#x27;s not actually using a keyboard he&#x27;s moving the cursor with his mind to the highlighted key now technically we can&#x27;t can&#x27;t actually spell and</p><p id="p7"><span class="ts-link" data-t="4:21">4:21</span>so I don&#x27;t want to oversell this thing because that&#x27;s that&#x27;s the next version so the but what&#x27;s really cool here is is sake of the monkey is moving the mouse cursor using just his mind moving the cursor around to the highlighted key and then spelling out what we what we want everyone to spell but and then so this this is a something that could be used for somebody who&#x27;s who&#x27;s say it quadriplegic or tetraplegic human even before we make the the spinal cord stuff work is being able to control</p><p id="p8"><span class="ts-link" data-t="5:09">5:09</span>a mouse cursor control a phone and we we&#x27;re confident that that someone who is has basically no other interface to the outside world would be able to control their phone better than someone who has Working Hands so foreign upgradability upgradability is very important because our first production device will be much like an iPhone one and I&#x27;m pretty sure you would not want an iPhone one stuck in your head for the iPhone 14 is available so it&#x27;s gonna be it&#x27;s be able to demonstrate full reversibility and upgrade ability so you can remove a device and replace it with the latest version or if it stopped working for any reason replace it it&#x27;s that&#x27;s that that&#x27;s a</p><p id="p9"><span class="ts-link" data-t="6:07">6:07</span>fundamental requirement for the device at your link and I should say both swaki and Paige were upgraded to our latest latest and greatest implants so that that&#x27;s been really over a year and a half now that that pagers had put the first implant and then the upgraded implant so this is a very good sign that it lasts for a long time with no observed ill effects</p><p id="p10"><span class="ts-link" data-t="6:36">6:36</span>I think it&#x27;s also important to show that sake actually likes doing the demo and it&#x27;s not like strapped to the chair or anything so it&#x27;s yeah so the monkeys actually enjoy doing the demos because they and they get the banana smoothie and it&#x27;s kind of a fun game so I I guess smart termic is like We Care a great deal about animal welfare and and I&#x27;m pretty sure like our monkeys are pretty happy you know so as you can see there&#x27;s a quick decision maker on the fruit front so</p></div></div>
       
       
@@ -354,7 +407,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -394,7 +447,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

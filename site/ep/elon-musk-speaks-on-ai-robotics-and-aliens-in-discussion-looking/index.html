@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -320,7 +373,7 @@
 <li data-z="86">关注太阳能制造产能和关税政策的变化。他给的数字是 SpaceX 和特斯拉各自每年 100 吉瓦，这个产能目标可以被追踪，也直接反映政策松紧。</li>
 <li data-z="87">如果要买人形机器人，第一波窗口大概在明年年底前后。真正开卖时重点看可靠性和安全性数据，别被演示效果带走。</li>
 <li data-z="88">给自己列一张好奇心清单。他想搞清楚的是宇宙起源、意识是什么、有没有别的文明。这件事不需要火箭，只需要认真对待那些你一直想问却没空问的问题。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=DPCvFy5BKeM" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>The overall goal of my companies is to maximize the future of civilization like basically maximize the probability that civilization has a great future. and to expand consciousness beyond earth. So take SpaceX for example that SpaceX is about build advancing rocket technology to the point where we can extend life and consciousness beyond Earth to the moon to Mars eventually to other star systems and</p><p id="p1"><span class="ts-link" data-t="0:33">0:33</span>and I think we should always view consciousness life as we know it as as precarious and delicate because to the best of our knowledge we we we don&#x27;t know of life anywhere You know, I&#x27;m often asked are there aliens among us? And I&#x27;ll say that I am one, but</p><p id="p2"><span class="ts-link" data-t="0:54">0:54</span>or you&#x27;re from the future.</p><p id="p3"><span class="ts-link" data-t="0:56">0:56</span>They don&#x27;t believe me. I think if anyone would know if there are aliens among us, it would be me. and we we have 9,000 satellites up there and not once have we had to maneuver around an an alien spaceship. So I&#x27;m like I don&#x27;t know. It&#x27;s bottom line is I think we need to assume that life and consciousness is extremely rare and it might only be us. And if that&#x27;s the case, then we need to do everything possible to to ensure that the the light</p><p id="p4"><span class="ts-link" data-t="1:28">1:28</span>of can light the light of consciousness is not extinguished because we&#x27;re effectively the way I view it is the image in my mind is of a a tiny candle in a vast darkness, tiny candle of consciousness that could easily go out. and that&#x27;s why it&#x27;s important to make life multilanetary such that if there is a natural disaster or a man-made disaster on earth that consciousness continues with robotics and AI this this is really the path to abundance for all. If you say, you know, people often talk about solving global poverty or essentially how how do we make give everyone a very high standard of living? I I think the only way to do this is AI and robotics.</p><p id="p5"><span class="ts-link" data-t="2:20">2:20</span>We need to be very careful with AI. We need to be very careful with robotics. We don&#x27;t want to find ourselves in a James Cameron movie, you know, Terminator. He&#x27;s he&#x27;s great. Great movies. I love his movies. But but we don&#x27;t want to be in Terminator obviously. but but we if you have</p><p id="p6"><span class="ts-link" data-t="2:41">2:41</span>ubiquitous AI that is essentially free or close to it and ubiquitous robotics then you will have an an explosion in the in the global economy. An expansion in the global economy that is truly beyond old precedent. And actually my prediction is in the in the benign scenario of the future that we will the robots we will actually make so many robots in AI that they will actually saturate all human needs. Meaning you won&#x27;t be able to even think of something to ask the robot for at a certain point.</p><p id="p7"><span class="ts-link" data-t="3:17">3:17</span>But how do you then have human purpose in that scenario? Yeah. I mean, you know, there are nothing nothing&#x27;s perfect, you know, but like you can&#x27;t have both. You can&#x27;t have work that has to be done and amazing abundance for all. because if it&#x27;s if it&#x27;s work that has to be done, then then then you and and only some people can do it, then then you you you can&#x27;t have abundance. Then it&#x27;s narrow.</p><p id="p8"><span class="ts-link" data-t="3:45">3:45</span>It&#x27;s narrow. Exactly. So, but if you if you have billions of humanoid robots, I think there will be, I think I think everyone on Earth is going to have one and going to want one. because, you who wouldn&#x27;t want a robot to, you know, assuming it&#x27;s very safe, watch over your kids, take care of your pet. if you have elderly parents, a lot of friends of mine said they have elderly parents.</p><p id="p9"><span class="ts-link" data-t="4:15">4:15</span>It&#x27;s it&#x27;s very difficult to take care of them. Expensive.</p><p id="p10"><span class="ts-link" data-t="4:18">4:18</span>Yeah, it&#x27;s expensive and it&#x27;s expensive and there just aren&#x27;t enough people to take care of the there aren&#x27;t enough young people to take care of the old people, right?</p><p id="p11"><span class="ts-link" data-t="4:25">4:25</span>so if you if they if if you had a robot that could take care of and protect an an elderly parent, I think that would be great. That would be an amazing thing to have. I mean overall I&#x27;m I&#x27;m very optimistic about the future. I think we&#x27;re headed for a future of amazing abundance which is very cool. and and and definitely</p><p id="p12"><span class="ts-link" data-t="4:49">4:49</span>we are in the most interesting time in history.</p><p id="p13"><span class="ts-link" data-t="4:52">4:52</span>You and I reverse aging in this new history.</p><p id="p14"><span class="ts-link" data-t="4:54">4:54</span>You know I haven&#x27;t I haven&#x27;t put much time into the aging stuff. I I do think it is a very solvable problem like like you can I think when when when we find figure out what causes aging</p><p id="p15"><span class="ts-link" data-t="5:08">5:08</span>I think we&#x27;ll find it&#x27;s incredibly obvious. It&#x27;s not a subtle thing. the reason I say it&#x27;s not a subtle thing is because all the cells in your body, you know, with some pretty much age at the same rate. I&#x27;ve never seen someone with with an old left arm and a young right arm ever in my life. so why is that?</p><p id="p16"><span class="ts-link" data-t="5:28">5:28</span>it that that means that there must be a clock a synchronizing clock</p><p id="p17"><span class="ts-link" data-t="5:32">5:32</span>that is synchronizing across 35 trillion cells in your body. There is some benefit to death by the way. It&#x27;s like there&#x27;s there&#x27;s a reason why we don&#x27;t actually have a longer lifespan. because if you if you have if people do live forever for a very long time I think there&#x27;s some risk of an oification of society of of things just getting kind of locked in place. That said, do I think we&#x27;ll figure out ways to extend life and and maybe even reverse aging? I think that&#x27;s highly likely.</p><p id="p18"><span class="ts-link" data-t="6:07">6:07</span>What would it take for the United States and what type of geography would it take to have that solar field to electrify the United States? And and then let me ask a question. Why aren&#x27;t we doing it?</p><p id="p19"><span class="ts-link" data-t="6:18">6:18</span>You could take basically a small corner of Utah, Nevada,</p><p id="p20"><span class="ts-link" data-t="6:22">6:22</span>Nevada, New Mexico. Obviously, we wouldn&#x27;t want it all in one place, but I&#x27;m you can it&#x27;s it&#x27;s a very small percentage of the area of of the US to generate all of the electricity that the US uses.</p><p id="p21"><span class="ts-link" data-t="6:35">6:35</span>and the same is true actually, I mean, for for Europe. Unfortunately, in in the US, the the the tariff barriers for solar are are extremely high. and that makes the economics of deploying solar so artificially high because China makes almost all the solar. The SpaceX and Tesla teams both separately are working to build to 100 gawatts a year of solar power in the US. By the by the end of next year I I think would be selling humanoid robots to the public.</p><p id="p22"><span class="ts-link" data-t="7:11">7:11</span>that that&#x27;s when we are confident that the it&#x27;s very high reliability, very high safety. and the range of functionality is is also very high. You can basically ask it to do anything you&#x27;d like. The Tesla full self-driving software, we we update it sometimes once a week. and recently some of the</p><p id="p23"><span class="ts-link" data-t="7:30">7:30</span>insurance companies have said that it is actually so safe when what Tesla full full self-driving is so safe that they&#x27;re they&#x27;re offering customers half price insurance if they if they use Tesla full self-driving in their car</p><p id="p24"><span class="ts-link" data-t="7:47">7:47</span>and that could be monitored by the insurance company. Can they is that part of the agreement then? Yeah, self-driving cars is essentially a solved problem at this point, right?</p><p id="p25"><span class="ts-link" data-t="7:58">7:58</span>and Tes Tesla&#x27;s rolled out sort of robo taxi service in a few cities and right</p><p id="p26"><span class="ts-link" data-t="8:04">8:04</span>we&#x27;ll I be very very widespread by the end of this year within the US and then we we hope to get supervised full self-driving approval in Europe hopefully next month. Really that quickly?</p><p id="p27"><span class="ts-link" data-t="8:18">8:18</span>Yeah. And then maybe a similar timing timing for China hopefully the rate at which AI is progressing I think we we&#x27;re we might have AI that is smarter than any human by the end of this year. and I would say no later than next year.</p><p id="p28"><span class="ts-link" data-t="8:37">8:37</span>Wow. and then probably by 2030 or 2031, call it 5 years from now. AI will be smarter than all of humanity collectively. We want to have like Starfleet and Star Star Trek really for for real like where we actually have giant spaceships traveling through space going to other planets. What I would call the philosoph philosophy of curiosity. I&#x27;d like to understand u the meaning of life, you know.</p><p id="p29"><span class="ts-link" data-t="9:08">9:08</span>the is the standard model of is the standard model of physics correct</p><p id="p30"><span class="ts-link" data-t="9:12">9:12</span>regarding the beginning of life beginning of existence and the end of the universe what what questions do we not know to ask that we should ask and AI will help us with these things so I&#x27;m just trying to understand how do we get here what&#x27;s going on what&#x27;s real are there aliens maybe there are and if if we&#x27;ve got if we got spaceships that are traveling to other star systems we may find we may encounter alien And where we may find many long dead alien civilizations.</p><p id="p31"><span class="ts-link" data-t="9:41">9:41</span>Do you see yourself ever going to Mars in your lifetime?</p><p id="p32"><span class="ts-link" data-t="9:46">9:46</span>yeah. I mean I would say like I you know I</p><p id="p33"><span class="ts-link" data-t="9:49">9:49</span>That&#x27;s a long commitment. I&#x27;ve been asked</p><p id="p34"><span class="ts-link" data-t="9:51">9:51</span>wasn&#x27;t that three years each way? it&#x27;s 6 months.</p><p id="p35"><span class="ts-link" data-t="9:55">9:55</span>6 months. That&#x27;s all it is.</p><p id="p36"><span class="ts-link" data-t="9:56">9:56</span>Yeah. 6 months. But the planets only align every every two years.</p><p id="p37"><span class="ts-link" data-t="9:59">9:59</span>Okay. So, yeah, I&#x27;ve been asked a few times like, &quot;Do I want to, you know, die on Mars?&quot; And I&#x27;m like, &quot;Yes, but just not on impact.</p></div></div>
       
       
@@ -348,7 +401,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -388,7 +441,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

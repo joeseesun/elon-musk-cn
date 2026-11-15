@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -287,7 +340,7 @@
 <li data-z="69">选行业的时候问自己一个问题：这份工作是在做蛋糕，还是在分蛋糕。分蛋糕的岗位回报高、学习曲线平、可替代性强；做蛋糕的岗位前期慢、上限高、技能可迁移。两种都合法，但要清楚自己在哪一边。</li>
 <li data-z="70">如果你在考虑让公司上市，先想清楚一件事：你能接受的最短汇报周期是多久。如果核心业务需要五年才能出结果，而你要每季度解释一次，那 IPO 融来的钱，有一部分会被用来支付解释成本。</li>
 <li data-z="71">读一手材料。这段问答只有几分钟，文字稿还有语音识别的错漏，但它是理解 SpaceX 后来很多决定的原点。二手转述会把"我们对公开市场有疑虑"简化成"马斯克不想上市"，中间那层权衡就丢了。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=7Vq9UPA0t5o" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>so it&#x27;s something thank you very much i really appreciate thank you we have just signed a contract to make the moon is a harsh mistress into living weapons disappear I would like that how will your work when you first read by but we want to catch them even younger yeah okay well Arthur any questions from the audience are like this little and conventional than a presentation that&#x27;s going to happen lets anybody have a question you call Lacey long Sri you got</p><p id="p1"><span class="ts-link" data-t="0:52">0:52</span>microphone setup if you want to get to the lives what we hiring great people is always tough in any company and I think we&#x27;ve been originally successful in doing so we we grew from 800 to 1,200 last year in span of last year and this year probably provided through twenty twenty-five percent so I think we&#x27;re making good progress it&#x27;s so it&#x27;s actually more of a challenge integrating people effectively into the organization any any given organization the app for</p><p id="p2"><span class="ts-link" data-t="1:53">1:53</span>anything religious the Baptist people within it and and so if you add people to the organization you&#x27;ve got to make sure that things are well aligned and they&#x27;re able to apply themselves to their full potential that that&#x27;s that&#x27;s one of the toughest thing I&#x27;m going to answer that one to Elon because back in 2009 a aeronautics professor at the University of Michigan was interviewed for aviation week he wrote a editorial and he said that in the last ten years his ten best students he knew who they were and five of them are working for SpaceX and that was more than any other company so it&#x27;s not just quantity right quality to the 30 circles when i read</p><p id="p3"><span class="ts-link" data-t="2:39">2:39</span>that article i was like damn we missed five question this attractive</p><p id="p4"><span class="ts-link" data-t="3:06">3:06</span>well I do you think engineering has a marketing problem unfortunately I do you think it&#x27;s changing a little bit with the with Silicon Valley companies that have really grown dramatically in the past several years you know like Google and Facebook and so forth with a yahoo that they&#x27;re all started and run by by engineers so I think we should start a bit of that it&#x27;s but it&#x27;s more in the kind of software engineering arena I i</p><p id="p5"><span class="ts-link" data-t="3:42">3:42</span>do think what one of the biggest sort of miss applications of talent is far too many smart people going into finance in the United States you know that&#x27;s sort of the capital allocation game but but you really need to actually be making products and services that people really use that that should really be aware where the smartest people go I think we</p><p id="p6"><span class="ts-link" data-t="4:09">4:09</span>each past somehow change the rules of the game such that finance is not so rewarding and that to some degree that may ever that may have occurred in recent years thank you for not saying anything about lawyers what anybody else is that it well SpaceX is actually we&#x27;ve been slightly profitable for the last four years and expect to be that the sero game so we don&#x27;t have an immediate need</p><p id="p7"><span class="ts-link" data-t="4:56">4:56</span>for capital but i think that there&#x27;s a good chance that we will IPO the company next year if the public markets are very efficient way to to raise capital and i think i think we we may need to which is probably a good move to have a capital reserve and yeah but there&#x27;s some debate</p><p id="p8"><span class="ts-link" data-t="5:20">5:20</span>about that because if we do go public you know how will the public markets respond to a super long term thinking you know it&#x27;s like making life multiplanetary I&#x27;m let&#x27;s kind of a long horizon return and but I mean I want to tell people that is it see how they react and see if the public markets willing to support that if so that we might IPO towards intermixture yeah</p><p id="p9"><span class="ts-link" data-t="5:50">5:50</span>thank you very much me well thank you appreciate it not like to thank all of you is heinlein&#x27;s children from taking time we are busy lives to come here to honor you lon and to help the High Line memory click up your copy of the book on the way out it&#x27;s free and if you want to get all of the books pick up the copy of the Virginia edition a flyer and you can</p><p id="p10"><span class="ts-link" data-t="6:22">6:22</span>order it online pay for it with paypal okay</p></div></div>
       
       
@@ -315,7 +368,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -355,7 +408,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

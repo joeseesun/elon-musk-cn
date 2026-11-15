@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -281,7 +334,7 @@
 <li data-z="67">判断自己的护城河是不是速度。如果是靠信息差、靠资质、靠关系，早点准备第二条路。这些东西的保质期正在变短。</li>
 <li data-z="68">看竞争对手时，别只看新闻标题，去看他们工程师的实际产出速度。经济总量的差距是算术，工程能力的差距是日积月累，后者更难追。</li>
 <li data-z="69">给自己设一个"这辈子要看到它发生"的清单。清单上的每一项，都反推一下需要多快的创新速率才能赶上。这个反推，比任何年度规划都更能校准方向。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=Xg0Exup-uxM" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>let&#x27;s go back to failure for a minute and and and the mindset that that you have you and your leadership team at tesla and spacex have on failure i mean the spacex blooper reel that you guys did and i think his 2017 time frame was definitely hey we embraced this learning that occurs more recently with the the tesla truck and the and the ball through the window also that might that that that mindset that embraces failure how do you personally i mean that it that those kinds of failures would drive a lot of us in this room nuts but doesn&#x27;t seem to drive you nuts seems like you&#x27;re very comfortable with it can you talk about the mindset that requires for you to be that accepting of</p><p id="p1"><span class="ts-link" data-t="0:57">0:57</span>that kind of failure sure should we roll the video no should we not no we should not roll the video not yet okay okay okay well i think of the these things is just there&#x27;s a certain amount of time and within that time you want the the best net outcome so for you know all the set of actions that you can do there&#x27;s going to be and some of which will fail some which will succeed and you want the the net useful output of your set of actions to be the highest so we have to like use like a baseball analogy like you know baseball they don&#x27;t let you just sit there and wait for the perfect pitch until that you get a real easy one they didn&#x27;t give you</p><p id="p2"><span class="ts-link" data-t="1:56">1:56</span>three shots and the third one they say okay and they get off the they go back to the put somebody else up there so these your three strikes on on the baseball not you know not only bad anymore so so what you&#x27;re what you&#x27;re really looking for is like what&#x27;s the batting average you know how how are you doing on on score and just there&#x27;s going to be some amount of failure but you want your net output</p><p id="p3"><span class="ts-link" data-t="2:34">2:34</span>that useful output to be maximized failure is essentially irrelevant unless it is catastrophic okay yeah okay intellectual property obviously tesla spacex solarcity have amazing capabilities that they&#x27;re bringing to the to the public and to the government every day how do you protect your intellectual property in a world where it seems like the cloud and servers and things are constantly under attack from people wishing to free you of their your intellectual property yeah well actually at tesla we just opened sourced our patents some years ago so anyone can use our patents so we really have not been tried to protect intellectual property in that sense we&#x27;ve tried to</p><p id="p4"><span class="ts-link" data-t="3:26">3:26</span>actually smooth the path because the overarching goal of tesla is to accelerate the advent of sustainable energy and so if we created a patent portfolio that discouraged other companies from making electric cars they will be inconsistent with our mission so we open source all the patterns okay in order to help the other and anyone else who wants to make an electric car so i guess that&#x27;s the opposite of protecting the ip</p><p id="p5"><span class="ts-link" data-t="3:59">3:59</span>now the real way i think you you actually achieve intellectual property protection is by innovating fast enough if your rate of innovation is high then you don&#x27;t need to worry about protecting vip because other companies will be copying something that you did years ago and that&#x27;s fine you know just make sure your rate of innovation is fast speed is really speed of innovation is what is what matters and i do i do say this to my teams like quite a lot that innovation per unit time as i go innovation per year if you want to say like is is what matters not innovation absent time because if you wanted to make say 100 improvement in something and that took 100 years or one year</p><p id="p6"><span class="ts-link" data-t="4:52">4:52</span>that&#x27;s radically different so it&#x27;s like what is your rate of innovation that that matters and is the rate of innovation is that accelerating or decelerating and a weird thing happens when companies get big is that most companies or organizations the bigger they get they tend to get less innovative not just less innovative on a per person basis but less innovative in the absolute and i think this is probably because the incentive structure is not is not there for innovation</p><p id="p7"><span class="ts-link" data-t="5:35">5:35</span>it&#x27;s not enough to use words to encourage innovation the incentive structure must be aligned with that that&#x27;s fundamental so so taking that from a business level to a national level in terms of obviously united states largest economy in the world china the second largest economy in the world currently and gaining fast what sort of things that could you share with the audience here that are your thoughts on the competition economic or military between the united states and china sure well i think china is a real interesting country i have to say the the thing to appreciate about china is just that there&#x27;s a lot of really smart really hard-working people there</p><p id="p8"><span class="ts-link" data-t="6:28">6:28</span>and they&#x27;re gonna do a lot of great things this is sort of you know independent of of chinese government policy they&#x27;re just going to do a lot of interesting things the thing that will be that will feel pretty strange is that the chinese economy is going to be probably at least twice as big as the us economy maybe three times but at least twice</p><p id="p9"><span class="ts-link" data-t="6:59">6:59</span>so that assumes a gdp per capita still less than the u.s but since they have about four or five times the population then it would only require getting to a gdp per capita of half the united states for their economy to be twice the size of ours and as i&#x27;m sure people in this room know the foundation of war is economics and so if you if you have half the resources</p><p id="p10"><span class="ts-link" data-t="7:35">7:35</span>of the counterparty then you better be real innovative if you&#x27;re not innovative you&#x27;re gonna lose i&#x27;m not sure whether that&#x27;s a cyber attack that&#x27;s ongoing or not here so [Laughter] the clock says i have 11 minutes left is that not true let&#x27;s get some swoosh all right it&#x27;s coming through the house system we&#x27;re working to get it shut off thank you</p><p id="p11"><span class="ts-link" data-t="8:26">8:26</span>yes well anyway so so yeah with with respect to china china&#x27;s economy is is going to be two to three times the size of the us economy at least at least double therefore in order for the us to be competitive on military level the innovation has to overcome a gigantic gap in economic output okay so in the absence of radical innovation the us will be militarily second okay</p><p id="p12"><span class="ts-link" data-t="9:09">9:09</span>basic basic math what from the standpoint of radical innovation we already talked about workforce we talked about processes we talked about protecting intellectual property rights let&#x27;s talk about overall culture that culture that you try and push into your companies that makes them successful any of us and i sat right next to one of your spacex employees on the plane here yesterday a young engineer it was motivating for me just to talk to her about what she was doing every day and how important her job was and i just felt like the only other place i&#x27;ve seen that kind of culture is frankly in the department of the air force with some of our young folks that are</p><p id="p13"><span class="ts-link" data-t="10:02">10:02</span>sprinkled around the back of the room how do you create that culture at spacex and tesla to to make employees like that well wow this smooth jazz is just honest with a vengeance i feel like we&#x27;re in a big elevator [Laughter] [Applause] so first of all when we interview people we we do ask for some evidence of exceptional ability which in most cases includes innovation this is not said everyone needs to be innovative it&#x27;s but we certainly need those that are doing advanced engineering to be innovative and ideally everyone is at least some to some degree innovative so at the interview point we select for it for people who want to create new technology</p><p id="p14"><span class="ts-link" data-t="11:02">11:02</span>and then the incentive structure is set up that such that innovation is rewarded making mistakes along the way does not come with a big penalty and but but failure to try to innovate at all comes with a big penalty you&#x27;ll be fired okay yeah all right the carrot and stick that&#x27;s the steak if you don&#x27;t even try or or somebody doesn&#x27;t even try to innovate or their innovation aspirations are are very are not not very good then yeah they will no longer be at the company okay okay all right so we got about five minutes left and what i&#x27;d like to do is just turn it over to you elon to talk about whatever you&#x27;d like to talk about if you have a message for the audience here you have</p><p id="p15"><span class="ts-link" data-t="11:59">11:59</span>you know a thousand plus air and space professionals and the greatest air and space force on the planet so what do you want to tell them think we we got to make starfleet happen [Laughter] [Applause] so so we were like real big spaceships that can go far places and well this will probably get me into the most trouble of all i think this should be a new uniform that&#x27;s you know</p><p id="p16"><span class="ts-link" data-t="12:36">12:36</span>that that&#x27;s like i don&#x27;t know cool uniforms cool spaceships you know i think that&#x27;s what when the public hears space force that&#x27;s what they think it&#x27;s like okay we&#x27;re gonna have like some sweet spaceships and like free look good uniforms and stuff and that&#x27;ll be that&#x27;s what the public wants so you know we want the sci-fi futures the the the good sci-fi futures to be real and ideally to become real while we&#x27;re still alive you know and we want to see it happen and so i think we really need to drive the rate of innovation to be such that we would see a big big breakthroughs big improvements in space technology in you know in the years to come so yeah so like just trying to make</p><p id="p17"><span class="ts-link" data-t="13:29">13:29</span>starfleet happen as soon as humanly possible and definitely why we&#x27;re while we&#x27;re still alive yeah so we&#x27;re not sure about wolf drive but we can other stuff i think can be done warp driving teleportation probably not but big spaceships that can go far places definitely that can be done understood ladies and gentlemen elon [Applause] musk</p></div></div>
       
       
@@ -309,7 +362,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -349,7 +402,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

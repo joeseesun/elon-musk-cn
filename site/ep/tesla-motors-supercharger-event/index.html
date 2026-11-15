@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -309,7 +362,7 @@
 <li data-z="81">发布之前先跑通一个最小完整闭环。六座站、一条公路、两个真实用户，比一张覆盖全美的地图更有说服力。规模可以小，但必须真的能用。</li>
 <li data-z="82">找第三方替你验证，同时准备好被同样的人质疑。让记者和真实用户先上路，可信度最高；数据被公开的那天，你也得接得住。</li>
 <li data-z="83">把你公开承诺的时间表记进日历，两年后回看。特斯拉说两年覆盖美国大部、五年覆盖全境，实际打了七折。给自己设可检验的承诺，是训练判断力最便宜的办法。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=wgk5-eB9oTY" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:01">0:01</span>Good evening, ladies and gentlemen. My name is Fran Van Holtzen and I&#x27;m chief of design for Tesla Motors. And I&#x27;m super excited that you guys came out on a Monday night, the end of September. Beautiful night we have for you. This is our design studio here in Hawthorne. And we have something really special to talk about and to show you. So without further ado, let me introduce to you Mr. Elon Musk.</p><p id="p1"><span class="ts-link" data-t="0:26">0:26</span>[Applause] All right, thanks everyone for coming. so what what we want to show you tonight is essentially the answer to the three major problems that are holding back electric vehicles or at least that people think are holding back electric vehicles. you know, one is this question of being able to drive long long distances conveniently. And with a with a gasoline car, you can drive in theory anywhere anywhere you want with with high convenience. Well, how do you do that with with an electric car? And that&#x27;s what the supercharger is going to enable. then another question is what do we do about the fact that u when electricity is generated it is</p><p id="p2"><span class="ts-link" data-t="1:15">1:15</span>generated at a power plant and so what about this idea that the emissions are just pushed to the power plant and we&#x27;re going to show you how we address that. and then the third is well what about the cost of electric vehicles? How do we how do you compare the cost of electric vehicles with the cost of of gasoline vehicles? And we&#x27;ll address all three of those things. The the re the answer to that is what we&#x27;re going to show you here with the Tesla Supercharger.</p><p id="p3"><span class="ts-link" data-t="2:01">2:01</span>[Music] So, we&#x27;re going to have these at highway restaurants allwhere all around the country and around the world. And that&#x27;s combined with the the solar power deck that you see there. So that provides the solar power that goes to the supercharger and then to the cars. So what we&#x27;re able to do here with with the supercharger is charge at about 100 kilowatts and going forward potentially as much as 100 120 kilow.</p><p id="p4"><span class="ts-link" data-t="2:53">2:53</span>What what that means is you could you could drive for three hours, stop for less than half an hour, and recharge and be ready to go again. So, yeah. So, if you if you take the typical trip that someone experiences when they&#x27;re when they&#x27;re driving, let&#x27;s say you you you started out at 9:00 a.m. and you drove for 3 hours. around noon, you&#x27;d want to stop for a bite to eat, go to the restroom, grab a coffee, and be on your way. And that actually takes about 20 to 30 minutes. And what you can do with the supercharger, you can just plug your car in, and by the time you&#x27;re done with all that, you&#x27;re ready to go again. So there&#x27;s no meaningful difference between driving a a an</p><p id="p5"><span class="ts-link" data-t="3:37">3:37</span>electric car and driving a gasoline car. And the supercharge, this is not something that&#x27;s going to be deployed at some distant point in the future. This is video from today showing four of the supercharger locations in use. So we we actually have six superchargers installed already. There&#x27;s four of them.</p><p id="p6"><span class="ts-link" data-t="3:59">3:59</span>Basam, Tahhon, and Harris. And in fact we have we have here two of the people that the first two nonTesla people to use the two supercharger network. and we&#x27;ll we&#x27;ll go to them in a moment. U one is Brad Burman from the New York Times and he&#x27;s driven all the way from Tahoe to to Los Angeles. It&#x27;s over 500 miles today.</p><p id="p7"><span class="ts-link" data-t="4:25">4:25</span>And in fact, he&#x27;s going to write be writing a story that&#x27;s going to be in this Sunday&#x27;s New York Times. So, so look for that when it comes out. and then there&#x27;s a one of our customers, Ben Weiss, took delivery of the car in in Las Vegas and drove drove here from Las Vegas. You know, you can actually do that trip non-stop as Moto Trend did, but you you can also do it really fast with air conditioning on if you use a supercharge network.</p><p id="p8"><span class="ts-link" data-t="4:54">4:54</span>So, so Ven took advantage of that. And and then he&#x27;s going to be driving he&#x27;s on from here to Santa Barbara. So, you can drive from Las Vegas to Santa Barbara, no problem. w with with this network and so it&#x27;s it&#x27;s actually already deployed so you can drive almost anywhere in California right now this is not some like I said this is not some you know figment of imagination that maybe it&#x27;ll happen some point in the future this is these are installed we we we built these up in secret and we&#x27;re unveiling it for the first time tonight so [Applause]</p><p id="p9"><span class="ts-link" data-t="5:33">5:33</span>So, by the end of this year, in in a few months, we&#x27;ll actually have a bunch more installed in California and extending to, Nevada and Oregon and going beyond that, within two years, this is not an exaggeration, within two years, we will cover almost the entire United States with superchargers.</p><p id="p10"><span class="ts-link" data-t="5:56">5:56</span>should be able to travel practically anywhere. And then our long-term goal, which is perhaps in the sort of four or five year time frame, so not Tesla longterm, four or five year time frame, we expect to cover the entire United States without exception and the lower part of Canada.</p><p id="p11"><span class="ts-link" data-t="6:16">6:16</span>So yeah, and then in addition beyond this, we&#x27;ll obviously have supercharges in Europe and Asia. So, you&#x27;ll be able to travel almost anywhere in the world on with an electric car with it with with with your Model S with the same level of convenience as a gasoline car. and then because we have the solar power systems that are that that are providing the energy and and we&#x27;re sizing the solar powered systems with the with with Solar City to to generate more power than the cars use over the course of a year. So you the the the solar powered system will actually put more power back into the grid than than the cars use during driving.</p><p id="p12"><span class="ts-link" data-t="7:01">7:01</span>This is a very important thing because it it it it goes to the heart of the argument that people will use to say oh well this doesn&#x27;t really address the CO2 problem because what about the power plant? They this is putting more energy back in the grid than the cars use. Okay. [Applause] and in creating this the the supercharger and the the solar panels all that working closely with the with Solar City and and using the the existing charger technology that we have in the Model S running in parallel we&#x27;re able to use the economies of scale of the Model S and and do the whole thing very inexpensively which is also very very important because it&#x27;s going to enable us to offer</p><p id="p13"><span class="ts-link" data-t="7:51">7:51</span>for this to Model S customers for free. [Applause] So for for model cars that have supercharger hardware installed, which will be the case for the 85 kWh pack and and for a small incremental charge for the 60 kilowatt hour pack, it it&#x27;ll you you&#x27;ll be able to travel for free forever on pure sunlight.</p><p id="p14"><span class="ts-link" data-t="8:18">8:18</span>[Applause] So, I think it&#x27;s pretty hard to to beat that, you know. I mean, free long distance, you&#x27;re not going to get that with gasoline. So, yeah, exactly. Or AT&amp;T. Yeah. So, I think I think this I I think this this day will actually go down as as being quite historic. I think at least on par with SpaceX talkinging with the space station earlier this year. I mean, I really think this is important.</p><p id="p15"><span class="ts-link" data-t="8:56">8:56</span>and and and really I want you to go out there and sort of and and spread the word because people have this idea that if you have an electric car, you you can&#x27;t you&#x27;re sort of you let there&#x27;s no freedom. You&#x27;re you&#x27;re stuck. You&#x27;re you know, they have this this this idea that you can&#x27;t go anywhere. And what we&#x27;re showing here today is that in fact you have more freedom than with anything.</p><p id="p16"><span class="ts-link" data-t="9:17">9:17</span>You&#x27;ll be able to go anywhere and and you can feel really good about your your travel because you&#x27;re you&#x27;re going on sunlight. And by the way, if you want to go from LA to New York, if you pack food and stay with friends, you can leave your wallet at home. So, well, see, so, well, we&#x27;ll show a few a few extra videos. There&#x27;s Model S charging. I think I think we&#x27;re actually going to say see how much it charged in the last since it was parked there. I think it charged quite a lot. anyway, so</p><p id="p17"><span class="ts-link" data-t="9:53">9:53</span>there was quite a significant amount of charge that the car gained just while we were sitting here. so thanks very much for coming and I&#x27;ll I&#x27;ll be around if you want to talk to me. So yeah, thank you very much. Bye. [Applause]</p></div></div>
       
       
@@ -337,7 +390,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -377,7 +430,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

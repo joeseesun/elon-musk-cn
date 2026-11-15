@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -280,7 +333,7 @@
 <li data-z="66">别人替你总结的时候会有偏差，重要的偏差当面改。他一上台先说“我不认为我们马上就要灭绝”，一句话把整场话题的基调拉回来。该澄清的地方不澄清，别人会按错误的版本理解你十年。</li>
 <li data-z="67">产品的顺序不能反。先让它好用，再让它有意义。任何要求用户为了崇高目的牺牲基本体验的产品，最后都会变成小众玩具。</li>
 <li data-z="68">把注意力放在提前十年说对的人身上。电动车、可回收火箭、光伏加储能，2012年都有人在公开场合讲。追当天的热点，你只能读到结论；读十年前的判断，你能看到推理过程。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=GVjWzIpdWp0" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:02">0:02</span>[Music] and finally I would like to introduce Henry TI Henry is no Kia&#x27;s Chief technology officer and I&#x27;m delighted that he&#x27;s made time to come over here tonight to introduce Alan musk for us he is responsible for setting no&#x27;s technology agenda both now and in the the future to enable Business Development opportunities he joined noia in 2004 and was named the noia leadership team in 2011 Henry is quite quite modest but is the author and co-author of more than</p><p id="p1"><span class="ts-link" data-t="0:48">0:48</span>papers on various fields from computer science social sciences and St statistics and holds five patents this is one very smart and intelligent man let me introduce you to Henry ter [Applause] this roughly translates good evening ladies and gentlemen given the breath and success of the next visionary&#x27;s accomplishments I should probably start this with the phrase this is a man who needs no introduction this was the end of the first version of this introduction</p><p id="p2"><span class="ts-link" data-t="1:30">1:30</span>the most successful individuals and corporations in Silicon Valley spot Trends early and capitalize on them however the truly inspirational create their own I now have the privilege of introducing someone who has transformed several facets of industry in a way thought quite impossible just a few years ago Elon Musk left his native South Africa in the early &#x27;90s to pursue Physics degree from the University of Pennsylvania and a business degree from whorton while completing his studies it became clear that there were three passions which would ultimately drive his Stellar career internet clean energy and space</p><p id="p3"><span class="ts-link" data-t="2:25">2:25</span>exploration internet Ventures like zip2 and x.com in the late &#x27;90s provided the springboard to more Capital intensive Industries later on xcr actually grew up not far from here on University Avenue but you probably know it better as PayPal this would be impressive enough but we really just are getting started after trying to buy a Russian ICBM for conversion to space travel in 2002 he formed space exploration Technologies on Space X where he&#x27;s currently the CEO and chief designer actually incidentially how do you go about buying an ICBM that&#x27;s as a fin I find this very interesting yeah SpaceX with USAF and NASA contracts</p><p id="p4"><span class="ts-link" data-t="3:25">3:25</span>recently made headlines that we all know when their dragon spacecraft became the first commercial vehicle in history to attach to the International Space Station and even more importantly returning safely to Earth just to the only other entities to achieve anything like this before now have been us Russian and Chinese space programs Space X aims to reduce the cost of space travel and enable wider exploration recognizing the importance of humanity becoming a multiplet</p><p id="p5"><span class="ts-link" data-t="4:07">4:07</span>species I&#x27;ve read Elon himself admitting that sooner or later we must expand life beyond this green and blue ball or go extinct when we recall the setbacks and adversity Space X overcame like a series of launch failures and severe Financial iial pressure it&#x27;s interesting to consider elon&#x27;s Role Models when I was discussing this yesterday he list the selection of scientists of course like Einstein Edison no surprise Tesla and Darwin but also one history&#x27;s most noted leaders throughout through extreme adversity Winston Churchill in 2003 Elon established Tesla Motors where he&#x27;s currently CEO and a product architect with the firm belief that the future of the automobile is</p><p id="p6"><span class="ts-link" data-t="5:05">5:05</span>electric once you&#x27;ve driven the Tesla roster it&#x27;s a very hard to argue you know it&#x27;s a good point later this week Tesla will deliver the first 10 of their stunning Model S cars to customers very timely thing if you power your Tesla car with solar energy for the ultimate EcoBoost you might utilize an installation from Solar City the leading provider of residential solar power in California I think it&#x27;s no coincidence that Elon Musk finds the time to be chairman of Solar City a company devoted to clean energy however what impresses and really touches me that even the short time we talk together on a deeper level I clearly see that these pioneering organizations are not being</p><p id="p7"><span class="ts-link" data-t="5:57">5:57</span>driven purely by profit Elon is a catalyst for Change and the businesses are a vehicle to support the Catalyst the changes of course are to accelerate the adoption of renewable energy and the absolute goal of humankind becoming a multiplet species refreshingly Elon believes that not only it is commercially viable to carry out that work in the US but it can also be done competitively something which we all have you know struggled lately</p><p id="p8"><span class="ts-link" data-t="6:31">6:31</span>in between being a Titan of a multi-industry landscape Elon is also a chairman of the musk Foundation a nonprofit focused on education child health and clean energy the musk Foundation recently donated solar power solution to those who have needed it most like Japan&#x27;s tsunami victims last year and areas affected by Hurricane Katrina the year before he&#x27;s also a trustee of the ex prise foundation and on the board of the Stanford engineering advising couns of course this type of a Monumental impact seldom goes unrecognized research and development magazine awarded him the innovator of the year and the American Institute of Aeronautics and astronautics awarded him</p><p id="p9"><span class="ts-link" data-t="7:16">7:16</span>the greatest contribution to the field of space transportation in 2008 musk was named one of the 75 most influential people of the 21st century by Esquire magazine and in addition received the aviation week a Laureate award he has received the Bon Brown trophy for the National Space society and in 2010 was the youngest recipient of the auto executive of the Year innovator award most recently he was named to the time 100 for 2010 so all this leaves me to wonder why he was never chosen to do those dosaki bear commercials so ladies and gentlemen the other most interesting man of the world Elon</p><p id="p10"><span class="ts-link" data-t="8:10">8:10</span>Musk wow that&#x27;s I I these introductions have been fantastic I mean I mean wow and it&#x27;s an honor to share this the stage with fellow recipients i&#x27; I&#x27;d like to to started by thinking that the the teams at at SpaceX and Tesla people have worked incredibly hard to to you to dock with the space station to make the model last and all that and and it&#x27;s it&#x27;s really U you know this award is there is really and and I&#x27;d like like to actually thank my assistant who&#x27;s right there trying to who I think works harder than I do</p><p id="p11"><span class="ts-link" data-t="8:48">8:48</span>so yeah so I I I think yeah thank you very much I should clarify one point with with respect to Extinction I I don&#x27;t think we&#x27;re about to to become extinct in case anybody was was wondering what what my opinion on that is so I think we I think we should attempt to become a multiplet species but it&#x27;s emphasis on Multi you know so and and I I think that&#x27;s one of one of the greatest Adventures that Humanity could could attempt to do I think it would make for a really exciting and inspiring future and it would have the the benefit of backing up the biosphere you know planetary redundancy that kind of thing and yeah and and then with with with hes obviously we&#x27;re trying to make</p><p id="p12"><span class="ts-link" data-t="9:35">9:35</span>make electric cars appealing which which I think is is pretty important in fact late end of this week we we&#x27;ll delivering our our first production cars of the of the model S so yeah it&#x27;s kind of an intense week actually well I I don&#x27;t want to I mean that was such a great introduction I think there there&#x27;s there&#x27;s there&#x27;s not much more that I that that I could that I could add just you know thank thank you very much for the award I really appreciate</p><p id="p13"><span class="ts-link" data-t="10:11">10:11</span>it this concludes the formal part of the pro pro proceedings I think know now we have dinner and the opportunity to mingle some more so please one last time I think we should recognize the four outstanding honores of this year&#x27;s Visionary Awards [Applause] you</p></div></div>
       
       
@@ -308,7 +361,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -348,7 +401,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

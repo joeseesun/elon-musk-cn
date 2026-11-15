@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -275,7 +328,7 @@
 <li data-z="64">自动化之前先问一句：这个环节的异常处理有多复杂。异常越复杂，越该留人。机器人擅长重复，不擅长判断。</li>
 <li data-z="65">对外承诺的每一个数字，最后都会折算成某个具体的人多等的几个月。定目标的时候把这个换算放在桌上。</li>
 <li data-z="66">开诚布公的边界要算清楚。你有信息优势，对方没有。用你的信息去判断“这能不能开玩笑”，对方的感受不会跟着你的判断走。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=lOz7cPJQd8E" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>the pioneering electric car company Tesla has suffered a series of very public challenges since the beginning of this year it&#x27;s high-profile CEO Elon Musk calls this period of production hell most of the troubles revolve around the company&#x27;s model three sedan it&#x27;s the first mid price electric car earlier this week musk took us on a tour of his Silicon Valley Factory this is the first time Network cameras were allowed inside the model 3 production line going to look at the batteries we divided the assembly into three parts and the middle part is where we put the battery pack and and motor in and so we call that marriage Elon what&#x27;s the hardest part</p><p id="p1"><span class="ts-link" data-t="0:41">0:41</span>pre marriage marriage post marriage right now a marriage is the hardest part is the participant Elon Musk relationship with outside analysts and investors is also going through a rough patch these days I&#x27;m definitely under stress so if I seem like an under stress then I&#x27;m gonna be clear I definitely under stress in the past month Tesla has issued a voluntary recall of 123 thousand of its older Model S vehicles dealt with a fatal crash of a vehicle equipped with its semi autonomous driving system and suffered a downgrade of its credit status on Wall Street the model three still in your mind is a face in the future of the company is it not yes</p><p id="p2"><span class="ts-link" data-t="1:20">1:20</span>absolutely but the most important thing on his mind these days is solving production delays for the Tesla&#x27;s new model 3 sedan here at his massive factory in Silicon Valley you started saying we&#x27;ll do five thousand a week then okay that didn&#x27;t work out we&#x27;ll do 2,500 a week and now it&#x27;s a little over two thousand a week there&#x27;s that trouble you yeah no that&#x27;s true I need to figure out how to be better and then we can be better if meeting goals Tesla&#x27;s future is tied to this car when musk introduced it last summer the model three was built as a company&#x27;s first mid-price mass-produced electric car accessible to middle-class customers not just the</p><p id="p3"><span class="ts-link" data-t="1:59">1:59</span>super-wealthy you said to your team everybody get ready to meet the demand we&#x27;re gonna be in production hell yes but you didn&#x27;t expect this kind of production hell or did you know it&#x27;s worse than I thought why is that why is it harder what happened we got complacent about some of the things that we felt were our core technology we put too much new technology into the model three all at once that this this should have been staged high-tech goes in the cars but it also builds them this is widely regarded</p><p id="p4"><span class="ts-link" data-t="2:32">2:32</span>as one of the most robotics driven auto assembly lines on the planet you on part of the thing I heard about the model 3 is that there&#x27;s too many robots that may not agree you do you think so that maybe you need more people in here working we do in some cases the robots actually slowed the production yes that is where this crazy complex network of conveyor belts and it was not working so we got rid of that whole thing this is cool yeah realizing it needed an overhaul must personally took over the model 3 production line at the beginning of April raining for really extreme levels of precision he says he has resorted to</p><p id="p5"><span class="ts-link" data-t="3:10">3:10</span>pulling all-nighters at the plant I think so yeah really intense I don&#x27;t have time to go home and shower and change side sleep here I wanted to see words I mean it&#x27;s pretty boring it&#x27;s actually cold in here too yeah I like it cool so you have a you like it cold I see when I catch with her so you&#x27;re just laying here yeah couch yeah last time as you&#x27;re actually step literally on the floor cuz the couch is too narrow yeah I was gonna say and you know I have to say it&#x27;s not even a comfortable couch either no it&#x27;s terrible kiss is not a good couch what is the numbers say for the last seven days what is the number 2071 you pleased with that yeah for the time being yeah</p><p id="p6"><span class="ts-link" data-t="3:51">3:51</span>musk feels like all the overtime is paying off and now he says a model three line is back on track and we&#x27;re able to unlock some of the critical things about holding us back from reaching 2,000 cars a week but since then we&#x27;ve continued to do 2,000 cars a week do you think that this is sustainable this page is sustainable yeah so probably have I don&#x27;t know a three or four fold increase in model 3 output in the in the second quarter but most critics have heard predictions like those before a future the automaker has yet to reach Leon you may be one of the few people to see it because a lot of people looking at you don&#x27;t see it they&#x27;re probably</p><p id="p7"><span class="ts-link" data-t="4:32">4:32</span>people that have a lot of analysts is that kind of look in the rearview mirror instead of looking at the front windscreen what do you mean by that this is very frequently been why people have underestimated Tesla because they would look at Tesla&#x27;s what has done in the past and use that as proxy for what we were able to do in the future on April Fool&#x27;s Day must mix his optimism with dark humor on social media in the midst of widespread concerns Tesla might collapse he tweeted this we are sad to report that Tesla has gone completely and totally bankrupt so bankrupt you can&#x27;t believe it you know people are nervous and they&#x27;re worried you are aware of that so knowing that why would</p><p id="p8"><span class="ts-link" data-t="5:12">5:12</span>you do an April Fool&#x27;s joke that you did because there&#x27;s media articles saying that Tesla&#x27;s going bankrupt yes so I thought well I&#x27;ll just do an April Fool&#x27;s joke that we did go bankrupt but Elon that&#x27;s not funny when people are nervous I mean it&#x27;s April Fool&#x27;s people should like lighten up okay like it should be pretty obvious I think that I&#x27;m not going to joke about bankruptcy if I think it&#x27;s remotely real I&#x27;m feeling</p><p id="p9"><span class="ts-link" data-t="5:39">5:39</span>pretty optimistic about what Tesla is at this point like at this point like I have a clear understanding of the path out of hell and I do not until recently have a clear understanding yama says anyone who pre-ordered the model 3 when it was unveiled last july should be getting their car in about three to six months and that&#x27;s about six to nine months later than they were promised so listen I have to say he really is on the case when you hear about him sleeping at that factory go yeah sure right but I asked employees when he wasn&#x27;t around he actually does sleep in that room and I said but why are you doing this it&#x27;s not like you&#x27;re out there you know painting</p><p id="p10"><span class="ts-link" data-t="6:14">6:14</span>a car or running a machine he said because I can solve the problems in real time I look at that board I can see where a problem is and go and make the correction and go check it out myself so no one&#x27;s very serious what I like hearing about him is he&#x27;s showing us him making his mistakes in real time trying to fix them tweaking we never get to look inside the clock works while you know what he says what he&#x27;s learning about automation matters for him who knows if it&#x27;ll help with the car but it&#x27;s a crucial thing happening to all business is learning that you can over automate and to watch that happening in real time and also fascinating to let us</p><p id="p11"><span class="ts-link" data-t="6:42">6:42</span>in when he knows he&#x27;s under the gun when he knows that people are complaining he says sure come on in he&#x27;s very calm very confident and very he&#x27;s very matter-of-fact he&#x27;s very bad effect in the way he speaks but I just think he&#x27;s he&#x27;s terrific and on the case yeah old and create as he thinks outside the box Nora we like that well more of him and a club that&#x27;s right yes</p></div></div>
       
       
@@ -303,7 +356,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -343,7 +396,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

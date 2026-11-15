@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -323,7 +376,7 @@
 
 <p data-z="87">他在这三条之外还留了一句话，值得单独拿出来：我们今天做的选择，会把碳排放曲线推向两个完全不同的极端，或者被压到可控水平，或者一路冲高。中间地带很窄。</p>
 
-<p data-z="88">而所有选择的起点，都是那 4 个单位的成本，究竟由谁来付。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+<p data-z="88">而所有选择的起点，都是那 4 个单位的成本，究竟由谁来付。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=v3AmtjqqVvo" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:01">0:01</span>All right. Well, it&#x27;s thank you for having me. It&#x27;s great to be here. Paris is one of my favorite places in the world. And it&#x27;s actually the, on the first trip that I went out of South Africa, Paris that that was where I went when I when I was a young little kid. Well, my my parents brought me when I was like six years old. so I&#x27;ve left Paris ever since. so thank you for having me. What I&#x27;m going to talk about today is just in general terms what is needed to address the the climate crisis. and this is a thing that if if if we if we do what actions can we take that that will accelerate the transition out of the fossil fuel era.</p><p id="p1"><span class="ts-link" data-t="0:45">0:45</span>so where we are today is let&#x27;s see if this thing&#x27;s working. Maybe not. Okay. All right, we have the we have the present era where we have the the car carbon cycle. And my apologies if if some of you already know all about this, but I think some of these things are maybe not as obvious as they may seem.</p><p id="p2"><span class="ts-link" data-t="1:06">1:06</span>So there&#x27;s a certain amount of carbon that is circulating through the environment. So it&#x27;s going into the air, being absorbed by and then getting absorbed by plants and animals and then going back into the air. And this this carbon is just circulating on the surface. U and this this is fine and it&#x27;s been doing that for millions hundreds of millions of years. the the thing that&#x27;s changed is that we&#x27;ve added something to the mix. So this is what I would call the the sort of the turd in the punch bowl. so the we added all this extra carbon to to the carbon cycle and the net result is that the the carbon in the ocean&#x27;s atmosphere is growing over time.</p><p id="p3"><span class="ts-link" data-t="1:49">1:49</span>It&#x27;s much more than can be absorbed by the ecosystem. It&#x27;s it&#x27;s really it&#x27;s really quite simple. We&#x27;re taking billions of tons of carbon that&#x27;s been buried for hundreds of millions of years and is not part of the carbon cycle. Taking from deep underground and adding it to the carbon cycle.</p><p id="p4"><span class="ts-link" data-t="2:08">2:08</span>The result is that a steady increase in the the carbon in the atmosphere and in the ocean oceans which doesn&#x27;t look like much if you look at it on this chart but when looked at in the context of of history it actually looks like this. So the the carbon parts per million has really been bouncing around the 300 level for around 10 million years.</p><p id="p5"><span class="ts-link" data-t="2:34">2:34</span>and then the last few hundred years it went into a vertical climb. This this is the the essence of the problem. This is very unusual. and and a and a very very extreme threat as you can see from from this rate of growth. Then this is accompanied by a temperature increase as one would expect and and and this and this temperature increase you people talk about 2 degrees or or 3° it&#x27;s important to appreciate just how sensitive the the climate actually is to to temperature and it&#x27;s important to look at it in terms of absolute temperature not in degrees Celsius relative to zero. We need to say what is the temperature change relative to absolute zero. That&#x27;s how the</p><p id="p6"><span class="ts-link" data-t="3:20">3:20</span>universe thinks about temperature. It&#x27;s how physics thinks about temperature. It&#x27;s it&#x27;s relative to absolute zero. So for small changes result in in huge effects. so New York City under ice would be minus 5 degrees. New York City underwater would be plus 5°. But looked at in in a as a percentage relative to absolute zero. it&#x27;s only a plus minus 2% change.</p><p id="p7"><span class="ts-link" data-t="3:51">3:51</span>So the the sensitivity of the climate is extremely extremely high. we&#x27;ve amplified this sensitivity by building our cities right on the on the coastline and most most people live very close to to the ocean and some countries of course that are that are very lowlying and would be completely underwater in in a in a</p><p id="p8"><span class="ts-link" data-t="4:15">4:15</span>climate crisis. So then the the the we&#x27;ve essentially designed civilization to be super sensitive to climate change. and the the the important thing to appreciate is that we are going to exit the fossil fuels era. So it is it is it is inevitable that we will exit the fossil era because at a certain point we will simply run out of carbon to mine and burn. So the question is really when when do we exit the era not not if</p><p id="p9"><span class="ts-link" data-t="4:52">4:52</span>the goal is to exit the era as quickly as possible. That means we need to move from from the old goal with the pre-industrial grow goal which was to move from chopping down forests and killing lots of whales. that the old goal was to move from from chopping wood and and killing whales to fossil fuels which is actually in that context was a good thing but the new goal is to move to a</p><p id="p10"><span class="ts-link" data-t="5:24">5:24</span>sustainable energy future and we want to use things like hydro solar wind geothermal nuclear is also a good option in places like France which don&#x27;t aren&#x27;t subject to natural disasters. and and we want to use energy sources that will be good for for a billion years. So, how do we accelerate this transition away from fossil fuels to a sustainable era?</p><p id="p11"><span class="ts-link" data-t="5:57">5:57</span>And and and and what happens if we don&#x27;t? So if we if we wait and if we delay the change the best case the best case is is is simply delaying that inevitable transition to sustainable energy. So this is the this is the best case if we don&#x27;t take action now. at the risk of being repetitive it&#x27;s there&#x27;s going to be no choice in the long term to move to sustainable energy.</p><p id="p12"><span class="ts-link" data-t="6:26">6:26</span>It&#x27;s it&#x27;s total logical. we have to have sustainable energy or we&#x27;ll simply run out of the other one. So the the only thing we gain by slowing down the transition is is is just slowing it down. It doesn&#x27;t doesn&#x27;t make it not occur. It just slows it down. The worst case, however, is more displacement and destruction than all the wars in history combined. Okay, this is these are these are the best worst case scenarios. So then we have you know about 3% of scientists that believe in the best case and about 97% that believe in the worst case.</p><p id="p13"><span class="ts-link" data-t="7:01">7:01</span>This is why I call it the dumbest experiment in history ever. Like why would you do this? So the the the reason that the the the transition is delayed or or or is happening slowly is because there is a hidden subsidy on all carbon producing activity. In a healthy market, if you have say€ 10 of benefit and 4 of harm to society, the profit would be €6. The sort of you know makes obvious sense. This is where the incentives are aligned with a good future.</p><p id="p14"><span class="ts-link" data-t="7:39">7:39</span>This is not this is not the case today. but if you have the incentives aligned then the forcing function towards a a good future towards a sustainable energy future will be powerful. In an unhealthy market you have your 10 years of benefit. You have your four years but the four years doesn&#x27;t isn&#x27;t taxed. So you have an untaxed negative externality. This is basically economics 101.</p><p id="p15"><span class="ts-link" data-t="8:06">8:06</span>So you have basically unreasonable profit and a forcing function to to do carbon emitting activity because this this this cost to society is not being paid. The net result is 35 gatons of carbon per year into the atmosphere. So this is analogous to not paying for garbage collection. and it&#x27;s it&#x27;s not as though we should we should say in the case of garbage have a garbage free society. It&#x27;s very difficult to have a garbage free society but it&#x27;s just important that people pay for garbage collection.</p><p id="p16"><span class="ts-link" data-t="8:52">8:52</span>So we need to go from having an untaxed negative externality and which is effectively a hidden carbon subsidy of enormous size 5.3 trillion a year according to the IMF every year. we need to move away from this and and and and have a carbon tax. So, but this is being this is being fought quite hard by the the carbon</p><p id="p17"><span class="ts-link" data-t="9:24">9:24</span>producers. and they&#x27;re using tactics that are very similar to what the cigarette industry or the tobacco industry used for many years. they would they would take the approach of having of of even though the overwhelming scientific consensus was that smoking cigarettes was bad for you. they would find a few scientists that would disagree and then they would say look scientists disagree. So that that that&#x27;s essentially how they would try to trick the public into thinking that smoking is not that bad.</p><p id="p18"><span class="ts-link" data-t="9:59">9:59</span>The solution obviously is to remove the subsidy. so that means we need to have a re a carbon tax and to make it sort of something which is neither a left nor a right issue we should make it probably a revenue neutral carbon tax. So this would be a case of increasing taxes on carbon but then reducing taxes in in other places. So maybe there would be a reduction in sales tax or VAT and an increase in carbon tax. So that only those using high levels of carbon would pay an increased tax.</p><p id="p19"><span class="ts-link" data-t="10:40">10:40</span>And moreover this I mean in order to give industry time to react this could be a phased in approach so that maybe it takes five years before the the carbon taxes are very high. So that means that only companies that don&#x27;t take action today will suffer in 5 years. But there needs to be a clear message from from government in this regard. The the because the fundamental problem is the rules today incent people to create carbon and this is madness and whatever you incent will happen. That that&#x27;s why you know we&#x27;re we&#x27;re seeing little very little effect thus far.</p><p id="p20"><span class="ts-link" data-t="11:21">11:21</span>And depending upon how what what action we take, we&#x27;ll we&#x27;ll will will drive the the carbon number to either extreme or or moderate levels. I I think it&#x27;s pretty much a given that that the two degree C increase will occur. The question is whether it&#x27;s going to be much more than that, not if there will be a twoderee increase.</p><p id="p21"><span class="ts-link" data-t="11:44">11:44</span>so the then the question is so so what can you do? I would say whenever you have the opportunity, talk to your politicians, ask them to enact a carbon tax. We we have to fix the unpriced externality. I would talk to your friends about it and fight the propaganda from the carbon industry.</p><p id="p22"><span class="ts-link" data-t="12:04">12:04</span>So that that&#x27;s the basic message I have and I&#x27;m happy to take questions. Thank you.</p></div></div>
       
       
@@ -351,7 +404,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -391,7 +444,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

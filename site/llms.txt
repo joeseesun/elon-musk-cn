@@ -12,6 +12,14 @@
 - RSS 全文订阅（最新 20 篇精读）：https://elon.qiaomu.ai/feed.xml
 - 引用时请注明「elon.qiaomu.ai 中文精读（AI 改写，非官方翻译）」并链接对应网页。
 
+## 可下载语料包
+
+- 全部中文精读合并为单个纯文本（给 RAG / 长上下文 / Agent）：https://elon.qiaomu.ai/corpus/llms-full.txt
+- 完整语料包 ZIP（逐篇 Markdown + 结构化 JSON + 说明）：https://elon.qiaomu.ai/corpus/elon-musk-cn-corpus.zip
+- 文件清单：https://elon.qiaomu.ai/corpus/index.md · 使用说明：https://elon.qiaomu.ai/corpus/README.md
+- 结构化数据：https://elon.qiaomu.ai/corpus/predictions.json（预言）· https://elon.qiaomu.ai/corpus/quotes.json（语录）· https://elon.qiaomu.ai/corpus/themes.json（主题）· https://elon.qiaomu.ai/corpus/videos.json（视频目录）
+- 英文原始语料（逐字文稿 / X 帖子 / 回复）不由本站托管，请去 https://silicon-valley.tech/#data 下载并注明出处。
+
 ## 中文精读（AI 深度改写）
 
 - [1998年马斯克谈Zip2与互联网](https://elon.qiaomu.ai/ep/elon-musk-on-zip2-and-the-internet-1998/index.md)：访谈，1998 年

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -318,7 +371,7 @@
 <li data-z="85"><strong>数据采集要按"简单动作乘以大规模"来设计。</strong>不用一上来就追求复杂任务。抓取、放置、倾倒、擦拭，这类动作的因果信号清晰，可以自动化标注，可以用遥操作批量采集，可以靠规模滚起来。复杂任务是这些原子动作的组合。</li>
 <li data-z="86"><strong>评估一台人形机器人，先数自由度和看执行器位置。</strong>手臂 11 个自由度做不了人的大部分精细活，22 个是及格线。执行器如果堆在手掌里，说明散热和力量问题没解决，大概率还停留在演示阶段。</li>
 <li data-z="87"><strong>如果你是做具身智能的，把数据管道的实时性当成产品需求来设计。</strong>模型能不能拿到五分钟前的真实世界反馈，决定了它在开放环境里能不能自我修正。离线数据集训练出来的策略，在现场几乎一定要重新标定。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=QGjhqFvDpHY" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:02">0:02</span>So the training compute is kinda like the engine, how many is this horsepower of the engine. So really, you wanna try to do the best on that. Then how efficiently do you use that training compute? And how efficiently do you do the inference, the use of the AI? So obviously, that comes down to human talent.</p><p id="p1"><span class="ts-link" data-t="0:24">0:24</span>And then what unique access to data do you have? That also plays a role. - You think Twitter data will be useful? - Yeah, I mean, I think, I think most of the leading AI companies have already scraped all the Twitter data. Not I think they have. So on a go forward basis, what&#x27;s useful is the fact</p><p id="p2"><span class="ts-link" data-t="0:47">0:47</span>that it&#x27;s up to the second. That&#x27;s hard for them to scrape in real time. So there&#x27;s an immediacy advantage that Grok has already. I think with Tesla and the real time video coming from several million cars, ultimately, tens of millions of cars, with Optimus, there might be hundreds of millions of Optimus robots, maybe billions learning a tremendous amount from the real world.</p><p id="p3"><span class="ts-link" data-t="1:15">1:15</span>That&#x27;s the biggest source of data I think ultimately is sort of Optimus. Optimus is gonna be the biggest source of data. - Because- - &#x27;Cause reality scales. Reality scales to the scale of reality. It&#x27;s actually humbling to see how little data humans have actually been able to accumulate.</p><p id="p4"><span class="ts-link" data-t="1:36">1:36</span>Really, you see how many trillions of usable tokens have humans generated, where on a non-duplicative, like discounting spam and repetitive stuff, it&#x27;s not a huge number. You run out pretty quickly. - And Optimus can go, so Tesla cars can unfortunately have to stay on the road. Optimus robot can go anywhere, and there&#x27;s more reality off the road and go off road.</p><p id="p5"><span class="ts-link" data-t="2:07">2:07</span>- I mean, except for the store, where I can like pick up the cup and see, did it pick up the cup in the right way? Did it pour water in the cup? Did the water go in the cup or not go in the cup? Did it spill water or not? - [Lex] Yeah. - Simple stuff like that. But it can do at that scale times a billion, so generate useful data from reality.</p><p id="p6"><span class="ts-link" data-t="2:33">2:33</span>So cause and effect stuff. - What do you think it takes to get to mass production of humanoid robots like that? - It&#x27;s the same as cars, really. I mean, global capacity for vehicles is about a hundred million a year. And it could be higher. It&#x27;s just that the demand is on the order of a hundred million a year.</p><p id="p7"><span class="ts-link" data-t="2:56">2:56</span>And then there&#x27;s roughly two billion vehicles that are in use in some way, which makes sense. Like the life of a vehicle is about 20 years, so it&#x27;s steady state. You can have a hundred million vehicles produced a year with a two billion vehicle fleet roughly. Now for humanoid robots, the utility is much greater.</p><p id="p8"><span class="ts-link" data-t="3:15">3:15</span>So my guess is humanoid robots are more like at a billion plus per year. - But until you came along and started building Optimus, it was thought to be an extremely difficult problem. I mean, it still- - Well, it is. - Extremely difficult. - So walk in the park. I mean, Optimus currently would struggle to walk in the park.</p><p id="p9"><span class="ts-link" data-t="3:37">3:37</span>I mean, it can walk in a park. The park is not too difficult, but it will be able to walk over a wide range of terrain. - And pick up objects. - Yeah, yeah. It can already do that. - [Lex] But like all kinds of objects? - Yeah, yeah. - All foreign objects. I mean, pouring water in a cup does not thrill you, &#x27;cause then if you don&#x27;t know anything about the container, it could be all kinds of containers.</p><p id="p10"><span class="ts-link" data-t="4:00">4:00</span>- Yeah, there&#x27;s gonna be an immense amount of engineering just going into the hand. The hand might be, it might be close to half of all the engineering in Optimus. From an electromechanical standpoint, the hand is probably roughly half of the engineering. - But so much of the intelligence, so much the intelligence of humans goes into what we do with our hands.</p><p id="p11"><span class="ts-link" data-t="4:22">4:22</span>- Yeah. - It&#x27;s the manipulation of the world, manipulation of objects in the world. Intelligence is safe manipulation of objects in the world, yeah. - Yeah. I mean, you start really thinking about your hand and how it works. - I do all the time. - The sensory control homonculus is where you have humongous hands.</p><p id="p12"><span class="ts-link" data-t="4:39">4:39</span>- [Lex] Yeah. - So I mean, like your hands, the actuators, the muscles of your hand are almost overwhelmingly in your forearm. So your forearm has the muscles that actually control your hand. There&#x27;s a few small muscles in the hand itself, but your hand is really like a skeleton meat puppet.</p><p id="p13"><span class="ts-link" data-t="5:00">5:00</span>And with cables. So the muscles that control your fingers are in your forearm and they go through the carpal tunnel, which is that you&#x27;ve got a little collection of bones and a tiny tunnel that these cables, the tendons go through. And those tendons are mostly what move your hands.</p><p id="p14"><span class="ts-link" data-t="5:21">5:21</span>- And something like those tendons has to be re-engineered into the Optimus in order to do all that kind of stuff. - Yeah, so like the current Optimus, we tried putting the actuators in the hand itself, but then you sort of end up having these like- - Giant hands? - Yeah, giant hands that look weird.</p><p id="p15"><span class="ts-link" data-t="5:37">5:37</span>And then they don&#x27;t actually have enough degrees of freedom and/or enough strength. So then you realize, &quot;Oh, okay, that&#x27;s why you gotta put the actuators in the forearm.&quot; And just like a human, you gotta run cables through a narrow tunnel to operate the fingers. And then there&#x27;s also a reason for not having all the fingers the same length.</p><p id="p16"><span class="ts-link" data-t="6:00">6:00</span>So it wouldn&#x27;t be expensive from an energy or evolutionary standpoint to have all your fingers be the same length. So why not do the same length? - Yeah, why not? - Because it&#x27;s actually better to have different lengths. Your dexterity is better if you&#x27;ve got fingers at different length.</p><p id="p17"><span class="ts-link" data-t="6:12">6:12</span>There are more things you can do. And your dexterity is actually better if your fingers are a different length. Like there&#x27;s a reason we&#x27;ve got a little finger. Like why not have little finger this bigger? - Yeah. - &#x27;Cause it allows you to do, it helps you with fine motor skills.</p><p id="p18"><span class="ts-link" data-t="6:28">6:28</span>- This little finger helps? - It does. - Hmm. (laughs) - But if you lost your little finger, you have noticeably less dexterity. - So as you&#x27;re figuring out this problem, you have to also figure out a way to do it so you can mass manufacture it. So it&#x27;s to be as simple as possible.</p><p id="p19"><span class="ts-link" data-t="6:43">6:43</span>- It&#x27;s actually gonna be quite complicated. The as possible part is it&#x27;s quite a high bar. If you wanna have a humanoid robot that can do things that a human can do, it&#x27;s a very high bar. So our new arm has 22 degrees of freedom instead of 11 and has the actuators in the forearm.</p><p id="p20"><span class="ts-link" data-t="7:03">7:03</span>And all the actuators are designed from scratch, from physics first principles. The sensors are all designed from scratch. And we&#x27;ll continue to put a tremendous amount of engineering effort into improving the hand. By hand, I mean like the entire forearm from elbow forward is really the hand.</p><p id="p21"><span class="ts-link" data-t="7:26">7:26</span>So that&#x27;s incredibly difficult engineering actually. And so the simplest possible version of a humanoid robot that can do even most, perhaps not all, of what a human can do is actually still very complicated. It&#x27;s not simple. It&#x27;s very difficult.</p></div></div>
       
       
@@ -346,7 +399,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -386,7 +439,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

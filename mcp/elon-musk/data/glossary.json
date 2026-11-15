@@ -1,0 +1,571 @@
+{
+ "第一性原理": [
+  "\"first principles\"",
+  "\"first principle\""
+ ],
+ "第一原理": [
+  "\"first principles\""
+ ],
+ "人工智能": [
+  "ai",
+  "\"artificial intelligence\""
+ ],
+ "超级智能": [
+  "superintelligence",
+  "\"digital superintelligence\""
+ ],
+ "通用人工智能": [
+  "agi"
+ ],
+ "机器人": [
+  "robot",
+  "optimus",
+  "humanoid"
+ ],
+ "人形机器人": [
+  "humanoid"
+ ],
+ "擎天柱": [
+  "optimus"
+ ],
+ "自动驾驶": [
+  "\"self-driving\"",
+  "autopilot",
+  "fsd",
+  "autonomy",
+  "autonomous"
+ ],
+ "完全自动驾驶": [
+  "fsd",
+  "\"full self-driving\""
+ ],
+ "无人出租车": [
+  "robotaxi",
+  "cybercab"
+ ],
+ "电动车": [
+  "\"electric car\"",
+  "\"electric vehicle\"",
+  "ev"
+ ],
+ "电动汽车": [
+  "\"electric car\"",
+  "\"electric vehicle\""
+ ],
+ "汽车": [
+  "car"
+ ],
+ "卡车": [
+  "semi",
+  "truck"
+ ],
+ "皮卡": [
+  "cybertruck"
+ ],
+ "跑车": [
+  "roadster"
+ ],
+ "火星": [
+  "mars"
+ ],
+ "月球": [
+  "moon"
+ ],
+ "星舰": [
+  "starship"
+ ],
+ "猎鹰": [
+  "falcon"
+ ],
+ "龙飞船": [
+  "dragon"
+ ],
+ "星链": [
+  "starlink"
+ ],
+ "火箭": [
+  "rocket"
+ ],
+ "发动机": [
+  "engine"
+ ],
+ "猛禽": [
+  "raptor"
+ ],
+ "复用": [
+  "reusable",
+  "reusability",
+  "reuse"
+ ],
+ "可复用": [
+  "reusable",
+  "reusability"
+ ],
+ "回收": [
+  "reusable",
+  "landing"
+ ],
+ "着陆": [
+  "landing",
+  "land"
+ ],
+ "发射": [
+  "launch"
+ ],
+ "太空": [
+  "space"
+ ],
+ "宇航员": [
+  "astronaut"
+ ],
+ "轨道": [
+  "orbit"
+ ],
+ "多行星": [
+  "multiplanetary",
+  "\"multi-planetary\"",
+  "multiplanet"
+ ],
+ "殖民": [
+  "colony",
+  "colonize"
+ ],
+ "文明": [
+  "civilization"
+ ],
+ "特斯拉": [
+  "tesla"
+ ],
+ "电池": [
+  "battery"
+ ],
+ "储能": [
+  "megapack",
+  "powerwall",
+  "storage"
+ ],
+ "太阳能": [
+  "solar"
+ ],
+ "能源": [
+  "energy"
+ ],
+ "可持续能源": [
+  "\"sustainable energy\""
+ ],
+ "气候": [
+  "climate"
+ ],
+ "全球变暖": [
+  "\"global warming\""
+ ],
+ "碳": [
+  "carbon"
+ ],
+ "石油": [
+  "oil"
+ ],
+ "核能": [
+  "nuclear"
+ ],
+ "工厂": [
+  "factory",
+  "gigafactory"
+ ],
+ "超级工厂": [
+  "gigafactory"
+ ],
+ "制造": [
+  "manufacturing"
+ ],
+ "量产": [
+  "production",
+  "\"volume production\""
+ ],
+ "产能": [
+  "production",
+  "capacity"
+ ],
+ "供应链": [
+  "\"supply chain\""
+ ],
+ "成本": [
+  "cost"
+ ],
+ "价格": [
+  "price"
+ ],
+ "芯片": [
+  "chip"
+ ],
+ "算力": [
+  "compute"
+ ],
+ "数据中心": [
+  "\"data center\""
+ ],
+ "神经网络": [
+  "\"neural net\"",
+  "\"neural network\""
+ ],
+ "脑机接口": [
+  "neuralink",
+  "\"brain-computer\"",
+  "\"brain computer\""
+ ],
+ "隧道": [
+  "tunnel",
+  "\"boring company\""
+ ],
+ "超级高铁": [
+  "hyperloop"
+ ],
+ "推特": [
+  "twitter"
+ ],
+ "言论自由": [
+  "\"free speech\"",
+  "\"freedom of speech\""
+ ],
+ "审查": [
+  "censorship",
+  "censor"
+ ],
+ "媒体": [
+  "media"
+ ],
+ "记者": [
+  "journalist",
+  "press"
+ ],
+ "广告": [
+  "advertising",
+  "advertiser"
+ ],
+ "收购": [
+  "acquisition",
+  "acquire",
+  "buy",
+  "bought"
+ ],
+ "出生率": [
+  "\"birth rate\"",
+  "birthrate"
+ ],
+ "人口": [
+  "population"
+ ],
+ "人口崩溃": [
+  "\"population collapse\""
+ ],
+ "孩子": [
+  "kid",
+  "children"
+ ],
+ "家庭": [
+  "family"
+ ],
+ "政府": [
+  "government"
+ ],
+ "监管": [
+  "regulation",
+  "regulator",
+  "regulatory"
+ ],
+ "政府效率": [
+  "doge",
+  "\"government efficiency\""
+ ],
+ "税": [
+  "tax"
+ ],
+ "补贴": [
+  "subsidy",
+  "subsidies"
+ ],
+ "民主": [
+  "democracy"
+ ],
+ "民主党": [
+  "democrat"
+ ],
+ "共和党": [
+  "republican"
+ ],
+ "选举": [
+  "election"
+ ],
+ "移民": [
+  "immigration"
+ ],
+ "战争": [
+  "war"
+ ],
+ "中国": [
+  "china",
+  "chinese"
+ ],
+ "美国": [
+  "america",
+  "\"united states\""
+ ],
+ "欧洲": [
+  "europe"
+ ],
+ "俄罗斯": [
+  "russia"
+ ],
+ "特朗普": [
+  "trump"
+ ],
+ "拜登": [
+  "biden"
+ ],
+ "奥巴马": [
+  "obama"
+ ],
+ "贝索斯": [
+  "bezos"
+ ],
+ "奥特曼": [
+  "altman"
+ ],
+ "盖茨": [
+  "gates"
+ ],
+ "乔布斯": [
+  "\"steve jobs\""
+ ],
+ "佩奇": [
+  "\"larry page\""
+ ],
+ "扎克伯格": [
+  "zuckerberg"
+ ],
+ "罗根": [
+  "rogan"
+ ],
+ "比特币": [
+  "bitcoin"
+ ],
+ "狗狗币": [
+  "dogecoin"
+ ],
+ "加密货币": [
+  "crypto",
+  "cryptocurrency"
+ ],
+ "创业": [
+  "startup",
+  "\"start a company\""
+ ],
+ "公司": [
+  "company"
+ ],
+ "管理": [
+  "management",
+  "manager"
+ ],
+ "会议": [
+  "meeting"
+ ],
+ "招聘": [
+  "hire",
+  "hiring",
+  "recruit"
+ ],
+ "招人": [
+  "hire",
+  "hiring"
+ ],
+ "面试": [
+  "interview"
+ ],
+ "人才": [
+  "talent",
+  "talented"
+ ],
+ "工程师": [
+  "engineer"
+ ],
+ "工程": [
+  "engineering"
+ ],
+ "物理": [
+  "physics"
+ ],
+ "数学": [
+  "math"
+ ],
+ "教育": [
+  "education",
+  "school"
+ ],
+ "大学": [
+  "college",
+  "university"
+ ],
+ "学校": [
+  "school"
+ ],
+ "读书": [
+  "book",
+  "read"
+ ],
+ "书": [
+  "book"
+ ],
+ "建议": [
+  "advice"
+ ],
+ "年轻人": [
+  "\"young people\"",
+  "young"
+ ],
+ "失败": [
+  "failure",
+  "fail"
+ ],
+ "风险": [
+  "risk"
+ ],
+ "危险": [
+  "danger",
+  "dangerous"
+ ],
+ "生存风险": [
+  "\"existential risk\"",
+  "existential"
+ ],
+ "恐惧": [
+  "fear",
+  "afraid"
+ ],
+ "痛苦": [
+  "pain"
+ ],
+ "压力": [
+  "stress",
+  "pressure"
+ ],
+ "工作": [
+  "work"
+ ],
+ "加班": [
+  "\"hours a week\"",
+  "\"hours per week\""
+ ],
+ "睡觉": [
+  "sleep"
+ ],
+ "睡眠": [
+  "sleep"
+ ],
+ "钱": [
+  "money"
+ ],
+ "金钱": [
+  "money"
+ ],
+ "财富": [
+  "wealth",
+  "rich"
+ ],
+ "股价": [
+  "stock"
+ ],
+ "股票": [
+  "stock",
+  "share"
+ ],
+ "估值": [
+  "valuation",
+  "\"market cap\""
+ ],
+ "利润": [
+  "profit",
+  "profitable"
+ ],
+ "破产": [
+  "bankrupt",
+  "bankruptcy"
+ ],
+ "盈利": [
+  "profitable",
+  "profit"
+ ],
+ "幸福": [
+  "happy",
+  "happiness"
+ ],
+ "意义": [
+  "meaning"
+ ],
+ "人生": [
+  "life"
+ ],
+ "人生意义": [
+  "\"meaning of life\""
+ ],
+ "意识": [
+  "consciousness"
+ ],
+ "模拟": [
+  "simulation"
+ ],
+ "外星人": [
+  "alien"
+ ],
+ "宇宙": [
+  "universe"
+ ],
+ "上帝": [
+  "god"
+ ],
+ "宗教": [
+  "religion"
+ ],
+ "死亡": [
+  "death",
+  "die"
+ ],
+ "未来": [
+  "future"
+ ],
+ "预测": [
+  "predict",
+  "prediction"
+ ],
+ "明年": [
+  "\"next year\""
+ ],
+ "年底": [
+  "\"end of the year\"",
+  "\"end of this year\""
+ ],
+ "游戏": [
+  "game",
+  "gaming"
+ ],
+ "电影": [
+  "movie",
+  "film"
+ ],
+ "音乐": [
+  "music"
+ ],
+ "朋友": [
+  "friend"
+ ],
+ "爱情": [
+  "love"
+ ],
+ "父亲": [
+  "father",
+  "dad"
+ ],
+ "南非": [
+  "\"south africa\""
+ ]
+}

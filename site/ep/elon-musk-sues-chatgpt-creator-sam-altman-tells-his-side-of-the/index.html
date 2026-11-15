@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -381,7 +434,7 @@
 <li data-z="117">给"未知的未知"留制度性冗余。具体做法很朴素：手上有一笔能撑一年的现金，身上有一门不依赖当前雇主的技能，身边有几个不在同一行业的朋友。这三样东西不会让你预测未来，会让你在预测失败时还站得住。</li>
 <li data-z="118">如果你是管理者，把"哪个岗位会消失"这个问题换成"哪个岗位的内容会先变"。前者没法回答，后者可以拆解到具体任务。拆解完了，你会发现真正要重新安置的是任务，不是人。</li>
 <li data-z="119">护士那个例子值得抄作业。奥特曼说这个岗位不会被替代，不是因为技术做不到，是因为人不要。任何时候，只要你的工作里有一部分是"对方明确希望是个真人"，这部分就有价格。找到它，放大它。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=tWtV03WDD7M" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>I have to ask your version of Elon Musk has like attacked you and all this. Is what is the core of that dispute from your perspective? Look, I know he&#x27;s a friend of yours and I know what side you&#x27;ll I actually don&#x27;t have a position on this because I don&#x27;t understand it well enough to understand.</p><p id="p1"><span class="ts-link" data-t="0:18">0:18</span>helped us start OpenAI. I&#x27;m very grateful for that. I really for a long time looked up to him as just an incredible hero and you know, great jewel of humanity. I have different feelings now. What are your feelings now? No longer jewel of humanity? There are things about him that are incredible and I&#x27;m grateful for a lot of things he&#x27;s done. There&#x27;s a lot of things about him that I think are traits I don&#x27;t admire.</p><p id="p2"><span class="ts-link" data-t="0:44">0:44</span>Anyway, he helped us start OpenAI and he later decided that we weren&#x27;t on a trajectory to be successful and he didn&#x27;t want to you know, he kind of told us we had a 0% chance of success and he was going to go do his competitive thing and then we did okay and I think he got understandably upset. Like I&#x27;d feel bad in that situation and since then has just sort of been trying to he had run a competitive kind of clone and has been trying to sort of slow us down and sue us and do this and that and That&#x27;s kind of my version of it. I&#x27;m sure he&#x27;d have a different one.</p><p id="p3"><span class="ts-link" data-t="1:19">1:19</span>You don&#x27;t talk to him anymore? Very little. If AI becomes smarter, I think it already probably is smarter than any person and if it becomes wiser, if we can agree that it reaches better decisions than people, then it by definition kind of displaces people at the center of the world, right?</p><p id="p4"><span class="ts-link" data-t="1:43">1:43</span>I don&#x27;t think it&#x27;ll feel like that at all. I think it&#x27;ll feel like a you know, really smart computer that may advise us and we listen to it sometimes, we ignore it sometimes. It won&#x27;t I don&#x27;t think it&#x27;ll feel like agency. I don&#x27;t think it&#x27;ll diminish our sense of agency. people are already using ChatGPT in a way where many of them would say it&#x27;s much smarter than me at almost everything. But they&#x27;re still making the decisions. They&#x27;re still deciding what to ask, what to listen to, what not. And I think this is sort of just the shape of technology.</p><p id="p5"><span class="ts-link" data-t="2:12">2:12</span>Who loses their jobs because of this technology? I&#x27;ll caveat this with the obvious but important the statement that no one can predict the future and I will in trying to if I try to answer that precisely, I will make a lot of I will say like a lot of dumb things, but I&#x27;ll try to pick an area that I&#x27;m confident about and then areas that I&#x27;m much less confident about. I&#x27;m confident that a lot of current customer support that happens over a phone or computer, those people will lose their jobs and that&#x27;ll be better done by an AI.</p><p id="p6"><span class="ts-link" data-t="2:49">2:49</span>Now, there may be other kinds of customer support where you really want to know it&#x27;s the right person. A job that I&#x27;m confident will not be that impacted is like nurses. I think people really want a deep human connection with a person in that time and no matter how good the advice of AI is or the robot or whatever, like you&#x27;ll really want that.</p><p id="p7"><span class="ts-link" data-t="3:08">3:08</span>A job that I feel like way less certain about what the future looks for looks like for is computer programmers. What it means to be a computer programmer today is very different than what it meant 2 years ago. You&#x27;re able to use these AI tools to just be hugely more productive. But it&#x27;s still a person there and they&#x27;re like able to generate way more code, make way more money than ever before and it turns out that the world wanted so much more software than the world previously had capacity to create that there&#x27;s just incredible demand overhang.</p><p id="p8"><span class="ts-link" data-t="3:37">3:37</span>But if we fast forward another 5 or 10 years, what does that look like? Is it more jobs or less? That one I&#x27;m uncertain on. But there&#x27;s going to be massive displacement and maybe those people will find something new and interesting and you know, lucrative to do, but what how big is that displacement do you think?</p><p id="p9"><span class="ts-link" data-t="3:53">3:53</span>Someone told me recently that the historical average is about 50% of jobs significantly change. Maybe they don&#x27;t totally go away, but significantly change every 75 years on average. That&#x27;s the kind of that&#x27;s the half-life of stuff. And my controversial take would be that this is going to be like a punctuated equal moment where a lot of that will happen in a short period of time, but if we zoom out, it&#x27;s not going to be dramatically different than the historical rate. Like we&#x27;ll do we&#x27;ll have a lot in this short period of time and then it&#x27;ll somehow be less total job turnover than we think. There will still be a job that is There there will be some totally new</p><p id="p10"><span class="ts-link" data-t="4:34">4:34</span>categories like my job, like, you know, running a tech company and would have been hard to think about 200 years ago. But there&#x27;s a lot of other jobs that are directionally similar to jobs that did exist 200 years ago and there&#x27;s jobs that were common 200 years ago that now aren&#x27;t. And if we again, I&#x27;ve no idea if this is true or not, but I&#x27;ll use the number for the sake of argument. If we assume it&#x27;s 50% turnover every 75 years, then I could totally believe a world where 75 years from now half the people are doing something totally new and half the people are doing something that looks kind of like some jobs of today. I mean, last time we had an industrial</p><p id="p11"><span class="ts-link" data-t="5:10">5:10</span>revolution, there was like revolution and world wars. Do you think we&#x27;ll see that this time? We&#x27;ve got a new partner. It&#x27;s a company called Cowboy Colostrum. It&#x27;s a brand that is serious about actual health and the product is designed to work with your body, not against your body.</p><p id="p12"><span class="ts-link" data-t="5:28">5:28</span>It is a pure and simple product, all natural. Unlike other brands, Cowboy Colostrum is never diluted. It always comes directly from American grass-fed cows. There&#x27;s no filler, there&#x27;s no junk. It&#x27;s all good. It tastes good, believe it or not. So before you reach for more pills for every problem that pills can&#x27;t solve, we recommend you give this product, Cowboy Colostrum, a try. It&#x27;s got everything your body needs to heal and thrive. It&#x27;s like the original superfood loaded with nutrients, antibodies, proteins. They&#x27;ll build a strong immune system, stronger hair, skin, and nails. I threw my wig away. I&#x27;m right back to my natural hair after using this product. You just take</p><p id="p13"><span class="ts-link" data-t="6:08">6:08</span>a scoop of it every morning in your beverage, coffee, or a smoothie and you will feel the difference every time. For a limited time, people listen to our show get 25% off the entire order. So go to cowboycolostrum.com, use the code Tucker at checkout, 25% off when you use that code, Tucker at cowboycolostrum.com.</p><p id="p14"><span class="ts-link" data-t="6:26">6:26</span>Remember you mentioned you heard it here first. I Again, no one knows for sure. I&#x27;m not confident on this answer, but my instinct is the world is so much richer now than it was at the time of the industrial revolution that we can actually absorb more change faster than we could before. There&#x27;s a lot that&#x27;s not about money of job. There&#x27;s meaning, there&#x27;s value, there&#x27;s community.</p><p id="p15"><span class="ts-link" data-t="6:49">6:49</span>I think we&#x27;re already unfortunately in society in a pretty bad place there. I&#x27;m not sure how much worse it can get. I&#x27;m sure it can, but I I I have been pleasantly surprised on the ability of people to pretty quickly adapt to big changes. like COVID was an interesting example to me of this where the world kind of stopped all at once and the world was like very different from one week to the next and I and I was very worried about how society was going to be able to adapt to that world. And it obviously didn&#x27;t go perfectly, but on the whole I was like, all right, this is one point in favor of societal resilience and people find, you know, new kind of ways to live their</p><p id="p16"><span class="ts-link" data-t="7:28">7:28</span>lives very quickly. I don&#x27;t think AI will be that nearly that abrupt. So what will be the downside I mean, I can see the upsides for sure. Efficiency, medical diagnosis seems like it&#x27;s going to be much more accurate. Fewer lawyers. Thank you very much for that. But what will What are the downsides that you worry about?</p><p id="p17"><span class="ts-link" data-t="7:49">7:49</span>I I think this is just like kind of how I&#x27;m wired. I always worry the most about the unknown unknowns. If it if it&#x27;s a if it&#x27;s a downside that we can really like be confident about and think about, you know, we talked about one earlier, which is these models are getting very good at bio and they could help us design biological weapons, you know, engineer like another COVID-style pandemic. I worry about that, but because we worry about it, I think we and many other people in the industry are thinking hard about how to mitigate that.</p><p id="p18"><span class="ts-link" data-t="8:14">8:14</span>The the unknown unknowns where okay, there&#x27;s like a there&#x27;s a societal scale effect from a lot of people talking to the same model at the same time. This is like a silly example, but it&#x27;s one that struck me recently. LLMs like ours and our language model and others have a kind of certain style to them. You know, they talk in a certain rhythm and they have a little bit unusual diction and maybe they overuse em dashes and whatever.</p><p id="p19"><span class="ts-link" data-t="8:40">8:40</span>And I noticed recently that real people have like picked that up. And it was an example for me of like, man, you have enough people talking to the same language model and it actually does cause a change in societal scale behavior. Yes. And you know, did I think that ChatGPT was going to make people use way more em dashes in real life? Certainly not. It&#x27;s not a big deal, but it&#x27;s an example of where there can be this unknown unknowns of this is just like this is a brave new world.</p><p id="p20"><span class="ts-link" data-t="9:14">9:14</span>Thanks for watching our YouTube channel. We hope you&#x27;ll subscribe to it. And by the way, you can hit the little bell on there and get notifications every time we produce a video. We hope you&#x27;ll do that, also.</p></div></div>
       
       
@@ -409,7 +462,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -449,7 +502,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

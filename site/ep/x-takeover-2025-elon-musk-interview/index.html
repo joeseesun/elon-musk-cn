@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -322,7 +375,7 @@
 <li data-z="87">比较航天成本时用"每公斤入轨价格"，单次发射报价会误导判断。星舰的真实意义在于把一百吨货的单价压到小火箭以下，单次总价是次要指标。</li>
 <li data-z="88">关注那对金属机械臂的抓取成功率。筷子接火箭这套方案决定了星舰能不能省掉着陆腿，也就决定了运力上限。</li>
 <li data-z="89">如果去美国南部旅行，可以绕道博卡奇卡，公路边就能看，不需要门票。傍晚的光线下尺度感最强，带个长焦镜头能拍到总装厂房和发射塔同框。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=v5pmIZ7Q_wQ" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:01">0:01</span>Is that a cap right there, too?</p><p id="p1"><span class="ts-link" data-t="0:04">0:04</span>That&#x27;s the Perseverance ro It&#x27;s a Perseverance rover on Mars.</p><p id="p2"><span class="ts-link" data-t="0:07">0:07</span>Oh my gosh, that&#x27;s awesome. Yeah.</p><p id="p3"><span class="ts-link" data-t="0:10">0:10</span>Well, first off, Elon, thanks for coming to the X Takeover formerly Tesla Takeover for the second year in a row. You&#x27;re welcome.</p><p id="p4"><span class="ts-link" data-t="0:21">0:21</span>Well, let&#x27;s let&#x27;s kick things off. Let&#x27;s start start off with you know really your baby, the Starship. Starship is the most ambitious rocket ever built. What&#x27;s been harder than expected and what&#x27;s the next milestone we should watch for?</p><p id="p5"><span class="ts-link" data-t="0:40">0:40</span>well, I I thought everything would be hard, so it&#x27;s not like I was like it would be easy.</p><p id="p6"><span class="ts-link" data-t="0:48">0:48</span>Yeah. Yeah. So I mean Starship is a is a crazy program on so many levels because you got something with two and a half and future versions will be three times the thrust of the Saturn 5 moon rocket which was previously largest rocket and largest flying object that we made. So Starship is you know three times the price</p><p id="p7"><span class="ts-link" data-t="1:14">1:14</span>roughly twice the weight of the next largest flying object ever made and has the the goal of being fully and rapidly reusable. So this is a this is a really crazy thing to I think it&#x27;s it&#x27;s really one of the hardest engineering challenges that exists. and you know when we first started</p><p id="p8"><span class="ts-link" data-t="1:37">1:37</span>talking about Starship people thought this was impossible. In fact even within the company we we sort of thought it was impossible and it had a very high sort of what I call giggle factor. you know you mentioned the thing and people immediately start giggling like at the absurdity of it all.</p><p id="p9"><span class="ts-link" data-t="1:55">1:55</span>so now but now it&#x27;s gone from as said we you know I guess I specialize in the go from the impossible to the merely late. so that&#x27;s my skill. it wasn&#x27;t possible now it&#x27;s just late. so and I encourage anyone who&#x27;s interested to go and and visit Starbase in South Texas. It&#x27;s like a magical land with gigantic rockets. So I think some of you</p><p id="p10"><span class="ts-link" data-t="2:26">2:26</span>it&#x27;s very inspiring. It&#x27;s like I take part for take parts of family. It&#x27;s on a major highway so you can see things quite close up.</p><p id="p11"><span class="ts-link" data-t="2:33">2:33</span>and really get a sense for the scale of the of the rocket and the factory intera it&#x27;s very cool. I I guess the the thing that I thought would be hottest currently is the hottest which is the creating a fully reusable orbital heat shield which has never been done before. So normally the the heat shields are they&#x27;re they&#x27;re expandable and even say for the shuttle heat shield they would lose many of the the tiles on every flight and I&#x27;d have to refurbish the heat shield between each flight. So it&#x27;s it&#x27;s never no one has ever created a fully reusable orbital heat shield before. and and no one in fact no one has created a fully reusable orbital rocket before. and Falcon 9 is the</p><p id="p12"><span class="ts-link" data-t="3:20">3:20</span>first rocket where there&#x27;s at least the boost stage is reusable on a regular basis. and where it actually makes economic sense. So so so solving the heat shield problem is I think probably the single biggest remaining challenge for Starship and and of course getting the upper stage for the ship to land and also get caught by the the giant metal chopsticks which looks looks like a sci-fi movie that looks it looks like an improbable sci-fi movie. The whole thing.</p><p id="p13"><span class="ts-link" data-t="3:58">3:58</span>Chopsticks. Literally catching it. Catching it.</p><p id="p14"><span class="ts-link" data-t="4:01">4:01</span>Yeah. giant metal chopsticks. that&#x27;s it&#x27;s pretty wild to be catching the largest flying object ever made with metal chopsticks out of the air. so then the but I&#x27;m hopeful that the ship will be will be recovered maybe this year but certainly I&#x27;d say in the first half of next year and then there&#x27;ll be further improvements to make the ship and the booster not just reusable but fully and rapidly reusable which will actually drop the cost per flight cost per ton of payload of Starship below that of of a Falcon 1 rocket of an expandable Falcon 1. So that that getting 100 tons or more to orbit of useful payload will cost less than a rocket that would ordinarily</p><p id="p15"><span class="ts-link" data-t="4:57">4:57</span>deliver half a ton. That was Falcon 1. And it&#x27;s because all you you&#x27;re doing is replacing the the fuel and oxygen in the rocket as opposed to building a new rocket. and most of the propellant is actually oxygen, not not fuel. But it&#x27;s almost 80% oxygen, 20% fuel. then the next big technology challenge after being able to achieve full re of the full reuse of the ship is orbital refilling where where where we actually refill propellant from from orbit like like like aerial re refueling. In this case, it&#x27;s orbital refilling. I say refilling, not refueling because most of what&#x27;s transferred is actually liquid oxygen as opposed to fuel.</p><p id="p16"><span class="ts-link" data-t="5:49">5:49</span>so for orbital refilling, you you need to have two starships come together and dock and transfer propellant from one, starship to another and then and then in the future to an orbit orbital propellant depot. Yeah. So that&#x27;s that&#x27;s the situation.</p><p id="p17"><span class="ts-link" data-t="6:11">6:11</span>It doesn&#x27;t sound hard. It&#x27;s just</p><p id="p18"><span class="ts-link" data-t="6:14">6:14</span>I mean it is very cubal. There&#x27;s nothing nothing is nothing impossible is is being talked about here but it is it is very tricky to do and and and no no other organization is even trying to do this. It&#x27;s like sort of like well who else is trying to do this? Well nobody actually.</p><p id="p19"><span class="ts-link" data-t="6:37">6:37</span>So in fact even after all these years there&#x27;s still no company that&#x27;s reusing a booster. So, everyone&#x27;s even tried to do Balcon 9 level reusability even even though we&#x27;ve shown that that it clearly makes a ton of sense, because, you know, compare the cost of of any form of transport where if you have to throw away the item afterwards, like if you if you had to if every time you drove somewhere you had to throw away the car, you&#x27;d be Wow, that&#x27;s a that&#x27;s a that&#x27;s a that&#x27;s a crazy car where you had to throw away after every every time you drive it. But that&#x27;s how it works for for rockets.</p><p id="p20"><span class="ts-link" data-t="7:21">7:21</span>So that is really yeah, I don&#x27;t think anyone would be driving a car if you had to buy a new car every time you drove somewhere and then you&#x27;d have to tow another car behind you for the return journey. Elon, what does a So yeah. The</p></div></div>
       
       
@@ -350,7 +403,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -390,7 +443,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

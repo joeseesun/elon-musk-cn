@@ -1,0 +1,17 @@
+[Unit]
+Description=Elon Musk Archive MCP (streamable HTTP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/qiaomu-apps/elon-mcp
+Environment=ELON_SITE_URL=https://elon.qiaomu.ai
+ExecStart=/usr/bin/python3 /opt/qiaomu-apps/elon-mcp/elon_mcp_server.py --http --host 127.0.0.1 --port 8791
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

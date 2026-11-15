@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>马斯克全访谈 MCP · elon.qiaomu.ai</title>
+<meta name="description" content="把 651 期访谈、588 份英文文稿、586 篇中文精读接入你的 AI 客户端。">
+<style>
+  :root{color-scheme:light;--bg:#fafafa;--fg:#1a1a1a;--muted:#666;--line:#e5e5e5;--accent:#c0392b;--card:#fff}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  main{max-width:760px;margin:0 auto;padding:48px 20px 80px}
+  h1{font-size:28px;margin:0 0 8px}
+  p.sub{color:var(--muted);margin:0 0 32px}
+  h2{font-size:19px;margin:34px 0 10px}
+  pre{background:#f3f3f3;border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;font-size:13px;line-height:1.6}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  a{color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:16px 0}
+  .pill{display:inline-block;background:#eef4ff;border-radius:999px;padding:2px 10px;font-size:13px;color:#345}
+</style>
+</head>
+<body>
+<main>
+  <h1>马斯克全访谈 MCP</h1>
+  <p class="sub">把本站 651 期视频、588 份英文逐字文稿、586 篇中文精读、语录与预言追踪，接进你的 AI 客户端。</p>
+
+  <div class="card">
+    <p><span class="pill">公开只读</span> <span class="pill">Streamable HTTP</span> <span class="pill">无需密钥</span></p>
+    <p>MCP 端点：<code>https://elon.qiaomu.ai/mcp</code><br>
+    健康检查：<a href="/mcp/health">/mcp/health</a></p>
+  </div>
+
+  <h2>1. 安装 Skill</h2>
+  <p>开源仓库：<a href="https://github.com/joeseesun/elon-musk-archive">github.com/joeseesun/elon-musk-archive</a>（MIT）。一行安装：</p>
+<pre><code>npx skills add joeseesun/elon-musk-archive</code></pre>
+  <p>或下载 <a href="/mcp/elon-musk-archive.zip">elon-musk-archive.zip</a>，解压到 <code>~/.workbuddy/skills/elon-musk-archive/</code> 后重启客户端。</p>
+
+  <h2>2. 配置 MCP</h2>
+  <p>编辑 <code>~/.workbuddy/mcp.json</code>，在 <code>mcpServers</code> 下加入：</p>
+<pre><code>"elon-musk": {
+  "type": "http",
+  "url": "https://elon.qiaomu.ai/mcp"
+}</code></pre>
+  <p>保存后在连接器管理里点「信任」并启用。若客户端只支持 stdio，可用 <code>npx -y mcp-remote@latest https://elon.qiaomu.ai/mcp</code> 桥接。</p>
+
+  <h2>3. 试试这样问</h2>
+  <ul>
+    <li>马斯克关于第一性原理的原话是什么？在哪一期、第几分钟？</li>
+    <li>他 2023 年以后对 AI 风险的看法有什么变化？</li>
+    <li>找出"火星殖民"相关的中文精读，并给出视频链接。</li>
+    <li>他做过的预言里，哪些已经兑现、哪些迟到兑现？</li>
+  </ul>
+
+  <p><a href="/">← 返回马斯克全访谈</a> · 数据来自 <a href="https://silicon-valley.tech/" rel="nofollow">silicon-valley.tech</a> 公开档案；中文精读为 AI 改写。</p>
+</main>
+</body>
+</html>

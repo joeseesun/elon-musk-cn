@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -283,7 +336,7 @@
 <li data-z="68">年轻的时候，把风险厌恶调低一档。先算清楚最坏结果是什么，多数时候最坏结果只是搬回父母家吃饭，而你用来下注的是可以重新长出来的时间。</li>
 <li data-z="69">下判断前做一次前提审查：我信的这个结论，依赖哪几个假设？这几个假设有没有被验证过？如果其中一个错了，结论还成立吗？这个动作每次花五分钟，能省掉几年弯路。</li>
 <li data-z="70">给自己设一个"没人做过所以不可能"的清单，定期回头看。清单上大部分项目确实不可能，但总有一两个只是没人试过。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=5nMQ0-1jqFs" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:01">0:01</span>[Music] [Applause] welcome to tyon live my name is matin Sayad we have the pleasure of welcoming Elon Musk he is the chairman of not one but three companies SpaceX Solar City and of course Tesla Motors and in his earlier life not very long ago in the &#x27;90s he started and sold two companies zip 2 and the company that changed the very nature of how we transact online PayPal and for a young man it&#x27;s amazing feat he&#x27;s going to turn only 37 next month Elon welcome thank you so off the bat let&#x27;s talk about Tesla Motors and the car you drove today mhm everybody&#x27;s talking about it 220 mi in one charge 0 to 16 4 seconds under 4 seconds under 4 seconds and 2 cents a mile I think we</p><p id="p1"><span class="ts-link" data-t="0:58">0:58</span>would love to have that car mhm it&#x27;s going to cost us a bit over 100 Grand and it&#x27;s a long line of course the celebrities have already signed up yes so you have 1,000 already pre-booked you went into production in March this year I think General production that&#x27;s correct why the money why the weight well the the reason it costs over $100,000 right now is because the technology is new and it&#x27;s still at at small scale of small scale of production so the idea is that we start off with the sports car and it&#x27;s initially expensive but then we working on model two model 3 Model four and with each subsequent model we bring the price down and we make the functionality of the</p><p id="p2"><span class="ts-link" data-t="1:39">1:39</span>car better so model 2 is a is a large four-door sedan with lots of cargo space you can see as many as five adults maybe even a scenario where there&#x27;s six adults that can sit in the car and it&#x27;s going to have a price which is you around $59,000 before any tax incentive so possible tax incentives could bring price down to 55 and then model 3 will be even lower cost and so we want to really drive the cost of the of the vehicles to mass Market as soon as possible because at the point at which the price of the car is compartible with that of other gasoline cars and and you still have the</p><p id="p3"><span class="ts-link" data-t="2:19">2:19</span>two cents a mile you know where where you can spend maybe $4 or $5 and travel over 200 miles the equivalent of one gas price of one gallon of gas then that at that point even if you don&#x27;t care about the environment you want to buy this car and that&#x27;s really our goal is to get there as soon as possible you want to talk a little bit about SpaceX mhm and now you&#x27;re making it economical for a lot of us people who want to travel to space hopefully one day you had two one Falcon one Falcon 2 can you shed some more light on it sure well we have two rockets and one spacecraft the Falcon 1 Falcon 9 and then two rockets and then dragon is the spacecraft and</p><p id="p4"><span class="ts-link" data-t="2:59">2:59</span>initially we&#x27;ll be we&#x27;re launching satellites and and then we&#x27;ll be taking Caro to the space station and and then we&#x27;ll be upgrading that capability to carry people to orbit and eventually Beyond orbit the the great breakthrough that we&#x27;re hoping to achieve is to build the first fully reusable rocket and that&#x27;s never been achieved in rocketry before and that would be one of the great historic Milestones if we&#x27;re able to do that and that&#x27;s really what will allow the cost of space travel to become much much less than it is right now cuz you can imagine if if if this was air travel or or really any mode of Transport boats cars horses doesn&#x27;t anything if you could</p><p id="p5"><span class="ts-link" data-t="3:40">3:40</span>only use it once then people would not use that mode of transportation if you could because like a 747 costs hundreds of millions of dollars and yet you can buy a roundt trip ticket from LA to London for $500 and that&#x27;s because that that plane can be used tens of thousands of times and so the capital cost of plane is small component of your ticket cost but if if if each if it took if a 747 could only make one flight then suddenly you&#x27;d have hundreds of millions of dollars of capital that has to be paid for by the the passengers and that would make it completely unaffordable and that&#x27;s the situation in rocketry today to go back to your days of</p><p id="p6"><span class="ts-link" data-t="4:18">4:18</span>PayPal you&#x27;ve been a successful entrepreneur twice what made you come to Green Tech and at such a huge length well I I think the transition to a sustainable energy economy is one of the most important problems facing Humanity the you know even if you even if you take the environment out of the equation the fact that there are limited supplies of oil and coal and natural gas mean that we have to find Alternatives and as we&#x27;re seeing with the price of oil which is incredibly expensive and it&#x27;s going to get worse because we&#x27;ve got growing economies like India like China which are growing like Gang Busters and everybody wants a car and everybody want wants to you know</p><p id="p7"><span class="ts-link" data-t="5:00">5:00</span>have appliances and all all things and that&#x27;s a reasonable expectation I think they should have those things but it&#x27;s going to it places a huge burden of increase burden on the demand for energy worldwide and so we must find renewable sources or the economies will grind to a halt even if the environment doesn&#x27;t get destroyed and so so it&#x27;s just a very very important it&#x27;s the most important problem we face in the 21st century really and people talk about things like poverty and disease and yes these things are certainly important but how will we solve them if we have no energy you know after University of Pennsylvania came to Stanford so we I</p><p id="p8"><span class="ts-link" data-t="5:38">5:38</span>was just talking to you you didn&#x27;t even get to attend a class and you started zip 2 in Silicon Valley it&#x27;s probably not an exception so among the trades we have dropouts right what other trades do you think you personally have that propels you to be such a successful entrepreneur in varied Industries where do you good at or better at than other entrepreneurs it&#x27;s very important for audience to understand well you know the traits well it&#x27;s dependent upon me giving an accurate self-analysis it&#x27;s always it&#x27;s difficult to to do self analysis you know you want you&#x27;re sort of too close to yourself by definition but</p><p id="p9"><span class="ts-link" data-t="6:19">6:19</span>I think well people do not do not think critically enough I mean there&#x27;s critical thinking is a skill in short supply where people you people take too many things as they assume too many things to be true without a sufficient basis in in in in that belief so it&#x27;s very important that people closely analyze what what is supposed to be true and and and try to build up try to say let&#x27;s let&#x27;s analyze things from first principles not by not not by analogy or Not by convention if you if you assume things are true by convention which is actually what most people do then it&#x27;s difficult to gain insight into what how things can be bettered so you know in any argument or or any</p><p id="p10"><span class="ts-link" data-t="7:14">7:14</span>sort of train of thinking you want to make sure that your the underlying premises are valid and applicable and and you know and and then in reaching a conclusion that that the conclusion you&#x27;re reaching is necessarily driven by the underlying premises and the interconnection between those premises that may seem like a really simple thing to say but most people don&#x27;t do that I so it&#x27;s really the foundation of rational thought right and let&#x27;s see what else I think also people tend to overweight risk on a personal level it&#x27;s one thing if you&#x27;ve got you know a mortgage to pay and kids to support and that if you were to deviate from your job that well how</p><p id="p11"><span class="ts-link" data-t="8:00">8:00</span>you going to feed your family and pay the rent and okay that&#x27;s understandable but let&#x27;s say you&#x27;re young and you&#x27;re just coming out of college or coming out of high school or whatever the what what do you what do you risk you know you&#x27;re not going to stop I mean it&#x27;s it&#x27;s really certainly not in any kind of modern economy it&#x27;s so easy to earn enough money just to live somewhere and eat food you could you know that&#x27;s that&#x27;s that&#x27;s I mean very easy to do so I what are they they afraid of they&#x27;re they&#x27;re mostly afraid of U failure I think or yeah but</p><p id="p12"><span class="ts-link" data-t="8:36">8:36</span>people should be be less risk averse when there&#x27;s not much at risk yeah you know you&#x27;re a young father five kids mhm three dogs three dogs actually how do you find time on when you do find time how do you spend quality time with your family I mean five kids it&#x27;s not easy well it it seems to be different different things with different parts of the family with my wife we like to go out to movies go out to you know if there&#x27;s try a new restaurant I love I love food love food too much I love Indian food by the way I love it&#x27;s great any particular dish you like from Indian well I like yeah I mean I like the I mean yeah it&#x27;s sort of a little cliche</p><p id="p13"><span class="ts-link" data-t="9:19">9:19</span>[Laughter] but I I you know I like it all you know it was in India actually last year because India hosted the international astronautical Congress right so I was in Hyderabad and then did the Golden Triangle and all that I come from hyad by the way oh wow okay yeah so it&#x27;s a great Center for space actually in India so had a great time it&#x27;s really really enjoyed it a lot actually good fantastic food wow well you&#x27;re truly an inspiration for many of us it&#x27;s a pleasure having you all right thanks for having me thank you all right well we have had the pleasure of listening to Elon Musk you have been watching this on taon live do not forget to watch many more interviews coming up</p><p id="p14"><span class="ts-link" data-t="10:00">10:00</span>on my.org thank [Music] [Applause] you</p></div></div>
       
       
@@ -311,7 +364,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -351,7 +404,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

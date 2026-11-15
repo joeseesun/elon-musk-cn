@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -319,7 +372,7 @@
 <li data-z="86"><strong>改造既有系统，往往比从零重造更快。</strong>火星上的奶牛不会从野外长出来，也不会靠几万年前那种自然演化出现。找现成的基底，改关键几个参数，比完全合成一条新路更容易走通。</li>
 <li data-z="87"><strong>把"我不知道答案"和"我不知道问题"分开。</strong>多数人卡在第一种，马斯克承认自己卡在第二种。承认这一点之后，行动方向反而清楚了：先去扩大理解范围，答案会在后面出现。</li>
 <li data-z="88"><strong>给自己留一个"回头看"的验收标准。</strong>他那句"至少参与其中一些"，比任何宏大叙事都好用。不必承担全部，只要在几件事上做过有用的东西。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=dfNC3PQIGPg" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>[Music] I&#x27;m Crystal Delworth poly Crystal HD here for raw science on the eve of my PhD thesis defense here to talk about technologies that are going to change the way that we experience our world I have two illustrious guests here with me one is Philip low who&#x27;s the inventor of the ibrain and founder and CEO of the company neurovigil our other guest is Elon Musk who really needs no introduction but he&#x27;s also at the Helm of the private space company SpaceX so thank you so much for joining me guys nice to be here yeah thanks for having us so philli I want to know a little bit about this I brain and I understand that there&#x27;s a new version yeah so well the</p><p id="p1"><span class="ts-link" data-t="0:44">0:44</span>iin is the world&#x27;s first mobile brain monitor in the sense that it&#x27;s we&#x27;ve introduced it as a little startup four years ago the company hman lash has used it to do outpatient clinical trials since then we&#x27;ve used it with a number of other pharmaceutical companies and what we&#x27;ve done is we&#x27;ve collected data from individuals who are sleeping we&#x27;ve produced maps of Rin activity to see how they react to pathologies and to particular compounds the devices have become smaller and smaller and smaller and this latest version is about the size of a miniature lisine packet so it&#x27;s really tiny so that&#x27;s that&#x27;s the leine and and this is this is Ian 3 the first one though did fit in</p><p id="p2"><span class="ts-link" data-t="1:33">1:33</span>Tic Tac boxes so we&#x27;ve gone from you know from one level of dental hygiene to another but this is pretty exciting to us because it means that it is not possible to record for neural data not only from a few hundred people a few thousand people but literally tens of thousands of hundred or hundreds of thousands of people and with that we want to use the power of analytics and big data in order to really see if people are actually diseased before they have symptoms so you looking for a pattern in the brain waves we&#x27;re looking for patterns and we&#x27;re we&#x27;re we&#x27;re also making sure that new drugs before they hit the market are actually clean and safe so Elon you&#x27;ve been very vocal</p><p id="p3"><span class="ts-link" data-t="2:13">2:13</span>about the possibilities of colonizing other planets specifically Mars and your own company is doing a lot of work to get us to the stage where we&#x27;re able to do that do you think that starting a colony on Mars would kind of be a chance to start over and maybe do a little bit better or do you think it&#x27;s a chance to copy what nature on Earth has already created for us yeah I think it&#x27;s quite likely that we&#x27; want to bioengineer new organisms that are better suited to living on Mars I mean Humanity&#x27;s kind of done that over time by sort of selective breeding so you know cows didn&#x27;t evolve in the wild but that&#x27;s a very slow process requires you know hundreds of generations whereas</p><p id="p4"><span class="ts-link" data-t="2:55">2:55</span>I think with actual bioengineering you could make that happen a lot faster Maybe with more Precision ideally long term although this is a tricky subject you&#x27;d want to write genetics what do you mean by that meaning you want to you&#x27;d want to create synthetic organisms completely synthetic organisms necess completely but you know start with some base and then modify stuff in the interest of colonization of other planets are you relying on the research of government funded space programs on the effects of you know being in space for long periods of time or a space have any interest in doing its own research well I think the the verdict is in with respect to long-term</p><p id="p5"><span class="ts-link" data-t="3:36">3:36</span>existence in space really mostly about in my opinion it is defining long term too well certainly more than enough to get to M okay you m is if you if you have a low energy trajectory like minimum energy trajectory is about 6 months I think that can be compressed down to about 3 months and it gets exponentially hotter as you go lower than that three three to four I mean and it&#x27;s important to actually be at that level because then you can send your spaceship to Ms and bring it back on the same orbital synchronization so or Earth and Ms sync up every 2 years and then they&#x27;re only kind of in in sync for about 6 months so you know and and then you know they&#x27;re</p><p id="p6"><span class="ts-link" data-t="4:23">4:23</span>they&#x27;re really too far apart so you&#x27;ve got to be able to go there and back in one go and and that that&#x27;s important for making the cost of traveling to Ms an affordable amount cuz you think of like what&#x27;s the key thing to establish at colonar Ms it&#x27;s it&#x27;s the cost per per unit Mass to the surface of Mars or the cost per person as well at a certain a level if it&#x27;s too high obviously there no there won&#x27;t be such a thing but if once it gets to a certain level it will the it&#x27;s like a reaction you know the activation energy it&#x27;s sort of like the economic activation energy of a mar Colony and I mean right now it&#x27;s like I don&#x27;t know if the last NASA</p><p id="p7"><span class="ts-link" data-t="5:06">5:06</span>estimate was was $500 billion and that was during Bush the 1 so so I would imagine today&#x27;s estimate is a trillion now we&#x27;re not going to go spend a trillion dollars on sending like four people to Mars so right right now the cost of going to Mars is beyond beyond what can be afforded so there&#x27;s like that&#x27;s why there&#x27;s like no no one&#x27;s going to Mars but ultimately in order to establish a colony I think you&#x27;ve got to get the cost down to maybe half a million or less per person to go and there&#x27;s got to be an intersection of sets of people that can afford to go and people that want to go what was the moment that you decided that this was your mission and how did you make that</p><p id="p8"><span class="ts-link" data-t="5:49">5:49</span>decision to investigate so Philip I&#x27;m going to start with you sure so well the thing is I&#x27;m an accidental entrepreneur and before that I was an accidental neuroscience scientist and before that I was a mathematician and then it wasn&#x27;t until Stephen Hawking asked me to help him with his ALS that I became really involved in trying to access Consciousness in humans I think the previous work that I had done on Consciousness in animals was more to sort of show some of the the basic similarities in terms of of the neurobiology but you know it&#x27;s very interesting how these things work I think when you&#x27;re passionate you really don&#x27;t know why you do things because if</p><p id="p9"><span class="ts-link" data-t="6:27">6:27</span>you did you may actually have some sort of control over them you know in my case when I was when I was 10 years old my father was incarcerated he had threaten someone with a gun in Switzerland it&#x27;s a very bad idea to threaten a banker with a gun and he he had a drug in his system a sleep drug which was found then later on to create quite a few set effects including extreme violence so he was you know he was sent to jail remember going to see him then and his case was reopen he was the first person to be pardoned by the by the Cal parliament in Geneva unanimously and at the time I thought you know he got away with it he had a very good attorney and I was trying to</p><p id="p10"><span class="ts-link" data-t="7:13">7:13</span>to be sort of clinical about the whole thing ironically 15 years later I&#x27;m doing a PhD on on sleep I challenged one of my my professors said you know what if I I use this particular drug for example in mice just to see his reaction he said Philip you can&#x27;t use this it makes people psychotic and aggressive so once I had heard this 15 years later you know I I thought okay this is Perhaps Perhaps my father was not as you know was not guilty at all so it was interesting my first reaction was to pick up the phone and apologized 15 years later to my father that you know I doubted his innocence thought you were just exactly exactly so it was interesting</p><p id="p11"><span class="ts-link" data-t="7:55">7:55</span>and now of course we&#x27;re helping some pharmaceutical companies come up with cleaner drugs you know that&#x27;s exactly what we do so it&#x27;s really a very personal motivation I I guess it I guess I guess it is but I didn&#x27;t realize that it was until I actually had been I had begun doing it thank you for sharing that so guess I&#x27;ll ask you the same question Elon like what what&#x27;s what drives you like when did you realize that this work was important and kind of what&#x27;s your personal motivation behind it yeah it&#x27;s just when I was in college I mean I I try to think what are the things that are most can affect the future of humanity and I wanted to be involved in at least some of those</p><p id="p12"><span class="ts-link" data-t="8:34">8:34</span>things I didn&#x27;t expect to be involved in all of them but mostly I just want to be involved in things that I thought would matter to the Future and to be able to look back and say okay I did something useful there did you have specific role models that were influential in the decisions that you made that you or was it just some type of you know an internal understanding that this is what you needed to do I wouldn&#x27;t say I wouldn&#x27;t say said there was like one it wasn&#x27;t any one particular I mean there&#x27;s certainly many people that I admire in history T Tesla obviously being one of them I think it stands because I had this like existential crisis when I</p><p id="p13"><span class="ts-link" data-t="9:10">9:10</span>was a kid and and try to figure out what&#x27;s it all about and and none of the books I read seem to actually have a good answer you know so I said I read all the religious texts and I read a bunch of philosophy books and they&#x27;re all quite depressing particularly the [Laughter] Germans actually when I read the H get kind of the Galaxy I thought this was a pretty good one you know just to sort of try to gain greater Enlightenment over time that seems like a good goal because we don&#x27;t really know what the meaning of the of of life is but or even really what the right questions are to ask but if we can improve our understanding of the universe then</p><p id="p14"><span class="ts-link" data-t="9:50">9:50</span>eventually we can figure out what the right question to ask is you know if it&#x27;s not meaning life at something you know yeah well I just want to thank thank you Elon and philli for joining me here and sharing your thoughts about Consciousness and Enlightenment and technology and where we&#x27;re going I&#x27;ve really appreciated it so thank you so much and hopefully we&#x27;ll have a lot of other very interesting conversations about technology and the future of humanity [Music]</p></div></div>
       
       
@@ -347,7 +400,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -387,7 +440,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -372,7 +425,7 @@
 <li data-z="113">看到某个被提拔的人被贴上“配额”标签时，把评价拉回到具体产出上。这个标签一旦贴上就很难揭掉，唯一能对冲的是可核查的交付记录。</li>
 <li data-z="114">给自己定个习惯：每年认真看一次所在行业的人均产出数据。零和直觉在短期里经常是对的，只有长期数据能把它纠正过来。</li>
 <li data-z="115">读到一个让你立刻愤怒的分配类新闻时，先问一句：这件事里有没有任何一方创造了新东西。如果没有，那它确实是零和；如果有，愤怒可能被用错了地方。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=Cut_dByoKek" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>free speech is the Bedrock of democracy and free speech is what allows atrocities to be called out and for people to be aware of them that&#x27;s why the Germans wanted to shut down the Press immediately so you know any a way I think we we should do everything we can to preserve free speech and when we lose free speech I think we lose democracy one of the other things we were talking about earlier to touch back on it was the Dei of it and and one of the things that you know you and I had been discussing a little bit offline is the fact that Dei effectively is a conspiracy theory in which there&#x27;s a Cadre of powerful people who are at the top and they control everything else</p><p id="p1"><span class="ts-link" data-t="0:41">0:41</span>that&#x27;s happening and because those powerful people are at the top they are exploiting everybody else and they have to be taken down more than one peg and you know that that conspiracy theory matches very aligns very closely with anti-semitic conspiracy theories I think the is very extremely anti-semitic in its core so yeah absolutely and it&#x27;s</p><p id="p2"><span class="ts-link" data-t="1:05">1:05</span>just it&#x27;s just generally anti- meritocratic so which I think is very dangerous you want to have a I think a society where you succeed based on your skills and hard work and that&#x27;s it and it doesn&#x27;t matter about your race gender Creed religion nothing you know just are you good at your job do you work hard are you you have high do you have high integrity nothing wrong that&#x27;s it stops there and it seems it seems as though you know in our society right now there&#x27;s an objection to that but that objection it seems to me can only be this crazy Su yeah it can only be sustained if you are tactically acknowledging that you will not succeed in the meritocracy the people who are</p><p id="p3"><span class="ts-link" data-t="1:49">1:49</span>pushing this the hardest ping frankly yeah I mean it&#x27;s it&#x27;s it&#x27;s essentially making the argument I&#x27;m not succeeding the reason I&#x27;m not succeeding is because no one can succeed and so it&#x27;s an argument to a certain extent of the unsuccessful or people who feel as though they are they deserve more and you know one of the one of the things that that occurs to me is that I&#x27;m not sure that anybody quote unquote deserves anything other than what your hard work and Innovation bring you in life right I think Dei also for for those who were were promoted based on their skills and Merit and hard work it undermines the the The credibility of their promotion</p><p id="p4"><span class="ts-link" data-t="2:23">2:23</span>or their status was it real or was it Dei you know and it&#x27;s it it takes away the the the respect that they deserve one of the things about meritocracy that I think people forget is that it&#x27;s the only system ever devised that has positive externalities any any other any other sort of system that you create is going to have negative externalities because you&#x27;re literally just croning with ex group and whatever that group is that group is going to get the benefits and if you&#x27;re not part of that group then you get screwed meritocracy is the idea that the people who are going to succeed are people who innately are capable of creating for everyone else I</p><p id="p5"><span class="ts-link" data-t="2:57">2:57</span>mean you mentioned earlier how many employees you have and people will talk about your level of personal wealth but that level of personal wealth is largely stockholding and that stock is in almost entirely stock yeah exactly I mean it&#x27;s not you&#x27;re sitting on like a giant somewhere I mean you are but not like that yeah it&#x27;s just just when I created the companies I felt that it was important now in my first company I didn&#x27;t have any money my first internet company I just had $100,000 student debt but for that was company in the very early days the internet CS up too but for for old companies subsequently I I basically doubled down I I took the</p><p id="p6"><span class="ts-link" data-t="3:33">3:33</span>money that from from zip2 invested it in x.com PayPal and took the PayPal money invested that in in in creating Tesla and SpaceX because I I didn&#x27;t feel like I didn&#x27;t feel right that I should ask investors to invest if I was not prepared to invest my own money I I think the whole other people&#x27;s money thing is not right you know you want to you want to have you want to have SC in the game and put your Capital where you&#x27;re of the capital of the company you&#x27;re creating there with Investor&#x27;s Capital and as a result of that I own a lot of shares in the company and the company as the better the company does the more valuable the shares are but that&#x27;s because the p has</p><p id="p7"><span class="ts-link" data-t="4:17">4:17</span>grown and and so you have to say like what&#x27;s at the root of a lot of the the negativity is is an axiomatic flow that the pi is static that it&#x27;s a zero some game that if someone else succeeds it&#x27;s because they took more than their fair share of this fixed P but it&#x27;s not a fixed pie obviously the the the</p><p id="p8"><span class="ts-link" data-t="4:40">4:40</span>there&#x27;s a lot of now I want some [Laughter] pie pie but but obviously the economic Pie has grown considerably from from what it was in the past the output of good and services the productivity per person is dramatically greater than it has been in the past so when you when you create a new company and you and you build create new products and services you you&#x27;re growing the the the groups you&#x27;re growing the you know the bundle has say pie again of of you&#x27;re you&#x27;re you&#x27;re growing the amount of goods and services available to to people so it&#x27;s it&#x27;s</p><p id="p9"><span class="ts-link" data-t="5:27">5:27</span>not you&#x27;ve not taken anything away from anyone you&#x27;ve created something new and you&#x27;ve you&#x27;ve given people new products and services they didn&#x27;t have before you know like we we didn&#x27;t used to have an iPhone we didn&#x27;t used to have computers we don&#x27;t used to have cars or be be able to fly in airplanes wouldn&#x27;t used to have many of the life-saving medicines that we have today these are all new things I&#x27;m sure you realize how good I look how well I feel well the very video you&#x27;re watching right now was something that we had just shot over in Poland a few days ago most people get sick when they travel abroad but not us because we use balance of nature seriously I actually</p><p id="p10"><span class="ts-link" data-t="6:04">6:04</span>saw producers act just gobbling those things down on the plane ride on the way back balance of nature fruits and veggies are the most convenient way to get whole food ingredients every single day balance of nature uses in advanced called vacuum process that encapsulates fruits and veggies into Whole Food supplements without sacrificing those natural antioxidants the capsules are completely void of additives fillers extracts synthetics pesticides added sugar the only thing in balance of Nature&#x27;s fruit and veggie capsules are you know like the fruits and veggies right now not only will my listeners get 35% off your first order you&#x27;ll get a free fiber and spice supplement as well</p><p id="p11"><span class="ts-link" data-t="6:35">6:35</span>balance of Nature&#x27;s fiber and spy supplement is a revolutionary fiber drink with a unique blend of 12 spices and Whole Foods there&#x27;s never been an easier way to make sure that you&#x27;re getting your daily dose of fruits and vegetables experience balance of nature for yourself today go to balance of nature.com use promo code search for 35% off your first order as a preferred customer plus get a free bottle of fiber and spice that&#x27;s balance ofn nature.com promo code search for 35% off your first preferred order plus that Free bottle of fiber and spice this is one of the I think this is the fundamental distinction between innovators and business people and people in the free</p><p id="p12"><span class="ts-link" data-t="7:04">7:04</span>market and and the political class the political PL class operates almost solely on the basis that the pi is fixed because if the pi is fixed then the way that you get elected is by promising more of that pi to such and such a person or you promise that by seizing money from the private sector you&#x27;re personally going to grow the pie and it seem it seems to me if the the the first Mark of a politician you shouldn&#x27;t listen to is I can fix all of your problems and that basically rules out nearly everybody because it seems like everyone in the political class is into the I can fix all of your problems when it seems like what I actually need is people who are entrepreneurial and</p><p id="p13"><span class="ts-link" data-t="7:37">7:37</span>Innovative to solve this problem in front of me so that we can then you know move on to the next problem that&#x27;s in front of them yeah basically the reality is that when that is that the government is really just a corporation in the limit government is the ultimate Corporation it&#x27;s not different from a corporation it&#x27;s just the ultimate Corporation and it&#x27;s a corporation that is Monopoly and and and also it can&#x27;t go bankrupt unless the country goes bankrupt and has a monopoly on violence so how much do you want to how much more do you want to give to the world the world&#x27;s biggest corporation that have that has Monopoly on violence probably not probably less</p><p id="p14"><span class="ts-link" data-t="8:18">8:18</span>and I mean if you look at say countries like eastn West Germany or North and South Korea cases where there&#x27;s just an arbitrary line that&#x27;s been drawn like could used to be one country arbitrary line is drawn because of a war what is the productivity difference from one to the other</p><p id="p15"><span class="ts-link" data-t="8:39">8:39</span>you know West Germany had a productivity five times greater than East Germany that that&#x27;s just and it&#x27;s not like West Germany was just B the sort of Bastion of capitalism they&#x27;re like half socialist so even with if you so so what that means if they have socialist and the other side is is 100% socialist or communist then you really have something like a 10 to1 difference in productivity if something is done by the government or done by the private sector that&#x27;s why you but I&#x27;m not someone who says abolish the government I just say let&#x27;s have the government do the least amount because the less the government does the more the economy will prosper because anything done by</p><p id="p16"><span class="ts-link" data-t="9:19">9:19</span>the government it&#x27;s going to be five to time time five to 10 times less efficient but like think of the DMV I&#x27;m I&#x27;m trying not to yes what if we&#x27;re going to get out of Dei what&#x27;s the best way to get out of Dei well I I I think Dei is starting to fade first of all di is actually illegal because it discriminates on the basis of of race sex sexual</p><p id="p17"><span class="ts-link" data-t="9:47">9:47</span>preference and and all all sorts of other things that is actually illegal so somehow you know it&#x27;s got they&#x27;ve managed to get this illegal thing in place but now we&#x27;re starting to see a large number of lawsuits saying no actually the law says you cannot discriminate on the basis of sex you know sexual identity and race you know so I think we&#x27;ll I think the is on</p><p id="p18"><span class="ts-link" data-t="10:17">10:17</span>its last legs it&#x27;s going to it&#x27;s going to be removed because it&#x27;s illegal actually</p></div></div>
       
       
@@ -400,7 +453,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -440,7 +493,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

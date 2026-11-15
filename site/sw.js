@@ -1,17 +1,20 @@
 /* 马斯克全访谈 · Service Worker
    - 静态资源（样式 / 脚本 / 图标 / 字体）：先用缓存，后台更新
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
-   - 都没有时显示离线页 */
-const VERSION = 'em-v2';
+   - 都没有时显示离线页
+   - 更新：新版本等待用户确认后才接管，不会读到一半被刷新
+   - 离线收藏：页面可发 CACHE_URLS 消息，把指定页面存进离线缓存 */
+const VERSION = 'em-v3';
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
 const PRECACHE = ['/', '/offline.html', '/style.css', '/app.js', '/ep.js', '/icon.svg', '/favicon.ico', '/site.webmanifest', '/data/episodes.json'];
-const MAX_PAGES = 80;
+const MAX_PAGES = 120;
 const MAX_ASSETS = 400;
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+  // 预缓存完成后不强制接管：由页面提示「有新版本」，用户点击再激活
+  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)));
 });
 
 self.addEventListener('activate', (e) => {
@@ -19,6 +22,8 @@ self.addEventListener('activate', (e) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+      .then((clients) => clients.forEach((c) => c.postMessage({ type: 'PWA_ACTIVATED', version: VERSION })))
   );
 });
 
@@ -69,4 +74,17 @@ self.addEventListener('fetch', (e) => {
   const isAsset = (sameOrigin && /\.(css|js|svg|png|jpg|ico|webmanifest)$/.test(url.pathname)) ||
     /^(fonts\.googleapis\.cn|fonts\.gstatic\.cn|i\.ytimg\.com|cdn\.jsdelivr\.net)$/.test(url.hostname);
   if (isAsset) e.respondWith(staleWhileRevalidate(req));
+});
+
+self.addEventListener('message', (e) => {
+  const msg = e.data || {};
+  if (msg.type === 'SKIP_WAITING') self.skipWaiting();
+  if (msg.type === 'CACHE_URLS' && Array.isArray(msg.urls)) {
+    e.waitUntil(caches.open(PAGES).then(async (c) => {
+      for (const u of msg.urls) {
+        try { const res = await fetch(u, { cache: 'reload' }); if (res.ok) await c.put(u, res.clone()); } catch (err) {}
+      }
+      await trim(PAGES, MAX_PAGES);
+    }));
+  }
 });

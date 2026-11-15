@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -300,7 +353,7 @@
 <li data-z="76">如果你自己的身份和公司绑定，发每条争议内容前做一次成本估算：会得罪哪一类客户、影响哪一条收入线、有没有替代表达方式。目的不在让你闭嘴，在于你知道自己在买什么。</li>
 <li data-z="77">判断一个人的立场是否可信，看他为这个立场放弃过什么。没放弃过任何东西的表态，只能算偏好，不能算信念。</li>
 <li data-z="78">看马斯克这类人的发言时，把“他说的对不对”和“他为什么在这个时间点说”分开评估。第一条靠事实核查，第二条靠动机分析。两件事都能做，但不能用一件替代另一件。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=F1PlQ0lrVFA" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>but how do you make a choice you don&#x27;t see I mean in terms of when you&#x27;re going to engage I mean for example even today Elon you you tweeted this thing about George Soros what I&#x27;m looking for because I want to make sure I quote it properly but I mean you know what you wrote but you basically it reminds me of my vetoes he&#x27;s like you know calm down people it&#x27;s a snack like a face out of it he said he wants to erode the very fabric of civilization and Soros hates Humanity like when you do something like that yeah I think that&#x27;s true that&#x27;s my opinion okay but why share it why share it especially I mean why share it when people who buy Teslas may not agree with</p><p id="p1"><span class="ts-link" data-t="0:38">0:38</span>you advertisers on Twitter may not agree with you why not just say hey I think this you can tell me we can talk about it over there you can tell your friends but why share it widely I mean this is freedom of speech I&#x27;m allowed to say whatever you absolutely are but I&#x27;m trying to understand why you do because you have to know it&#x27;s got a there it puts you in a in the middle of a the partisan divide in the country it makes you a lightning rod for criticism I mean do you like that I you know people today saying he&#x27;s an anti-semite I don&#x27;t think you are no I&#x27;m definitely I&#x27;m like I&#x27;m like a pro semi if anything I I believe that probably is the case</p><p id="p2"><span class="ts-link" data-t="1:16">1:16</span>why would you even introduce the idea of that that that would be the case I I mean it looks we don&#x27;t want to make this a George Source interview no God no I don&#x27;t want him at all but I&#x27;m what I&#x27;m trying even came up though in the annual meeting I mean you know do your tweets hurt the company are there Tesla owners to say I don&#x27;t agree with his political position because and I know it because he shares so much of it or their advertisers on Twitter that Linda Ocarina will come and say you gotta stop man or you know I can&#x27;t get these ads because of some of the things you tweet</p><p id="p3"><span class="ts-link" data-t="1:57">1:57</span>you know I&#x27;m reminded of there&#x27;s a seat in The Princess Bride great movie great where he confronts the person who killed his father and he says offer me money offer me power I don&#x27;t care so you just don&#x27;t care you want to share what you have to say I&#x27;ll say what I want to say and if if if the consequence of that is losing money so be it okay [Music]</p><p id="p4"><span class="ts-link" data-t="3:04">3:04</span>what&#x27;s up guys it&#x27;s your boy Benny so Elon Musk went on CNBC yesterday and just blew people&#x27;s minds with that the greatest answer ever given by any billionaire in any interview anywhere not only is he quoting The Princess Bride which is just unbelievably epic but he&#x27;s also standing for free speech</p><p id="p5"><span class="ts-link" data-t="3:23">3:23</span>in a way that no one on the Republican Party side nobody on the Democrat Party side nobody I&#x27;ve ever seen with more to lose and more skin in the game actually stand up because that shows actual bravery right actual bravery is when you have something to lose most of these people who are taught they have nothing to lose Elon Musk has paid 44 billion dollars just to begin with for Twitter so there could be a social media platform for people to actually communicate on for there to be truth in our society Twitter was essentially just an effective the psyop tool of the deep State and the FBI the CIA we know this that this is empirical this is proven and this is</p><p id="p6"><span class="ts-link" data-t="4:05">4:05</span>what Elon Musk bought and what he&#x27;s defending there as well he&#x27;s also talking about George Soros and his criticism George Soros saying he has every right to criticize anyone that he wishes Source reminds me of Magneto Elon Musk said which is very very true drosaurus is an evil person that has an evil agenda in this country go check out the open Society Foundation you can go see it they don&#x27;t want Natural Born they don&#x27;t want National borders they don&#x27;t want nationality at all George Soros is someone who is openly antithetical to capitalism to the way that our society is structured and to the foundations of the family this is not something that I say as a partisan</p><p id="p7"><span class="ts-link" data-t="4:44">4:44</span>this is something that he&#x27;s done interviews on that he&#x27;s described and discussed so take from that what you will Elon Musk says I&#x27;d like to apologize for this post it was really unfair to Magneto oh what a legend what an absolute Legend Elon Musk also talked about Joe Biden saying that he doesn&#x27;t really have anything against Joe Biden he would like to have a normal person as president and I think a lot of us agree some of these conspiracy theories have turned out to be true the answer is is nuanced like do I believe Biden</p><p id="p8"><span class="ts-link" data-t="5:26">5:26</span>won yes I believe he won and you voted for it I did actually do you regret that I mean man I I wish we could have just a normal human being as president that&#x27;s what I want I think if if we could you know there&#x27;s that old saying of like we&#x27;re better we&#x27;re better off being run by by people picked at random from the phone book than the faculty of Harvard yeah I don&#x27;t know who said that but if somebody were very wise and and I I I I would I would say if we could do that for the president that that would be great obviously you&#x27;re not happy with buying don&#x27;t we all just want a normal human beings stay based Elon Elon Musk also talking about the censorship on the platform</p><p id="p9"><span class="ts-link" data-t="6:16">6:16</span>that he now owns twitter.com and how they used that platform the Deep State use that platform in order to silence reporting on the biggest political bombshell in American history the hunter Biden laptop story that exposed 100 family the entire Biden family as a crime syndicate that was utilizing their High position inside of the American government to sell all the rest of us out to the Communist Chinese bombshell stuff seems like the American intelligence agencies and National Security apparatus would care about such a thing and Elon Musk put a stop to the silencing of such journalism and describe the hunter Biden laptop thusly so many conspiracy theories</p><p id="p10"><span class="ts-link" data-t="6:58">6:58</span>have turned out to be true which ones well like the hunter Biden laptop that&#x27;s true yeah yeah so you know that that was a pretty big deal there was a Twitter and and and others engaged in active suppression of information that was relevant to the public that&#x27;s that&#x27;s a that&#x27;s a terrible thing that happened that&#x27;s like an interference but that&#x27;s a terrible terrible thing to happen and he was being asked about conspiracy theories on Twitter interesting when they call you far right that this means you&#x27;re right so far okay and we are and Elon Musk has liberated the internet I&#x27;m very very thankful for it but more importantly I think he believes in his</p><p id="p11"><span class="ts-link" data-t="7:40">7:40</span>entire soul like what he says and Above All Else he&#x27;s willing to actually have investment in this he actually plays the game and that&#x27;s what we&#x27;ve been missing people that actually fight back play the game and that&#x27;s how you save America like share and subscribe it&#x27;s your boy Betty see ya [Music]</p></div></div>
       
       
@@ -328,7 +381,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -368,7 +421,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

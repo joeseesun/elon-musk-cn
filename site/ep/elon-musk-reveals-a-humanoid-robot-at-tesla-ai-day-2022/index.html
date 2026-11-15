@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -345,7 +398,7 @@
 <li data-z="98">盯住两万美元这个价能不能守住。它决定了整个商业模型成不成立。如果最终价格翻倍到四五万美元，市场空间会立刻缩水一大半。供应链的国产化程度、执行器的良率、电池包的成本，都是关键变量。</li>
 <li data-z="99">盯住手的自由度是否保留到量产。11 个自由度、6 个执行器、金属肌腱这套方案成本不低，很多公司在量产阶段会砍掉手指的冗余自由度换取便宜。如果特斯拉守住这个配置，说明它真的打算让机器人操作工具，而不是只做展示。</li>
 <li data-z="100">如果你是开发者，现在就可以开始熟悉占用网络、逆运动学和轨迹优化这三块。这套技术栈的复用性很强，从自动驾驶到机器人操作都能用得上。人形机器人的人才需求，未来几年会沿着这条线爆发。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=UXHoWNfjJYM" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>welcome to Tesla AI day 2022. I do want to set some expectations with respect to our Optimus robot as as you know last year it was just a person in a robot suit but We&#x27;ve now we&#x27;ve come a long way and it&#x27;s I think you know compared to that it&#x27;s going to be very impressive so should we should we bring out the vot before we do that we have one one little bonus tip for the day this is actually the first time we try this robot without any backup support cranes mechanical mechanisms no cables nothing yeah want to join with you guys tonight but it was the first time let&#x27;s see you ready let&#x27;s go [Applause] [Music]</p><p id="p1"><span class="ts-link" data-t="1:19">1:19</span>foreign [Music] so this is essentially the simple self-driving computer that runs in your Tesla cars by the way [Music] this is the this is literally the first time the robot has operated without a tether was on stage tonight so the robot can actually do a lot more than we just showed you we just didn&#x27;t want it to fall on its face so we&#x27;ll we&#x27;ll show you some videos now of the robot doing a bunch of other things yeah we wanted to show a little bit more what we&#x27;ve done over the past few months with apart and just walking around and dancing on stage ah just humble beginnings but you can see the autopilot neural networks running as is just retrained for the bud</p><p id="p2"><span class="ts-link" data-t="2:39">2:39</span>directly on that on that new platform that&#x27;s my watering can yeah when you see a rendered view that&#x27;s that&#x27;s the robot what&#x27;s the that&#x27;s the world the robot sees so it&#x27;s it&#x27;s very clearly identifying objects like this is the object it should pick up picking it up we use the same process as we did for autopilot to connect data in train your networks that we then Deploy on the robot that&#x27;s an example that illustrates the upper body a little bit more what you saw was what we call Bumble C that&#x27;s our sort of rough development robot using semi-off-the-shelf actuators but we actually have gone a step further than that already the team&#x27;s done an incredible job</p><p id="p3"><span class="ts-link" data-t="3:22">3:22</span>and we actually have an optimist bot with a fully Tesla designed at both actuators battery pack control system everything it it wasn&#x27;t quite ready to walk but I think it will walk in a few weeks but we wanted to show you the robot the the something that&#x27;s actually fairly close to what will go into production and and show you all the things it can do so let&#x27;s bring it out let&#x27;s do it [Music]</p><p id="p4"><span class="ts-link" data-t="4:14">4:14</span>all right [Music] with the degrees of freedom that we expect to have in Optimus production unit one which is the ability to move all the fingers independently move the to have the thumb have two degrees of freedom so it has opposable thumbs and both left and right hand so it&#x27;s able to operate tools and do useful things our goal is to make a a useful humanoid robot as quickly as possible the Optimus is designed to be an extremely capable robot but made in very high volume probably ultimately millions of units and it is expected to cost much less than a car I would say probably less than twenty thousand dollars the the potential for optimistic is I think appreciated by</p><p id="p5"><span class="ts-link" data-t="5:15">5:15</span>very few people hey as usual Tesla demos are coming in hot software integration Hardware upgrades over the months since then but in parallel we&#x27;ve also been designing the Next Generation this one over here obviously there&#x27;s a lot that&#x27;s changed since last year but there&#x27;s a few things that are still the same you&#x27;ll notice we still have this really detailed focus on the true human form so on the screen here you&#x27;ll see in Orange are actuators which we&#x27;ll get to in a little bit and in blue our electrical system so in the middle of our torso actually it is the Torso we have our battery pack the sized at 2.3 kilowatt hours which is perfect for about a full day&#x27;s worth of work</p><p id="p6"><span class="ts-link" data-t="6:03">6:03</span>what&#x27;s really unique about this battery pack is it has all of the battery Electronics integrated into a single PCB within the pack so going on to sort of our brain it&#x27;s not in the head but it&#x27;s pretty close also in our torso we have our Central computer so we still are gonna it&#x27;s gonna do everything that a human brain does processing Vision data making Split Second decisions based on multiple sensory inputs and also Communications so to support Communications it&#x27;s equipped with wireless connectivity as well as audio support and then it also has Hardware level security features which are important to protect both the robot and the people around the robot so now that we have our</p><p id="p7"><span class="ts-link" data-t="6:44">6:44</span>sort of core we&#x27;re going to need some limbs on this guy and we&#x27;d love to show you a little bit about our actuators and our fully functional hands as well so there are many similarities between a car and the robot when it comes to powertrain design the most important thing that matters here is energy mass and cost in the particular case you see a car with two drive units and the drive units are used in order to accelerate the car 0 to 60 miles per hour time or drive a City Drive site while the robot that has 28</p><p id="p8"><span class="ts-link" data-t="7:18">7:18</span>actuators it&#x27;s not obvious what are the tasks at the actuator level so we have tasks that are higher level like walking or climbing stairs or carrying a heavy object which need to be translated into joint into joint specs the rotary actuator in particular has a mechanical clutch integrated on the high speed side angular contact ball bearing and on the high speed side and on the low speed side a cross roller bearing and the gear train is a strain wave gear and there are three integrated sensors here and the bespoke permanent magnet machine so our actuator is able to lift</p><p id="p9"><span class="ts-link" data-t="8:12">8:12</span>a half tone nine foot concert grand piano our fingers are driven by metallic tendons that are both flexible and strong we have the ability to complete wide aperture power grasps while also being optimized for precision gripping of small thin and delicate objects some basic stats about our hand is that has six actuators and 11 degrees of freedom it has an in-hand controller which drives the fingers and receives sensor feedback reported directly from autopilot to the Bots situation it&#x27;s exactly the same occupancy Network that we&#x27;re talking to a little bit more details later with the autopilot team that is now running on the butt here in this video the only thing that changed</p><p id="p10"><span class="ts-link" data-t="8:53">8:53</span>really is the training data that we had to recollect we&#x27;re also trying to find ways to improve those occupancy networks using work made on your Radiance fields to get really great volumetric rendering of the Bots environments for example here some Machinery that the bot might have to interact with so we&#x27;ve been training more neural networks to identify high frequency features key points within the Bots camera streams and track them across frame over time as the bot navigates to its its environment and we&#x27;re using those points to get a better estimate of the Bots pose and trajectory within its environment as it&#x27;s walking and this is a video of the</p><p id="p11"><span class="ts-link" data-t="9:34">9:34</span>motion control code running into your product simulator simulator showing the evolution of the robot&#x27;s work over time and so as you can see we started quite slowly in April and start accelerating as we unlock more joints and deeper more Advanced Techniques like arms balancing over the past few months we wanted some manipulate objects while looking as natural as possible and also get there quickly so what we&#x27;ve done is we&#x27;ve broken this process down into two steps first is generating a library of natural motion references or we could call them demonstrations and then we&#x27;ve adapted these motion references online to the current real world situation so</p><p id="p12"><span class="ts-link" data-t="10:11">10:11</span>let&#x27;s say we have a human demonstration of picking up an object we can get a motion capture of that demonstration which is visualized right here as a bunch of keyframes representing the locations the hands the elbows the Torso we can map that to the robot using inverse kinematics and if we collect a lot of these now we have a library that we can work with but a single demonstration is not generalizable to the variation in the real world for instance this would only work for a box in a very particular location so what we&#x27;ve also done is run these reference trajectories through a trajectory optimization program which solves for where the hand should be how</p><p id="p13"><span class="ts-link" data-t="10:53">10:53</span>the robot should balance during when it needs to adapt the motion to the real world so for instance if the box is in this location then our Optimizer will create this trajectory instead I think the first thing within the next few weeks is to get optimists at least at par with Bumble C the other bug prototype you saw earlier and probably Beyond we&#x27;re also going to start focusing on the real use case at one of our factories and I make this product a reality and change the entire economy all of this was done in barely six or eight months thank you very much [Applause]</p></div></div>
       
       
@@ -373,7 +426,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -413,7 +466,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -23,9 +23,10 @@
   site/data/search/          文稿全文检索索引（tools/search_index.py）
   site/search/               文稿搜索页
   site/sitemap.xml / feed.xml / llms.txt / 404 / offline / disclaimer
+  site/corpus/           可下载中文语料包（build_corpus.py）
 
 数据来源声明：视频档案与语料来自 silicon-valley.tech（Elon Musk Archive），
-转载引用须注明原始出处；本站不托管媒体文件。
+转载引用须注明原始出处；本站不托管媒体文件。英文原始语料只给链接，不重复托管。
 """
 import html as H
 import json
@@ -36,6 +37,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+
+
+def ensure_dir(p, parents=False):
+    """mkdir(exist_ok=True) 在部分受限文件系统的 shim 下会对已存在目录误报 EEXIST。"""
+    try:
+        p.mkdir(parents=parents, exist_ok=True)
+    except FileExistsError:
+        if not p.is_dir():
+            raise
 import insights  # noqa: E402
 import search_index  # noqa: E402
 SITE = ROOT.parent / 'site'
@@ -45,7 +55,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 11, 5, 6, 4, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 14, 6, 7, 4, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -223,6 +233,8 @@ THEME_SCRIPT = """<script>
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -254,13 +266,66 @@ THEME_SCRIPT = """<script>
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>"""
 
-HEAD_EXTRA = ('<link rel="preconnect" href="https://fonts.googleapis.cn">'
+I18N_SCRIPT = '<script src="/i18n.js?v=3"></script>\n'
+
+HEAD_EXTRA = (I18N_SCRIPT +
+              '<link rel="preconnect" href="https://fonts.googleapis.cn">'
               '<link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin>'
               '<link rel="preconnect" href="https://i.ytimg.com">'
               '<link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400'
@@ -323,7 +388,7 @@ SITE_FOOTER = """<footer class="site-footer">
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -370,6 +435,7 @@ COLOPHON = ('<aside class="colophon" aria-label="致读者">'
             '<div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button>'
             '<button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button>'
             '<button type="button" class="colo-link" data-share>分享这篇</button>'
+            '<button type="button" class="colo-link" data-offline>离线保存</button>'
             '<a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside>')
 
 
@@ -398,7 +464,7 @@ def build_data():
         })
     n_pick = sum(1 for x in eps if x['pick'])
     out = {'updated': TODAY, 'episodes': eps}
-    (SITE / 'data').mkdir(parents=True, exist_ok=True)
+    ensure_dir(SITE / 'data', parents=True)
     (SITE / 'data' / 'episodes.json').write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')))
     print(f"episodes.json: {len(eps)} videos, tr={sum(1 for x in eps if x['tr'])}, "
           f"zh={len(ZH)}, pick={n_pick}, zh_title={sum(1 for x in eps if x['zh'])}")
@@ -691,7 +757,7 @@ def build_page(i, eps):
         resources=resources, prevnext=prevnext,
     )
     dest = SITE / 'ep' / slug / 'index.html'
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    ensure_dir(dest.parent, parents=True)
     dest.write_text(page)
     if has_zh:
         head = [f'# {zh_title or title}', '',
@@ -984,7 +1050,7 @@ def build_predictions():
 </html>
 """
     out = SITE / 'predictions' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print(f'predictions page: {len(ps)} items')
 
@@ -1050,7 +1116,7 @@ def build_quotes():
 </html>
 """
     out = SITE / 'quotes' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print(f'quotes page: {len(sayings)} sayings')
 
@@ -1117,7 +1183,7 @@ def build_themes():
 </html>
 """
     out = SITE / 'themes' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print(f'themes page: {len(themes)} themes')
 
@@ -1180,7 +1246,7 @@ def build_archive(eps):
 </html>
 """
     out = SITE / 'archive' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print(f'archive page: {len(eps)} videos')
 
@@ -1256,7 +1322,7 @@ def build_disclaimer():
 </html>
 """
     out = SITE / 'disclaimer' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print('disclaimer page: ok')
 
@@ -1334,7 +1400,7 @@ def build_search_page():
 </html>
 """
     out = SITE / 'search' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print('search page: ok')
 
@@ -1428,7 +1494,7 @@ def build_trends_page():
                      '数据洞察', '马斯克在关心什么', f'把 {n_docs} 份文稿按年份摊开，看火星、AI、推特、政治这些话题在他嘴里什么时候升温、什么时候冷下来。',
                      body, f'<script src="/search.js?v={SEARCH_V}"></script>\n<script src="/trends.js?v={TRENDS_V}"></script>')
     out = SITE / 'trends' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print(f'trends page: {len(t["rows"])} topics × {len(t["cols"])} years')
 
@@ -1487,6 +1553,36 @@ def build_stats_page():
     big = [(f'{len(master)}', '个公开视频', f'{ys[0]}–{ys[-1]}'), (f'{n_tr}', '份英文文稿', f'约 {tr_sec / 3600:.0f} 小时'),
            (f'{words / 10000:.0f} 万', '个英文词', '文稿总字数'), (f'{n_zh}', '篇中文精读', f'覆盖 {n_zh * 100 / max(1, n_tr):.0f}% 的文稿')]
     big_html = ''.join(f'<div class="bn"><b>{a}</b><span>{b}</span><small>{c}</small></div>' for a, b, c in big)
+    corpus_block = f"""
+  <section class="ins-sec corpus-sec" id="corpus">
+    <div class="ins-h"><h2>把语料打包带走</h2><p>想让 AI 一口气读完整个档案？英文原始语料与本站的中文精读，各有各的下载方式。</p></div>
+    <div class="corpus-two">
+      <div class="corpus-card other">
+        <div class="cc-tag">原始语料 · 来自 silicon-valley.tech</div>
+        <h3>英文原始语料</h3>
+        <p>逐字文稿、X 帖子与回复、预言英文原文，都由档案方提供。本站不重复托管，只指过去——也请你在引用时注明原始出处。</p>
+        <div class="cc-links">
+          <a href="https://silicon-valley.tech/#data" target="_blank" rel="noopener">数据下载页 ↗</a>
+          <a href="https://silicon-valley.tech/llms.txt" target="_blank" rel="noopener">llms.txt ↗</a>
+          <a href="https://silicon-valley.tech/llms-full.txt" target="_blank" rel="noopener">全文单文件 ↗</a>
+        </div>
+        <p class="cc-note">版权归原权利方所有；请注明 Elon Musk Archive。</p>
+      </div>
+      <div class="corpus-card ours">
+        <div class="cc-tag">中文增量 · 本站独有</div>
+        <h3>中文精读语料包</h3>
+        <p>{n_zh} 篇 AI 中文精读，加上翻译整理后的预言、语录、主题与视频目录。按你的用法挑一个：</p>
+        <div class="cc-links">
+          <a href="/corpus/llms-full.txt">全文单文件 <small>给 RAG / 长上下文</small></a>
+          <a href="/corpus/elon-musk-cn-corpus.zip">完整语料包 ZIP <small>逐篇 Markdown + JSON</small></a>
+          <a href="/corpus/index.md">文件清单</a>
+          <a href="/llms.txt">llms.txt</a>
+        </div>
+        <p class="cc-note">中文精读为 AI 改写、非官方翻译；引用请注明「elon.qiaomu.ai 中文精读」并链接网页版。</p>
+      </div>
+    </div>
+  </section>
+"""
     n_books, books_block = insights.books_html(
         _en_docs(), lambda slug: (2 if slug in ZTEXTS else 0) + (1 if (by_slug[slug].get('d') or '') >= '2015' else 0),
         cover_dir=SITE / 'assets' / 'books')
@@ -1495,6 +1591,7 @@ def build_stats_page():
         poster_dir=SITE / 'assets' / 'movies')
     body = f"""
   <div class="bn-row">{big_html}</div>
+  {corpus_block}
   <section class="ins-sec">
     <div class="ins-h"><h2>每年留下了多少公开视频</h2><p>档案里每一年的视频数，按场合分色。2022 年收购推特、2024–2025 年投身政治之后，他出现在镜头前的次数明显变多。</p></div>
     <div class="yb-legend">{legend}</div>
@@ -1525,7 +1622,7 @@ def build_stats_page():
                      '数据洞察', '用数字看马斯克', f'{len(master)} 个视频、{words / 10000:.0f} 万个英文词摊开来看：他哪年说得最多、在什么场合说、最爱用哪些词。',
                      body)
     out = SITE / 'stats' / 'index.html'
-    out.parent.mkdir(exist_ok=True)
+    ensure_dir(out.parent)
     out.write_text(html)
     print(f'stats page: {len(ys)} years, {len(ps["rows"])} phrases from {ps["words"]:,} words')
 
@@ -1562,6 +1659,13 @@ def build_llms(eps):
              f'- 话题趋势（26 个话题逐年热度）：{DOMAIN}/trends/ · 档案数据与马斯克高频英文词：{DOMAIN}/stats/',
              f'- RSS 全文订阅（最新 20 篇精读）：{DOMAIN}/feed.xml',
              '- 引用时请注明「elon.qiaomu.ai 中文精读（AI 改写，非官方翻译）」并链接对应网页。', '',
+             '## 可下载语料包', '',
+             f'- 全部中文精读合并为单个纯文本（给 RAG / 长上下文 / Agent）：{DOMAIN}/corpus/llms-full.txt',
+             f'- 完整语料包 ZIP（逐篇 Markdown + 结构化 JSON + 说明）：{DOMAIN}/corpus/elon-musk-cn-corpus.zip',
+             f'- 文件清单：{DOMAIN}/corpus/index.md · 使用说明：{DOMAIN}/corpus/README.md',
+             f'- 结构化数据：{DOMAIN}/corpus/predictions.json（预言）· {DOMAIN}/corpus/quotes.json（语录）· '
+             f'{DOMAIN}/corpus/themes.json（主题）· {DOMAIN}/corpus/videos.json（视频目录）',
+             '- 英文原始语料（逐字文稿 / X 帖子 / 回复）不由本站托管，请去 https://silicon-valley.tech/#data 下载并注明出处。', '',
              '## 中文精读（AI 深度改写）', '']
     for x in eps:
         if x['s'] in ZH:
@@ -1696,6 +1800,8 @@ def main():
     build_llms(eps)
     build_feed(eps)
     build_special_pages(eps)
+    import build_corpus
+    build_corpus.main()
     clean_stale(eps)
 
 

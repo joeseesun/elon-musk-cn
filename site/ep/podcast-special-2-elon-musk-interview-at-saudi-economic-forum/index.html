@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -282,7 +335,7 @@
 <li data-z="67">卫星互联网的资费变化值得盯着，尤其是船用和航空这两块。它一旦降价，影响的是航运、渔业、远洋作业和长途旅行，是一整条产业链的成本结构。</li>
 <li data-z="68">想理解 AI 乐观派的世界观，去读一本伊恩·班克斯。《Consider Phlebas》或者《Player of Games》都行，读完你会明白为什么这帮人不怕 AI。</li>
 <li data-z="69">把"AI 会不会毁灭人类"这个问题往旁边放一放，换一个更能指导行动的问题：我所在的行业，哪一部分工作是信息处理，哪一部分是物理操作。前者已经在被替代，后者还有几年缓冲。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=hTTwiE7J_M8" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>Okay, let&#x27;s unpack this. imagine a future, right, where you&#x27;re not just talking to your phone, but you&#x27;ve got your own personal robot. Maybe even tens of billions of them across the planet. Wow. Sounds like pure sci-fi, doesn&#x27;t it? You know, think C3PO or R2-D2, but maybe even more capable, becoming everyday things, right? Like household appliances almost. Exactly. And well, this kind of vision, it was actually a big part of a really fascinating discussion recently happened at a US Saudi event. Ah yes and the focus was squarely on you know what&#x27;s next technology innovation that sort of thing and what&#x27;s really interesting there I think is the context you had major</p><p id="p1"><span class="ts-link" data-t="0:38">0:38</span>leaders talking about how a big economy pivots you know how it thrives when innovation is the main driver yeah the fact that President Trump and his royal highness were part of it definitely signals how important this shift is seen to be moving away from say traditional resources towards a future built on well new ideas new tech absolutely and that&#x27;s our goal today really to dig into some of the most well thoughtprovoking ideas from that event. So we&#x27;re drawing on Elon Musk&#x27;s perspectives mainly mostly his vision. Yeah. But also weaving in insights from Kevin break you know our longtime collaborator. Hi Kevin&#x27;s work that gives it a good grounding. It&#x27;s a compelling mix. I</p><p id="p2"><span class="ts-link" data-t="1:16">1:16</span>think you&#x27;ve got these like huge predictions alongside Kevin&#x27;s observations from you know on the ground and that theme of building an innovation economy. I mean, the scale of Musk&#x27;s predictions is just it&#x27;s kind of mind-boggling. It really is. And Kevin Brakes research adds that crucial layer, doesn&#x27;t it? How these big ideas are landing, how they&#x27;re being perceived within Saudi Arabia specifically. So, let&#x27;s dive straight into the robots then, because apparently Elon actually brought some of the Optimus bots to this event. Showed them off to the dignitary.</p><p id="p3"><span class="ts-link" data-t="1:48">1:48</span>I did. Yeah. I even heard something about a a Trump dance. That&#x27;s the story. Yes. The robots apparently showed their stuff. Some pretty engaging moves including Yeah. that sequence playfully called the Trump dance. Ah, seriously. And even a YMCA performance apparently. Wow. So, it paints a pretty vivid picture of how fast these humanoid robots are, you know, coming along. It certainly does. But, okay, beyond the the dancing, Musk made this pretty astonishing prediction. M he sees a future with tens of billions of personal robots. Mhm. Billions. That&#x27;s like way</p><p id="p4"><span class="ts-link" data-t="2:27">2:27</span>more than the number of people on Earth right now. It is an incredible number. And he made that connection, didn&#x27;t he, to having your own C3PO or R2-D2, but maybe even better. It really makes you stop and think about the potential. Well, yeah. And it throws up huge questions about our economies, doesn&#x27;t it? What does that do? Musk himself talked about that. He suggested almost unlimited economic potential, you know, driven by that level of robotic help. Unlimited potential. Yeah. His vision includes maybe a global economy like 10 times bigger than today&#x27;s 10 times. Which leads to this idea he has of universal high income. Not basic income, high income. Okay, unpack that.</p><p id="p5"><span class="ts-link" data-t="3:04">3:04</span>Universal high income. Well, the idea is if you have such a massive lead in productivity from all these robots, maybe wealth generation fundamentally changes. So, it&#x27;s not just about a safety net, but widespread prosperity. That&#x27;s a really expansive concept, a totally different way of thinking about work and value. It is. And he pointed to sci-fi for a positive vision. Actually, the culture series by Ian Banks. Oh, interesting. Not the usual dystopian view then. Exactly. He mentioned it as a potentially positive non-disystopian future with advanced AI, which is Yeah.</p><p id="p6"><span class="ts-link" data-t="3:38">3:38</span>Very different from the sort of Terminator fears we often hear. Right. To kill a robot. Precisely. and he acknowledged those risks, you know, the Terminator scenario as he put it, but the emphasis seemed very much on aiming for maybe a Star Trek future. Okay. Exploration, prosperity. Yeah.</p><p id="p7"><span class="ts-link" data-t="3:55">3:55</span>Facilitated by technology, using these tools for human progress basically. Okay. So, that&#x27;s the big robot picture. Now, shifting gears a bit, transportation, robo taxis, and autonomous vehicles were also big topics. Yeah. Sounds like there&#x27;s a lot of excitement for that in the kingdom.</p><p id="p8"><span class="ts-link" data-t="4:11">4:11</span>There seems to be. Yes. And what&#x27;s interesting is how they&#x27;re framing it. Thinking of cars as essentially robots on four wheels. Robots on four wheels. Yeah. And potentially as cashgenerating units. Ah okay. So not just transport but an economic engine in themselves. Exactly. It shows a very forwardthinking view on autonomy. Not just convenience but a core part of the future economy. And the positive vibe at the event suggests, you know, maybe rapid adoption is on the cards there.</p><p id="p9"><span class="ts-link" data-t="4:42">4:42</span>Makes sense. And sticking with new tech adoption, Starlink came up, too. It did. Something about approval for maritime and aviation use. That sounds like a pretty big deal for connectivity. Oh, absolutely. Getting that green light for ships and planes using Starlink, that&#x27;s going to directly boost connectivity across the kingdom, especially in areas, you know, that might have struggled before. Big implications for communication data. Right. Okay. And another sort of infrastructure idea that was floated. Yeah. Tunnels from the Boring Company. yes, Elon&#x27;s other venture. The whole idea of going 3D with roads to be traffic.</p><p id="p10"><span class="ts-link" data-t="5:19">5:19</span>It&#x27;s definitely a different way to think about it. It is this concept of tunnels creating a kind of well he called it a wormhole effect for transport. A wormhole like shortcutting through spaceime. Huh. Well, maybe not quite that sci-fi, but the idea is you bypass all the surface level congestion by going underground, drastically cutting travel times. And they have that working example in Vegas, right? Exactly. That&#x27;s a proof of concept. Shows how it can work in a real city, what it could do for urban travel. Okay. Now, let&#x27;s pivot to something maybe a bit more abstract, but hugely ambitious. X AI, right? His</p><p id="p11"><span class="ts-link" data-t="5:54">5:54</span>AI venture. For those of us not, you know, deep in the AI world, what&#x27;s the core mission there? What&#x27;s XAI about? Well, the crucial thing to get, I think, is the goal. It&#x27;s not just about building artificial general intelligence or AGI. Okay. The aim is to create AI. That is, and this is the phrase, maximally true seeking. Maximally true seeking. Yeah. The fundamental mission is quite profound to understand the universe. Understand the universe. Wow.</p><p id="p12"><span class="ts-link" data-t="6:21">6:21</span>It&#x27;s about tackling the biggest questions, you know, about reality, existence. You can almost think of it as like AI aiming for enlightenment. So, trying to answer things like where did the universe come from? Where&#x27;s it all going? Exactly. And even he mentioned discovering what questions do we not know to ask. Whoa. Okay. That&#x27;s that&#x27;s deep. The unknown unknowns. It really is. And Musk&#x27;s philosophy behind it, as he put it, seems driven by this really deep curiosity, a desire to just understand how reality works fundamentally. And XAI is the tool for that. That seems to be the vision, a powerful tool to help humanity try and unravel some of those, you know,</p><p id="p13"><span class="ts-link" data-t="7:00">7:00</span>ultimate mysteries. This all paints a picture of just incredibly ambitious future focused thinking, which brings us back to Kevin Break&#x27;s perspective. You&#x27;ve worked with him for a while. How does his research frame all this? Especially looking at those presentations at the Saudi Economic Forum. Kevin&#x27;s perspective is really valuable here because he&#x27;s been tracking the innovation scene in Saudi Arabia closely. Yeah. His analysis, especially of Musk&#x27;s talks there, is generally very positive, very upbeat. Okay. As Kevin put it himself, it gives you a real chance to quote, &quot;Get a sneak peek into what is ahead for innovation in Saudi.&quot; So, what were the key takeaways from</p><p id="p14"><span class="ts-link" data-t="7:36">7:36</span>Kevin&#x27;s research then? What potential did he highlight based on these discussions? Well, pulling together Kevin&#x27;s analysis, there&#x27;s this clear sense of real excitement, you know, about how robotics, autonomous vehicles that are connectivity via Starlink. Yeah. How all that could genuinely spark a new era there, a new era of growth.</p><p id="p15"><span class="ts-link" data-t="7:57">7:57</span>Yeah. Economic growth, technological progress within the kingdom. His research really emphasizes the potential for like significant jumps in productivity and a real tangible shift towards an economy truly driven by innovation. He sees these initiatives as potentially, you know, fundamentally reshaping their economic future. Okay, so let&#x27;s try and sum this up. We&#x27;ve touched on a future potentially teeming with billions of personal robots changing the economy, right? Universal high income robo taxes transforming how we get around cars as robots on four wheels. greatly improved connectivity from things like Starlink, even digging tunnels to reimagine roads going 3D.</p><p id="p16"><span class="ts-link" data-t="8:36">8:36</span>Yeah. And kind of underpinning a lot of the ambition is this goal of using XAI to understand the universe itself. The maximally truth seeeking AI all happening within this context of major innovation focus in Saudi Arabia which Kevin Break&#x27;s research really highlights. Exactly. And these aren&#x27;t just you know pie in the sky ideas. They represent potential shifts that could really genuinely impact your life, your world. Yeah. Think about those key points. The sheer number of robots predicted, cars becoming economic units, AI searching for fundamental truths. It points to a future that could look radically different and potentially hopefully very beneficial. That&#x27;s the</p><p id="p17"><span class="ts-link" data-t="9:15">9:15</span>optimistic take. Yeah. So, as we sort of stand on the edge of this Mhm. this potential wave of innovation, what are the big questions we should be asking ourselves, you know, to make sure this future lines up with what we actually want? It&#x27;s definitely food for thought. It really is. And look, if you&#x27;re interested, if you want to explore these things more, yeah, where can people go?</p><p id="p18"><span class="ts-link" data-t="9:33">9:33</span>You can find more info on the tech itself at the official websites. You know, Tesla is tesla.com, SpaceX is spacex.com, and the Boring Company is boring company.com. Okay. Good resources to check out. Yeah. great places to dig deeper into the specifics if this has sparked your curiosity. And we genuinely love to hear what you think about all this, you know, these potential futures.</p><p id="p19"><span class="ts-link" data-t="9:55">9:55</span>Feel free to share your comments. Let us know what really stood out to</p></div></div>
       
       
@@ -310,7 +363,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -350,7 +403,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

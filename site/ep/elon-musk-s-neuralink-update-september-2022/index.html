@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -293,7 +346,7 @@
 <li data-z="72"><strong>想参加脑机接口试验</strong>：先看清楚入选条件，BrainGate2 招的是脊髓损伤、脑卒中、ALS 等导致语言功能受损的患者，入口在 braingate.org 和 braingate.ucdavis.edu。Neuralink 当时尚未开放人体试验招募。</li>
 <li data-z="73"><strong>想投简历</strong>：别写"热爱脑科学"，写三到四条可量化的工程成果，产线节拍、良率提升、数据采集系统的覆盖范围。招人方明确说了，最重要的是这几条。</li>
 <li data-z="74"><strong>判断这家公司走到哪一步</strong>：看它的招聘岗位类型和厂房规划，比看发布会准得多。招制造工程师、盖动物手术室，说明它正在从演示阶段往量产和临床推进。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=Hc-ZJ-auPOA" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>hey there welcome to neuropod a Channel about all things related to the Elon Musk founding company neurolic in this update episode I&#x27;ll discuss neuralink&#x27;s progress update and demo coming up on Halloween then we&#x27;ll talk about nerlink&#x27;s merch store and we&#x27;ll show you where you can sign up to be notified first when the store goes live next we&#x27;ll talk about rumors about emerge with synchron another BCI company and then Elon went on the full sun podcast so we&#x27;ll talk a little bit about that then there was an article that talks about neuralink&#x27;s new Austin expansion plants we&#x27;ll dive into some of the highlights from that article then there&#x27;s another company called brain</p><p id="p1"><span class="ts-link" data-t="0:38">0:38</span>gate 2 that&#x27;s enrolling patients in a clinical trial that&#x27;ll be pretty similar to neuralink we&#x27;ll show you where you can sign up if you&#x27;re interested in that then Mark Zuckerberg went on Joe Rogan&#x27;s podcast to talk about a wide variety of topics we&#x27;ll discuss where he thinks neuralink and meta are heading in the future and then we&#x27;ll finish up the episode with how you can help make a neuralink robot Elon announced on Twitter that there&#x27;s going to be a knurling progress update show and tell on October 31st Halloween I&#x27;m pretty excited for this event it&#x27;s been a little while since we&#x27;ve gotten an update from the company so it&#x27;ll be nice to see what they&#x27;ve been working on</p><p id="p2"><span class="ts-link" data-t="1:17">1:17</span>since Elon and the team often discuss how nerling can help paralyze patients use a computer keyboard and mouse more efficiently than an able-bodied human I think it&#x27;d be cool to expand on the monkey man pong demo from back in April 2021 and have pager play a video game like pong and compete against an able-bodied human where they&#x27;re using an actual joystick Additionally the team is often stated that they&#x27;re wanting to increase the number of electrodes so maybe we&#x27;ll hear of some improved Channel counts increase utility of the robot and or more efficient chip design all of which could be easily overlooked by the public but should probably be more appreciated</p><p id="p3"><span class="ts-link" data-t="2:00">2:00</span>as these engineering Feats are not simple to achieve let me know in the comments what you think the team could showcase might they show something related to Frankenstein or Halloween a few weeks ago Kevin a neurlink engineer shared the neurolink merch store is coming soon you can sign up for it at shop.nuralink.com this reminds me of one of our original update episodes from almost two years ago when I said this Viv and Max both shared some cool shirt designs maybe these are some of the designs we&#x27;ll see when the shop goes live it looks like there&#x27;s a link implant a brain activity plot called a spike train and an action potential almost everyone over time will</p><p id="p4"><span class="ts-link" data-t="2:44">2:44</span>develop Brain and Spine problems these can all be sold with an implantable neural link the neurons are like wiring and you can need an electronic thing to solve an electronic problem neural like device it&#x27;s about an inch in diameter and has a battery and a Bluetooth and a inductive charger it would be implanted in your skull [Music] the Victor is very carefully inserted with a robot that we developed very carefully avoiding any veins or arteries and then you Stitch it up and you wouldn&#x27;t even know that somebody has interface basically anywhere on your brain you can solve a very wide range of brain injuries if you want the future to be good you must make it so</p><p id="p5"><span class="ts-link" data-t="3:30">3:30</span>[Music] there&#x27;s a Reuters article that started to gain quite a bit of traction it&#x27;s titled musk approaches brain chips startup synchron about deal amid neuralink delays the article talks about how Elon and Tom Oxley the founder and chief executive of synchron discussed a potential collaboration or a complete merging of the two companies I think it&#x27;s worth noting that synchron and neuralink have very different BCI approaches synchron is working on a less invasive approach that requires inserting a stent into the vasculature or blood vessels of the brain and neuralink is working on a more invasive approach that has not yet started human trials</p><p id="p6"><span class="ts-link" data-t="4:20">4:20</span>there&#x27;s quite a bit about this article that doesn&#x27;t line up in my view so although I suppose it could be right I think it&#x27;s best to keep the story in the rumor category and not expect a merger anytime soon of course later in the article the author states that the sources requested anonymity because the matter is confidential and I looked into the author a little bit further based on the Articles she&#x27;s written it seems like she&#x27;s not elon&#x27;s number one fan there&#x27;s one article in particular where she references a 62-page neuralink handbook that seems nothing like what I&#x27;d expect given that Tesla&#x27;s handbook was literally called an anti-handbook that&#x27;s only four pages</p><p id="p7"><span class="ts-link" data-t="5:02">5:02</span>anyway moving on Elon talked about the impact of repeated hits to the head and how it impacts UFC fighters and NFL players in any kind of heart like real fast joke acceleration is get your your brain is going to get damaged up against your skull how bad how bad is a concussion just one concussion oh I can crush is probably okay would you trade 30 of your mental processing and memory for a million dollars or any amount for that matter he then went untad these comments about neuralink repeated repeated concussions or repeated injuries like what&#x27;s going to happen is you&#x27;re going to lose you&#x27;re going to lose a certain number of neurons are going to die you know so you</p><p id="p8"><span class="ts-link" data-t="5:48">5:48</span>smash you smash your brain against your skull internally just due to a fast acceleration you can lose some number of neurons now if you keep doing that you&#x27;re going to lose enough neurons to make a difference a lot of this isn&#x27;t very new to the Avid neuropod listeners so I&#x27;ll link to the interesting sections of the interview in the description as you&#x27;ve probably inferred from me mentioning the Austin job openings for so long neuralink is expanding their operations in the US and Texas area if or when nerlink&#x27;s headquarters also moves to Texas they&#x27;ll join the other musk companies who have planted roots in the Lone Star State they&#x27;re working on constructing eight</p><p id="p9"><span class="ts-link" data-t="6:25">6:25</span>buildings on a 37-acre property in the Del Valley area Link&#x27;s largest addition to the property would be a 78 000 square foot building with two office spaces and warehouse space according to a filing another building would be a 5850 square foot office that is described as an animal vet office capable of fitting 12 employees the office will also have two operating rooms surgery preparation and storage rooms short-term animal storage and it room a conference room a locker room showers and a waiting room it also has a room labeled histology which is the study of microscopic structure of tissues [Music] asked about how one might go about enrolling in neuralink&#x27;s clinical trials</p><p id="p10"><span class="ts-link" data-t="7:14">7:14</span>so in addition to synchron&#x27;s trials I thought I&#x27;d raise awareness of another set of Trials taking place at brain gate 2. this is probably the most comparable to neuralink&#x27;s devices the release States UC Davis health is recruiting people for a clinical trial with the goal of building a neurological prosthesis for restoring speech to people who have lost or are losing the ability to speak the research is aimed at people who have neurological injuries or Progressive neurological diseases such as spinal cord injury stroke and amyotrophic lateral sclerosis or ALS the link to this article will be in the description to learn more about the study visit bringate.org or contact</p><p id="p11"><span class="ts-link" data-t="7:59">7:59</span>bringate UC davis.edu Joe Rogan and Mark Zuckerberg discuss the early days of Facebook how Mark feels about Twitter and where meta is going meta has been interested in augmented reality virtual reality and brain interfaces for several years now this is a short clip of what Mark said regarding the future of meta and neural interfaces and we haven&#x27;t even gotten to neural interfaces yet but we should definitely spend some time on that but it&#x27;s like you kind of go across all these different things and it&#x27;s just this incredibly wide amount of technology that that needs to get built in order to basically build and deliver a realistic sense of presence like you&#x27;re physically</p><p id="p12"><span class="ts-link" data-t="8:38">8:38</span>there with another person which I just think is the most magical thing in the world after watching the full three-ish hour-long episode it&#x27;s clear to me that Mark Zuckerberg is primarily motivated by Connecting People whether that connection happens in the physical world today&#x27;s digital world or a more futuristic virtual digital world at least right now he and his company are not willing nor wanting to take the leap forward and embrace the invasive implant neural interface route which I suppose might be good news doesn&#x27;t it seem fun to work on building neuralink robots experience with brains would not be necessary to do this one example role is manufacturing engineer</p><p id="p13"><span class="ts-link" data-t="9:21">9:21</span>on the robot team the team designs the equipment and the production line that makes the needle cartridges or the end part of the robot here&#x27;s a message from Sam on the nerlink team we are trying to scale our line by 10 times in the next year and eventually 100 times or more so there&#x27;s a lot of work to do but it&#x27;ll be a lot of fun we&#x27;re looking for anyone that has built up assembly lines design machines implemented Data Tracking or as any skill they think would be useful for this the application is really simple just upload your resume and most importantly three to four bullet points of technical accomplishments highlighting your exceptional ability</p><p id="p14"><span class="ts-link" data-t="10:01">10:01</span>the link to the job posting will be in the description and here&#x27;s neurlink&#x27;s employee count according to LinkedIn if you&#x27;re passionate about the mission of the company and think you have any applicable skills it&#x27;s worth applying this company is still in the super early stages and has plenty of room to grow thank you to our generous patreon supporters and channel members who enable us to continue producing neuropod if you found this video useful please do us a favor and like And subscribe for future updates if you missed our videos about kernel or deepminded check them out here thanks for watching hope to catch you at the next episode [Music]</p></div></div>
       
       
@@ -321,7 +374,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -361,7 +414,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

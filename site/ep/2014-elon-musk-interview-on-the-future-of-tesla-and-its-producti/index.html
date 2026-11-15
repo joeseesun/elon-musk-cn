@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -298,7 +351,7 @@
 <li data-z="75">评估延期决策时把两本账分开算。产品账看质量，现金账看节奏。Model X证明原则能保住口碑，也会烧掉现金，提前把这笔代价写进计划里，比事后解释划算。</li>
 <li data-z="76">面对渠道或监管阻力，先确认自己服务的是终端用户还是中间商。选定了就别摇摆，摇摆一次，两边的信任都要重新买。</li>
 <li data-z="77">看季度交付这类数字，先弄清口径和物流边界，再判断好坏。季末冲刺出来的数字里，往往藏着下个季度的问题。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=arauCxOuDxU" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>go inside Elon musk&#x27;s second company actually it&#x27;s your third because you co-founded PayPal right SpaceX of course you run Tesla right let&#x27;s talk about this one open the door so first of all it&#x27;s worth starting off with the the key the key is a essentially a sort of surrealistic version of the car it&#x27;s sort of an impressionist version of the car so if if you want to make something happen like for example we could open the trunk just by pressing the the trunk on the little car and when there it goes so you just press the trunk part on so if you want to open the trunk you just open the trunk and it&#x27;s it&#x27;s got It&#x27;s got a huge huge amount of storage space I think</p><p id="p1"><span class="ts-link" data-t="0:43">0:43</span>it&#x27;s more interesting yeah no sorry it&#x27;s like trunks I love trunks but it&#x27;s more interesting to see the dashboard of which there are no buttons right there&#x27;s there&#x27;s there&#x27;s actually two buttons technically one is for the glove compartment and the other is for the emergency blinker I have often said that inside a Tesla is like sitting inside an iPhone and you see that dashboard you can see exactly where the car is parked on 48th and 6th it&#x27;s absolutely fascinating I need some numbers on deliveries the model S delivered record numbers of deliveries what 7,579 for the most recent quarter for the current quarter people are expecting Elon around</p><p id="p2"><span class="ts-link" data-t="1:23">1:23</span>7,800 will you beat that number well I I think we&#x27;ll sort of see what the final day the quarter are looking like but I think we&#x27;re sort of on track to to be something like that okay something like that are you going to vest it that&#x27;s what I guess I&#x27;m pushing you it&#x27;s really you know it really depends if if there are no if if nothing goes wrong we might be slightly higher but there are always these logistical issues that you encounter because we&#x27;re shipping cars all over the world so if like if we encounter a customs issue in Europe or China or something like that or you know A Train That&#x27;s carrying our cars breaks down it&#x27;s difficult to account</p><p id="p3"><span class="ts-link" data-t="2:00">2:00</span>for for those extenuating circumstances it sounds like you&#x27;ve been through a lot of this yeah we&#x27;ve been through all of those so so but I mean I feel I feel fairly comfortable with you know where things are headed for for this quarter you&#x27;ve got some some analysts for example the Deutsche Bank analyst and he he really a lot of these guys are very bullish on it and they they predict that you would get about I guess a 100,000 in sales by 20 I mean 27 what</p><p id="p4"><span class="ts-link" data-t="2:29">2:29</span>what can we eventually expect when it comes to ramping up with the gigafactory in place the number of Teslas that you push off the assembly line well I I mean I feel comfortable that we&#x27;ll be able to achieve at least a half million cars a year by 2020 and you know maybe we can do a bit sooner than that but I think that&#x27;s that&#x27;s what I feel comfortable predicting half a million cars by 2020 that is is pretty pretty interesting and impressive I hadn&#x27;t heard that number let&#x27;s get to the brand new crossover SUV the model X right what kind of pre-orders are you looking at We&#x27;ve basically sold out next year&#x27;s production which is how many well it&#x27;s</p><p id="p5"><span class="ts-link" data-t="3:11">3:11</span>sort of somewhere in the I don&#x27;t know 15,000 is range maybe 20,000 is it&#x27;s difficult to say exactly when it&#x27;s I&#x27;m not trying to be I&#x27;m not trying to I mean I try to convey the level of uncertainty that I actually have as opposed to you know sort of sandbag or whatever but so depending upon how the ramp on the X goes next year it&#x27;s you know 15ish thousand is probably a reasonable guess maybe 20 if things go especially well that&#x27;s a technical term 15ish okay 15ish to I wish I had a better ability to forecast than than I do but the the thing that for for for the XO for any new product from Tesla that&#x27;s actually the most important is did we get did we</p><p id="p6"><span class="ts-link" data-t="4:01">4:01</span>get the product right i&#x27; I&#x27;d much rather delay the the production delay the production ramp until we we&#x27;ve got the product to be super great then come out early with something that&#x27;s that has deficiencies I mean I I of course and I mean we we could probably make a bit more money if if we did I think in the short term certainly if we you know if we compromised on the on the nature of the product or the quality of the vehicle but but really want to have I mean with with each product like I it drives me crazy that other comers will come out with these products these cars that are that are not that are not good like why would they even come out with that it&#x27;s just</p><p id="p7"><span class="ts-link" data-t="4:42">4:42</span>so we just we want people to know that when ever Tesla comes out with a product it&#x27;ll be something that we we we think is going to be amazing let&#x27;s look at this one as we walk over this is by the way my favorite Tesla color this sparkly Navy deep blue a friend of mine he&#x27;s I went to ele school with them Nathan Hawkman in Los Angeles bought one of these but as you look at these will China be what ramps you up because you&#x27;ve struck a deal with I I believe it&#x27;s China Unicom to build 400 charging stations throughout China when will those be up and running so we actually there&#x27;s there&#x27;s a MTH of the supercharges on our website as well as the the schedule for the superchargers</p><p id="p8"><span class="ts-link" data-t="5:23">5:23</span>the the the rate at which we&#x27;re establishing supercharge locations is very r right now we&#x27;re putting one we&#x27;re bringing one live every 20 hours on average so it&#x27;s there there&#x27;s a huge number of supercharged locations that are going active in terms of China demand I think you know the way we roughly think of of demand is a long-ter demand is about you know a third from from about a third from Asia which includes Japan and and other parts about a third from North America about a third from from Europe and the rest of the world so it&#x27;s so China could be a huge help and here here in your own country here in the United States you had to battle against the state of New Jersey the</p><p id="p9"><span class="ts-link" data-t="6:10">6:10</span>dealers you know some are calling them the dealer cartel I find it fascinating that that some states New York Massachusetts are saying welcome Tesla you can directly sell to people without the dealer model will you ever be afraid to take on real critics and real tough people like dealer Lobby no I I I think I think we&#x27;re always going to just we&#x27;re going to fight for the End customer that that&#x27;s who we care about and yeah we&#x27;ll never stop fighting for the the at the End customer that&#x27;s that&#x27;s who that&#x27;s who we&#x27;re really trying to serve at the end of the day and here you have the ultimate entrepreneur right here Elon Musk the CEO of SpaceX the CEO of Tesla the</p><p id="p10"><span class="ts-link" data-t="6:51">6:51</span>chairman of let&#x27;s not forget Solar City and the co-founder of PayPal is really one of these people who takes life and and digs your teeth in so thank you so much for coming on exclusively to talk about that yeah thanks yeah thanks for having me and guess what we we got a sort of a last Millennium but really fighting back car company Audi coming up auton Nation Auto Nation CEO Mike Jackson will be joining me live like to know your thoughts on that one later because they are selling cars hand over fist</p></div></div>
       
       
@@ -326,7 +379,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -366,7 +419,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

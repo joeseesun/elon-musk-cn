@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -366,7 +419,7 @@
 
 <p data-z="110">“第一规则：不要恐慌。”这句话出自道格拉斯·亚当斯的《银河系漫游指南》，一本马斯克反复提到的书。书里的设定是，宇宙很大很荒凉，你能带的东西很少，唯一必须记住的就是别慌。</p>
 
-<p data-z="111">他大概是真的把这句话当操作手册在用的。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+<p data-z="111">他大概是真的把这句话当操作手册在用的。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=0l3-y_kgBho" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>[Music] ladies and gentlemen this is your captain speaking welcome aboard our vessel to mars boarding is completed as all systems are set and we&#x27;re sure that we don&#x27;t take the coronavirus to outer space thanks for your cooperation by the way we are ready to launch first rule don&#x27;t panic cabin crew prepare for takeoff</p><p id="p1"><span class="ts-link" data-t="0:40">0:40</span>[Music] 20 seconds to lift off even 15 seconds 9 8 7 6 5 4 three two one two ignitions</p><p id="p2"><span class="ts-link" data-t="1:52">1:52</span>this is your captain with an update from the cockpit we arrived in earth&#x27;s orbit safe and sound let me please especially welcome one very special passenger an extraordinary visionary a multi-talented engineer a super smart entrepreneur and not at least the man who made this mission to mars possible please give a very warm welcome to mr elon musk</p><p id="p3"><span class="ts-link" data-t="2:26">2:26</span>please take a look at a wonderful planet isn&#x27;t it gorgeous as curious as i am to see mars i&#x27;m really looking forward to come back to our old homestead [Music]</p><p id="p4"><span class="ts-link" data-t="2:56">2:56</span>south africa in the 70s a boy from pretoria facing childhood problems he reads 10 hours a day star wars and science fiction but this one&#x27;s got talent for machines and for money at the age of 12 he programmed his first computer game on the good old commodore young elon sold blastar for 500</p><p id="p5"><span class="ts-link" data-t="3:35">3:35</span>develop stuff let it grow sell it soon this is how he made his fortune and his opportunity to go even further this is the way one sentence he never wanted to hear you&#x27;re in the army now so he got himself a passport moved to canada leaving the south african apartheid regime behind he was 16 years old after some time in</p><p id="p6"><span class="ts-link" data-t="4:04">4:04</span>kingston he left canada went to pennsylvania got his bachelor and then moved south ah stanford university palo alto where all the silicon dreams were about to come true elon was one of those who founded the legend of the valley with two thousand dollars a car and a computer and nothing more he and his brother kimball founded zip2 a company that provided and licensed online city guide software to newspapers four years later he sold it to compaq for 307 million dollars quite a story but just the start</p><p id="p7"><span class="ts-link" data-t="4:51">4:51</span>a typical story of those times develop and invest find allies merge disrupt the rise of paypal his first vision of making things easier for people using the digitization elon musk helped to change the financial industry forever paypal was sold for 1.5 billion dollars to ebay elon held 11.7 of the shares</p><p id="p8"><span class="ts-link" data-t="5:21">5:21</span>a big winner in the big game money that he uses to make the world a better place he attacks on the world&#x27;s best settled market the automotive industry we created tesla to make a difference in the world tesla disruption at its best not everything worked out perfect but his long breath proved him right he is pushing all his competitors forward he is expanding he leads technology he leads infrastructure and logistics and if necessary he works and sleeps at the factory</p><p id="p9"><span class="ts-link" data-t="6:06">6:06</span>and he is i&#x27;m beer leaner soon very soon we&#x27;ve decided to put the tesla gigafactory europe in the berlin area [Music] and tesla is just on the cutting edge of an idea autonomous driving is born so for us being a little startup we had to start it for the car that was in in low production and necessarily expensive their idea of an electric car is something that doesn&#x27;t look good isn&#x27;t fast it doesn&#x27;t have high performance we wanted to break them all of all of that that&#x27;s what we sought to achieve saving time for important things saving time for stuff that is fun well it is fun to drive a tesla</p><p id="p10"><span class="ts-link" data-t="6:57">6:57</span>but on an endless motorway even riding gets tiring it&#x27;s humid we&#x27;re bored very soon let the car dry and get some food for the brain while it does the work and last but not least fuel it with energy that is not harmful to the planet elon embraces his responsibility but this is never enough much more is needed elon can&#x27;t stop thinking about the future of making things work better more efficient a visionary a man who never gives up</p><p id="p11"><span class="ts-link" data-t="7:48">7:48</span>although there would have been a few moments when giving up would have been a more than plausible option he reaches out for the stars the real ones the stars shining bright at night in the sky do you see him both light up he is a superstar and still the kid who loves sci-fi spacex is not only a business it&#x27;s not a hobby it&#x27;s a passion elon is ceo and its first spaceship designer it is all rocket science really many laughed at him nasa with its billions the russians with their ruthless and dead serious ambitions the whole goal of spacex was improved space exploration technology and that&#x27;s helping make humanity a space bringing civilization he transported americans to the iss</p><p id="p12"><span class="ts-link" data-t="8:51">8:51</span>three is more effective and sustainable than state economy crew dragon is a gentle slap in the face for over-the-top institutional rocketeers the russians took it personal elon musk must not be quoted by them too successful russia some things never change can one man change the world yeah sure elon musk did it and he doesn&#x27;t stop there and i think that&#x27;s one of the things that you know makes people excited about the future and we want the things that are in science fiction novels and movies not to be science fiction forever we want them to be real one day</p><p id="p13"><span class="ts-link" data-t="9:52">9:52</span>what if one could help handicapped people by connecting the body with machines to reconnect neural disorders hey presto neuralink what if we could get rid of traffic on our city streets dig a deep long tunnel beneath them and shoot the cars from one side of the town to the other hey presto the boring company</p><p id="p14"><span class="ts-link" data-t="10:20">10:20</span>the name by the way is one of the best puns ever and stop if we can do that with cars why shouldn&#x27;t we do it with goods and people in full speed 600 kilometers in 35 minutes just do it hey presto hyperloop [Applause] but all that&#x27;s earthbound reach for the stars and planets we&#x27;re already on our way to</p><p id="p15"><span class="ts-link" data-t="10:49">10:49</span>[Music] mars [Music] this is your captain speaking well rather gasping what a trip that was and it&#x27;s not over yet let&#x27;s hear it from the man himself i&#x27;d kindly ask you now elon to come on stage and join axel springer ceo matthias duffner for a little chat well that was fun yeah i&#x27;m glad that you enjoyed it yeah it&#x27;s like a ride i mean i think you could charge money for this this is great i mean yeah this really makes a difference to have this two screens and the angle change it&#x27;s like that felt great like disney right elon apart from this</p></div></div>
       
       
@@ -394,7 +447,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -434,7 +487,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -296,7 +349,7 @@
 <li data-z="75"><strong>允许自己在公开场合承认曾经很惨。</strong>马斯克在电视上直接说那段日子挺难受，承认脆弱不会削弱可信度，反而让后面的判断更有分量。</li>
 <li data-z="76"><strong>做长期决策时，算概率，别等确定性。</strong>火星计划、电动车普及、可重复使用火箭，这些事当年看都是低概率事件，可一旦成了，收益是数量级的。</li>
 <li data-z="77"><strong>给自己留一张返程票。</strong>马斯克讲火星时特意强调价格里含免费返程，这个细节值得学：激进的计划配上退路，才有人愿意上车。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=Bl8edJUV188" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>the story of Elon Musk is almost too incredible to believe he&#x27;s an engineer and entrepreneur worth more than 15 billion dollars he backs himself on high-risk ventures which invariably lead to huge profits first there was paypal the way to buy and sell on the internet then Tesla the electric supercar he built and SpaceX the rocket company nASA uses now his sights are set even further afield colonizing Mars and if he reminds</p><p id="p1"><span class="ts-link" data-t="0:35">0:35</span>you of Tony stark/iron man you&#x27;re right because he&#x27;s also the inspiration behind the Hollywood superhero Iron Man Tony Stark is a brilliant relentlessly driven and more than a little eccentric billionaire who always aims high mr. musk how are you rotations the promotion thank you very much exactly like Elon Musk yeah good idea for an electric jet you do and if you</p><p id="p2"><span class="ts-link" data-t="1:15">1:15</span>spend any time with the real life Tony Stark thank you all for a connect tonight be prepared to move quickly but this is where our mission control and watch Patrol will be one moment he&#x27;s a Rocket Man worked off of the SpaceX alpha-9 one proudly boasting his two billion dollar contract with NASA ferrying supplies to the International Space Station it&#x27;s just a game kicking the ball some people that said we couldn&#x27;t do it</p><p id="p3"><span class="ts-link" data-t="1:49">1:49</span>and you next minute he&#x27;s perfecting another rocket his electric super fast super car the Tesla it is a beast a monster 691 horsepower yeah and will go to 0 200 kilometres in 3.1 seconds whatever he does and at whatever speed he&#x27;s doing it there&#x27;s always a legion of adoring Musketeers on hand</p><p id="p4"><span class="ts-link" data-t="2:28">2:28</span>what really strikes me about your staff is everyone is almost miss ionic with the official their true believers in elon musk&#x27;s vision of the world sure well I mean generally I tried to discourage cult-like behavior by the way Elon Musk grew up in South Africa studied in Canada but then moved to California and became a Silicon Valley superstar by creating the online commerce business PayPal a few years</p><p id="p5"><span class="ts-link" data-t="3:03">3:03</span>later musk sold paypal for a packet he then bravely or stupidly called his great fortune into Tesla an electric car start up company that aimed to beat petrol powered vehicles well so far this is a very expensive car call this the 50 million dollar car if ever there was a way to blow a billion bucks this was it you know this is really just the beginning of the beginning alright so when people were telling you this is insane what do you say well I don&#x27;t want to give the impression that I thought Tesla would be successful from the beginning I actually thought we would fail you did really i thought would maybe have a 110 twenty percent chance of success I mean sort of sin general</p><p id="p6"><span class="ts-link" data-t="3:48">3:48</span>fail and order startups especially factorable in the early days Tesla was a hugely expensive money pit and his prediction of failure and personal bankruptcy came perilously close to true you know each month that passes is literally cost us tens of millions of dollars I mean read to appreciate that it didn&#x27;t help that</p><p id="p7"><span class="ts-link" data-t="4:15">4:15</span>the traditional car industry treated Elon Musk as a joke right now we&#x27;re facing issue which is that it&#x27;s sort of a crisis of confidence among our customers they were basically saying our all this proves it you know here&#x27;s this cheeky bloke from Silicon Valley who thinks he can make a car he&#x27;s gonna fail right sure how do you feel at that stage well pretty miserable honestly if they&#x27;d honestly look like we were going to fail almost ran out of money in fact at the end of two thousand eight so I had to invest up the last money that I had in the company you staked your fortune and everything yeah I would have ended up owing money if Tesla&#x27;s gone bankrupt</p><p id="p8"><span class="ts-link" data-t="4:54">4:54</span>and we managed to close the financing round on the last hour of the last day that was possible so it was Christmas Eve to 2008 6pm there&#x27;s the electric car maker tesla motors are at the eleventh hour musk convinced investors to get him a second chance and set out to build a completely new type of illiterate car yeah this is a</p><p id="p9"><span class="ts-link" data-t="5:24">5:24</span>full-size model can your shoulders which part and all of it the whole thing I think we can show you the whole thing the death of Australia&#x27;s car manufacturing industry was Elon Musk&#x27;s gains so you&#x27;ve been here from the very beginning on the very beginning Australian been burn it that&#x27;s him on the right used to work for Holden in Melbourne he no managers play modeling of new Tesla cars I should be doing it in our own country fellow was Iran polanski used to work at Ford I can imagine there&#x27;s a huge attraction in designing an electric vehicle from the ground up and that that allows us to to kind of rethink how the cars designed and manufactured we challenge everything</p><p id="p10"><span class="ts-link" data-t="6:13">6:13</span>and then we change can I be the Australian data for a moment this country is a nation of petrol heads they love their big trucks their big cars their throbbing v8&#x27;s they love their gasoline I don&#x27;t see them getting rid of oil anytime soon why wouldn&#x27;t I trick car work in that market well I mean I think Australians also appreciate advanced technology and great engineering and that this car is regarded by why the most difficult critics in the world as the best car</p><p id="p11"><span class="ts-link" data-t="6:54">6:54</span>three years ago Tesla really took off with the launch of the Model S it&#x27;s a four-door sedan that looks nothing like what most people would assume an electric vehicle to be we wanted to create electric car that it was beautiful at incredible handling great acceleration back the Model S has got the highest acceleration of any four-door car ever</p><p id="p12"><span class="ts-link" data-t="7:27">7:27</span>it&#x27;s a beautiful car to drive as if playing up to his credentials as an automotive renegade musk ensured there were plenty of idiosyncratic quirks in his new car the stereo does go up to 11 thanks spinal tap and in the performance Tesla there&#x27;s a curious selector appropriately called the insane button it immediately unleashes an eye-watering</p><p id="p13"><span class="ts-link" data-t="7:57">7:57</span>691 horsepower to the cars four wheels and if you push it and put your foot on the accelerator it does amazing things Wow go that&#x27;s amazing it just pushes you back into the back of your seat when I was trying to car out it the acceleration felt insane so it&#x27;s like well we should probably of a button there so that people would decide if they want to have insane acceleration or not so it has the</p><p id="p14"><span class="ts-link" data-t="8:36">8:36</span>speed the looks and the gadget REE but the issues that have always held the lit the cars back have been price and range most owners talk about range anxiety but this car can travel around 400 kilometers before it needs recharging so here we are enroute from LA to San Francisco and this being an electric car on that sort of journey you&#x27;ve got to top it up probably a couple of times to be safe the nice thing about this though is they&#x27;ve got these supercharging stations all along the way a couple of clicks on that it opens it up plugs it in in 15 minutes the cars energies all topped up and better still it&#x27;s free</p><p id="p15"><span class="ts-link" data-t="9:30">9:30</span>which helps ease the pain of the cars high costs although the boss and chief salesman says like all evolving technology it will get cheaper our third generation cars model 3 which is it&#x27;ll be a smaller car and at much higher volume we&#x27;re aiming to approximately have the price of the car and be able to produce something for thirty five thousand dollars instead of four seventy-five thousand dollars are you talking yeah</p><p id="p16"><span class="ts-link" data-t="10:03">10:03</span>having Tesla&#x27;s fortunes improving gives Elon Musk the chance to pursue his other greater vision space his company SpaceX builds unmanned rocket switch resupply the International Space Station more economically and efficiently than NASA looked off of the spacex falcon 9 rocket it&#x27;s a risky business as musk discovered last month</p><p id="p17"><span class="ts-link" data-t="10:34">10:34</span>and we peer to have had a launch vehicle failure but even this is just a stepping stone to his most ambitious dream of all standing by for some information SpaceX is an astonishing achievement but you&#x27;ve also got your plans for Mars think about the future is just if we&#x27;re out there exploring sighs it&#x27;s so much more exciting and inspiring than one where we are forever can find to earth and a Mars mission yeah so in order to make Mars work we we need kind of the next generation of rockets and spacecraft we think we&#x27;ve got something that will enable people to move to Mars for approximately half a million dollars half a million dollars yeah you can get</p><p id="p18"><span class="ts-link" data-t="11:20">11:20</span>a free return to take it with that by the way so the thing that most people say about you is the vision of the future that you have is quite breathtaking and so many times along the way people have nay Sade haven&#x27;t they I guess there&#x27;s certainly been a lot of attacks one thing I&#x27;ve have noticed in recent months and years is that it&#x27;s become obvious to a lot of the entrenched interests that that Tesla and SpaceX are not going to die previously they thought well they&#x27;re just basically ignored us or laughed at us now we&#x27;re actually starting to make real inroads and they&#x27;re treating us as a real threat and so the it is it is quite daunting is</p><p id="p19"><span class="ts-link" data-t="12:01">12:01</span>actually within the power of humanity to do and I think it&#x27;s something that that it&#x27;s we must do Elon Musk strives for what others might think impossible thinking ahead of the curve he wants technology to improve the way we live for generations to come get the feeling that&#x27;s a lot of dystopian writing about the world at the moment the future it&#x27;s very bleak the way that which is cast isn&#x27;t it yeah I guess bleak stories make for better drama but you&#x27;re an optimist statue you&#x27;re hopeful I&#x27;m hopeful I want to try to do is maximize probability that the future will be better so it&#x27;s sort of altruistic but I think why wouldn&#x27;t you try to make the future</p><p id="p20"><span class="ts-link" data-t="12:45">12:45</span>better if you&#x27;re gonna be part of it</p></div></div>
       
       
@@ -324,7 +377,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -364,7 +417,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

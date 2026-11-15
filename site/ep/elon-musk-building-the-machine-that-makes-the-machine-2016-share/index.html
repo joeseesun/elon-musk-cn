@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -287,7 +340,7 @@
 <li data-z="70">列一张“看不见的墙”清单。写下所有你从来没质疑过的行业惯例，逐条问：这一条是物理限制，还是历史选择。分不清的，先按历史选择处理，去试一次。</li>
 <li data-z="71">改的时候，一次只动一个维度。密度、速度、体积三项同时改，你不知道是哪一项起了作用，也没法回滚。</li>
 <li data-z="72">别指望供应商替你做这件事。整线方案被反复验证过，也正因为被反复验证过，它的密度和速度都停在行业惯例值上。整体设计这一步，只能自己来。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=f9uveu-c5us" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:01">0:01</span>so yeah just talking about the future the the most important point I want to make is that whatever to earlier that we&#x27;ve realized that that the true problem the true difficulty and where the greatest potential is is building the machine that makes the machine in other words building the factory and really thinking of the factory like a product not not sort of a hodgepodge of</p><p id="p1"><span class="ts-link" data-t="0:39">0:39</span>of things that that are bought you know where the machines have kind of bought from a catalog but actually just like we do with the car you&#x27;re gonna try to create a car by ordering a bunch of things up a catalog we designed the car the way it should be and then we make all either wheel with working with suppliers make all of those individual components there&#x27;s almost nothing in a Model S that&#x27;s in any other car and I think the same approach is is</p><p id="p2"><span class="ts-link" data-t="1:14">1:14</span>a right approach to take when building the machine maker that the factory I actually think that the potential for improvement in the machine that makes the machine is a factor of 10 greater than the potential on the car side I think maybe more than a factor of 10 I&#x27;ve really come to appreciate that you know over the last two three months in particular when I&#x27;ve sort of just been on the production floor all the time and and sort of seeing things you know running production personally I&#x27;d edit it at a detailed level I don&#x27;t even have it I don&#x27;t even have a desk or an office anymore I just basically I&#x27;m just basically standing in the production</p><p id="p3"><span class="ts-link" data-t="2:06">2:06</span>floor and occasionally meeting in a conference room and it&#x27;s like wow you know I do my I do my favorite thing which is applied physics principles that&#x27;s like the best tool possible and it&#x27;s like it&#x27;s like wow you know when you think of a production facility on a fundamental level for a given size of factory the</p><p id="p4"><span class="ts-link" data-t="2:32">2:32</span>output is going to be volume times density times velocity so unless let&#x27;s sort of look at our factory and say okay what what what is the density of useful to non useful volume it&#x27;s it&#x27;s crazy low it&#x27;s like two or three percent if you look at volumetrically not just on a on a planar level but volumetrically it&#x27;s literally two or three percent when you say car cartoon on car race volumetric ratio like wow okay that seems like the lower room for improvement and then you say like philosophy what is a reasonable</p><p id="p5"><span class="ts-link" data-t="3:16">3:16</span>expectation for the exit velocity of vehicles from the factory and I first to me think that say the some of these advanced car factories around the world are very good at making cars and they may make a car every 25 seconds and that sounds fast but but actually if you say well the length of the car plus some buffer space is approximately five meters and so it&#x27;s taking 25 seconds to</p><p id="p6"><span class="ts-link" data-t="3:43">3:43</span>move five meters okay that&#x27;s point two meters per second basically you know you know much faster than a tortoise at that point and you know so it&#x27;s like wow that that really doesn&#x27;t seem that doesn&#x27;t seem fast like how come how come these factories like a a slow sort of slow walk would be approximately most low to medium walk would be one meter per second and and if a fast walk would be</p><p id="p7"><span class="ts-link" data-t="4:21">4:21</span>one point five meters per second and the best part in the world are doing point to like huh seems like you should be able to have cars exit at least walking speed this doesn&#x27;t seem so crazy and and then the the density improvement likely maybe as much as an order of magnitude improvement in density possible as well going from maybe two or three percent to twenty or thirty percent of the volumetric density being optimal and</p><p id="p8"><span class="ts-link" data-t="4:58">4:58</span>like Eagles I think of it like like the design of a modern system on a chip or a computer and you see if you look at say that the clump complexity of the board and you see how how close together the line traces are and how focused things are on clock speed and data transfer from RAM to say solid-state disk or the internal CPU cache it&#x27;s like wow this is this crazy</p><p id="p9"><span class="ts-link" data-t="5:31">5:31</span>potential for improvement here I think at least an order of magnitude and potential for improvement on production and so with with with less like significantly less engineering effort I we can make dramatic improvements to the machine that makes the machine I think that&#x27;s like this is I think I mean I think like probably a lot of people will not believe us about this but I&#x27;m absolutely confident that this can be accomplished yeah there are opportunities we&#x27;re finding all over the place and as you start to you know shift some of the design resources that have been you know improving motor technology and power electronics or batteries and are working so hard to try and find</p><p id="p10"><span class="ts-link" data-t="6:21">6:21</span>tenths of a percent of efficiency gain or performance gain on those different systems and and when they start to go and look at the factory they say oh my gosh you know this is this is crazy you know we can find as you were saying you know easily tens of percent or twenty some cases hundreds of and efficiency gain that would sort of unheard of in terms of you know what you could do in the design world so the impact there is is pretty phenomenal and quite close at hand yeah so we&#x27;re basically design a computer design design a factory like your design an advanced computer and in fact I think use engineers that are used</p><p id="p11"><span class="ts-link" data-t="7:00">7:00</span>to doing that and have them work work on this and I found that like once you sort of explained this to a first-rate engineer they took the light bulb goes on they like Wow as JB was saying like they spend huge amounts of effort Tonique trying to get a fraction of a percent of improvement on the product itself but but actually that same amount of effort will yield an order of magnitude greater result if you focus on building a machine that pulls the machine and it&#x27;s just that a lot of Engineers don&#x27;t realize that this is possible they think that there&#x27;s like a wall that they&#x27;re basically operating according to these invisible walls and</p><p id="p12"><span class="ts-link" data-t="7:44">7:44</span>so we just need to you know we&#x27;re in the process of just going to us explaining those wolves don&#x27;t exist and I think it&#x27;s going to be pretty amazing</p></div></div>
       
       
@@ -315,7 +368,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -355,7 +408,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

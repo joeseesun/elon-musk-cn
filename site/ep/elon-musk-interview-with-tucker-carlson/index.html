@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -272,7 +325,7 @@
 <li data-z="62">给卖出设一个冷静期。任何由新闻标题触发的卖出决定，至少隔一天再执行，多数冲动会在 24 小时里自己消失。</li>
 <li data-z="63">同时警惕反向的标题。当身边所有人都在用亢奋语气谈某个市场时，把它当成减仓信号，而不是加仓信号。</li>
 <li data-z="64">判断一段观点值时，看论证链条，不看说话人的头衔。在自己不熟悉的领域里成名的人，说错话的概率和普通人没有区别。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=qyz6fZHN-eE" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>hey what&#x27;s up everybody it is Thursday July 13th heading back to Florida tonight I want to talk a little bit I saw an interesting interview between Tucker Carlson and Elon Musk online on YouTube I&#x27;m not sure when the interview is done I think it still might have been when Carlson was at Fox News but and they</p><p id="p1"><span class="ts-link" data-t="0:29">0:29</span>talked about everything they talked about artificial intelligence they talked about you know Tech they talked about Tesla they but the one part that I thought was interesting and what I want to kind of relay to you was they got into a first let me before I say that let me mention that</p><p id="p2"><span class="ts-link" data-t="0:54">0:54</span>Musk he&#x27;s a brilliant guy but he has he has economics and and government Finance wrong I mean he has the wrong understanding you know he&#x27;s obviously not an mmt guy he has the wrong understanding like he was talking about how the government can create money and basically create as much money as it wants and that&#x27;s inevitably going to lead to inflation and of course if the government just you know willy-nilly printed money to the point where it led to</p><p id="p3"><span class="ts-link" data-t="1:29">1:29</span>the the total capacity of the total productive capacity of the economy to supply the goods and services represented by those purchases represented by that demand then yeah it will it will result in inflation there was nothing in his mansion and I think he was talking about that in reference to what happened during the pandemic but he completely ignored the</p><p id="p4"><span class="ts-link" data-t="2:01">2:01</span>aspect of the supply chain disruptions and you know the closures of entire countries you know people out of work in other words the the shutdown of Global Production so you got to be able to make that distinction also he made a comparison between the United States printing money and Venezuela and that&#x27;s again he misses out on the distinction between Venezuela having debts denominated in a foreign currency mainly the U.S dollar and the United States which is a currency issuer and all of its liabilities I&#x27;m not even going to call them debts all of its obligations are denominated in its own Sovereign currency of which it is the Monopoly issuer so it&#x27;s not it&#x27;s apples and</p><p id="p5"><span class="ts-link" data-t="2:55">2:55</span>oranges it&#x27;s it&#x27;s two different circumstances and you know a guy like him he&#x27;s smart enough to understand this obviously nobody has ever explained it to him and he&#x27;s never read any mmt Publications or books that&#x27;s pretty obvious but but most of these guys make that mistake but I want to talk about what he said about the stock market because I think it&#x27;s very important and and these are sentiments that I have echoed and spoken about many times and when Tucker Carlson asked him well how should people go about investing in the stock market he said basically you should invest in companies where you believe they have good products and services and good</p><p id="p6"><span class="ts-link" data-t="3:38">3:38</span>management and then you should hold on to it and then at times when there is you know when people get panicky and they sell the market down you should buy more and more and more the price of the stock doesn&#x27;t always indicate the viability of the company we know this that the market fluctuates I mean I guide you guys you people through these ups and downs all the time on a regular basis so I thought his and you hold on to it because ostensibly you know you&#x27;re buying into an Enterprise where you feel or</p><p id="p7"><span class="ts-link" data-t="4:20">4:20</span>it&#x27;s been shown that the goods and services produced by this Enterprise are in high demand they have some sort of Competitive Edge and they&#x27;re able to dominate the market and that could be in many different ways it could be sheer size it could just be their Innovative Talent you know their brain power I mean it could be a lot of things but he&#x27;s right about and this goes back to something I I talked about in a previous video where I said Warren Buffett&#x27;s partner Charlie Munger he was asked by at one of these conferences somebody asked him well when do you sell he said I don&#x27;t sell good assets I mean as long as their valuation is good and these are companies that I feel you</p><p id="p8"><span class="ts-link" data-t="5:09">5:09</span>know we&#x27;ve done our due diligence and and they are they&#x27;ve shown or they&#x27;ve proven themselves to produce products and services that are in high demand and they have you know some kind of Competitive Edge whether that be size or the other things I mentioned then you you hang on to good assets and I&#x27;ve always found in my life because there have been many times many times where I had great assets and I sold out thinking oh it went up you know so such and such and I&#x27;m going to sell out and in retrospect it was a terrible terrible decision and a lot of that came in real estate I I had memberships on various exchanges that I sold out which you know went up exponentially so I</p><p id="p9"><span class="ts-link" data-t="5:59">5:59</span>learned a hard lesson about hanging on to good assets but I thought he gave very good advice when it came to the stock market I was surprised to hear you know I thought he was going to hear and say something about the stock market being like a gambling casino somebody&#x27;s outside cutting grass you know every time when you guys used to watch me in New York you&#x27;d hear like ambulances and fire engines and police cars now you got someone cutting the lawn and yeah so he&#x27;s right I mean you</p><p id="p10"><span class="ts-link" data-t="6:35">6:35</span>hold on to those assets and you know when it goes down you don&#x27;t panic you don&#x27;t freak out he also said something which I think is very true and something that I have spoken about many times was the fact that hang on I&#x27;m going to close this window Maybe shut up it&#x27;s a little bit better something that I&#x27;ve spoken about many times is that there&#x27;s an inherent negative bias in the news and that just doesn&#x27;t go towards the stock market it goes you know in general that those kind of negative headlines you know human beings are predisposed</p><p id="p11"><span class="ts-link" data-t="7:21">7:21</span>and and I guess this could go back you know evolutionary just our our the animal parts of our brain the very you know the fight or flight response you know the the the most important thing for any living creature is to its protection is to save itself or get out of the the way get out of the situation if trouble threatens and so that&#x27;s a a very</p><p id="p12"><span class="ts-link" data-t="7:53">7:53</span>powerful stimulus in our brain and so it&#x27;s almost like a natural reaction on the part of people when they see negative headlines they&#x27;re going to react to that and it&#x27;s also on the part of the media they know that you know that gets the clicks that gets the views so they tend to gravitate towards putting out that kind of salacious or frightening negativity and so there&#x27;s an</p><p id="p13"><span class="ts-link" data-t="8:24">8:24</span>inherent bias in that and that&#x27;s why I always say you know fade the headlines and that even applies when things are going fantastic and people talking about you know maybe characterizing the stock market in a kind of euphoric way like it&#x27;s just going to keep going up and up and up I mean that&#x27;s also something that you have to pay attention to because that could be a period where you want to take some money off the table and wait for it to pull back anyway it&#x27;s a very interesting Eddie video physical flows are really strong you know I didn&#x27;t mention that where as but I&#x27;ve been saying it every day and I&#x27;ve been saying the dollar is going to go</p><p id="p14"><span class="ts-link" data-t="9:04">9:04</span>down as flows expand as we came off of that June tax train and that&#x27;s going to be the case until around August 15th and then you know we&#x27;ll peek out and we&#x27;ll go into another period of dream but anyway that&#x27;s it I got to get packing to head out to the airport and I guess my next video tomorrow will be coming to you from Florida take care everybody bye</p></div></div>
       
       
@@ -300,7 +353,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -340,7 +393,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

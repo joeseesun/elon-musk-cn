@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -278,7 +331,7 @@
 <li data-z="65">下次看到某个产品做了件明显不划算的事，先别用“不专业”下判断，问一句“他们是不是在优化另一个目标”。很多看着离谱的设计，背后只是目标函数和你不一样。</li>
 <li data-z="66">如果你在做产品，把“这东西酷不酷”当成一个正式的评估维度写进决策表。它没法被量化，但它决定了有没有人愿意主动替你说那句话。</li>
 <li data-z="67">看老的访谈和发布会，先对一下时间。2023 年 11 月这个锚点前后，Cybertruck 的配置、价格、交付节奏都改过，把访谈里的数字当成当时的快照，能少踩很多坑。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">语音识别自动转录（Whisper），含全部发言人，可能有识别错误。已按语句合并成段落，并去掉 um、uh 等口头填充词。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>Do you drive today? Like what&#x27;s your go to? Well, I have a lot of cars. I collect cars. I have too many cars. But, my car, you know, I drive my Tesla a lot. I love it. Yeah. I love that fucking thing. And I drive my, everybody who I talk to as a Tesla loves the Tesla. Fucking great. Yeah. Jamie&#x27;s got one. He&#x27;s got the one I have the plaid. They&#x27;re the shit.</p><p id="p1"><span class="ts-link" data-t="0:21">0:21</span>Yeah. They&#x27;re so fast. It&#x27;s a time machine. How about I that&#x27;s what I hear. Is there an SUV available? Yeah. They have an SUV and they and they have the Cybertruck that&#x27;s coming up. How about a pickup truck? That&#x27;s the Cybertruck. Oh, nice. Have you seen it? No. You haven&#x27;t seen the Cybertruck?</p><p id="p2"><span class="ts-link" data-t="0:35">0:35</span>All I drive is pickup trucks. Oh, Elon brought one here the other day. It&#x27;s fucking insane. That&#x27;s that&#x27;s that&#x27;s. It&#x27;s insane. It&#x27;s insane. It&#x27;s a spaceship. It looks like something. Seeing it in real life is so fucking cool. There&#x27;s something about photos or kind of, they don&#x27;t, you&#x27;re not in context.</p><p id="p3"><span class="ts-link" data-t="0:50">0:50</span>You&#x27;re not physically there where you get to look at it. But when you&#x27;re physically there and you look at it, you&#x27;re like, oh my God, this thing is so fucking cool. because it doesn&#x27;t look anything like any other car that&#x27;s it well it proved by the way it&#x27;s also arrow proof i shot an arrow at the other he told me it was a real group side of the i&#x27;d pull the fucking arrow back and launched into his door it bounced off barely scratched it barely you can see a very slight mark where it but he said it&#x27;ll stop a forty-five slug yet why i go why it was because it&#x27;s cool with a lot of that i was just gonna ask why Because it&#x27;s cool.</p><p id="p4"><span class="ts-link" data-t="1:26">1:26</span>Like that&#x27;s literally what he did. I mean, the whole thing is made out of steel. The whole thing is made out of steel. Is it heavy as fuck? It&#x27;s heavy as fuck. That&#x27;s me shooting the arrow at it. Wow. So you see, right, that&#x27;s like right when the arrow releases it hits it, it&#x27;s fucking sparking up.</p><p id="p5"><span class="ts-link" data-t="1:42">1:42</span>Yeah, it was, I mean, fucking just ate it. Like it was nothing. Yeah. It&#x27;s just cool. I mean, he just decided to make it like it&#x27;s, you know, just make the fucking coolest cyber vehicle that he can. He just likes, look, he is the best kind of billionaire to me. Because he does wild shit.</p><p id="p6"><span class="ts-link" data-t="2:00">2:00</span>I mean, he made the fucking tip of the SpaceX rocket pointy, because he wanted it to look more like the one on space balls. Literally. I mean, that&#x27;s literally what he did. He&#x27;s just a wild fella. Yeah. And he just decided. So idea, make it happen. It&#x27;s hard. I mean, he detailed the process of going from an initial concept, making a demonstration</p><p id="p7"><span class="ts-link" data-t="2:26">2:26</span>vehicle and then production. How difficult it is and how many things have to line up. Especially when you get something that&#x27;s incredibly innovative and complicated. I was going to say so, the innovation, the complication, the production cost on that and how heavy it is. What do you think that&#x27;s going for?</p><p id="p8"><span class="ts-link" data-t="2:41">2:41</span>I think there&#x27;s going to be three different tiers, he said. Yeah. There&#x27;s going to be a beast mode, which is like the most insane, you know, 1100 horsepower, three electric engines, zero to 16 under three seconds, which is insane for a 7,000 plus pound vehicle. Three seconds. Three seconds, wow.</p><p id="p9"><span class="ts-link" data-t="2:57">2:57</span>Yeah. And then there&#x27;s gonna be a lower tier model, but even if you get a Model 3, which is like their entry level Tesla, it&#x27;s fast as fuck. It&#x27;s so fast. It&#x27;s so competent. It&#x27;s a joy to drive. And if you&#x27;ve never driven an electric car, you gotta get past the fact that it doesn&#x27;t make any noise because a lot of people love the rumble of the V8 all that jazz.</p><p id="p10"><span class="ts-link" data-t="3:19">3:19</span>But if you can get past that, there&#x27;s the sheer ability that they have to just go, just take off. Mine goes zero to 16, 1.9 seconds. Do you miss the rumbling of the muscle cars? No, I just drive a muscle car when I miss the rumbling. Yeah. Those feel different though to me. When I drive those, that&#x27;s like I&#x27;m on a ride.</p><p id="p11"><span class="ts-link" data-t="3:40">3:40</span>That&#x27;s like I&#x27;m on a Disneyland ride for adults. It&#x27;s like, whoa, you don&#x27;t even have to go fast. Just a rumble and a shift in the gears. Yes.</p></div></div>
       
       
@@ -306,7 +359,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -346,7 +399,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -323,7 +376,7 @@
 <li data-z="88"><strong>别用“发钱就能解决”当解释框架。</strong>韩国两千亿美元的对照组摆在那里。看到生育补贴政策，多问一句：托育位够不够，父亲的育儿假能不能真休，女性生完孩子回到职场会不会被降级。这三件事比补贴金额重要。</li>
 <li data-z="89"><strong>如果你在 30 岁上下，把 2050 年当成一个具体年份来规划。</strong>那时候你 50 多岁，社会的一半人口比你年长，养老金和医疗资源的分配规则会和你今天熟悉的完全不同。储蓄率、保险配置、居住城市的选择，都值得按这个前提重算一遍。</li>
 <li data-z="90"><strong>对“人口崩溃”这类说法保留一点怀疑。</strong>它描述的危机是真的，它给出的因果往往被简化过。真正值得关注的不是人少了，是年轻人少了，以及年轻人身上压了多少东西。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=JQC8xhLhskc" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>good morning ladies and gentlemen this is average Korean man from South Korea today I am going to talk about depopulation problem here in South Korea and I have talked about depopulation problem in many of my videos but this time it&#x27;s special because Elon Musk has mentioned about it on his social media and also talked about it at a forum that was held last</p><p id="p1"><span class="ts-link" data-t="0:35">0:35</span>month so I have brought what he posted on his social media over here so let&#x27;s take a look so this is what he posted on his social media called X also known as Twitter and he bought the company Twitter and changed the name of the website into X so now it&#x27;s called X anyways here he says 2/3 of Korea</p><p id="p2"><span class="ts-link" data-t="1:06">1:06</span>will disappear every generation population collapse and it was posted on November 27th and he also shared a graph over here saying that the reasons for South Korea&#x27;s falling fertility rate are long work days low wages and dwindling marriage rates and this graph is is from an article called South Korea&#x27;s plan to avoid population collapse from a website called www.th Global health.org so if you are interested in this article please take a look at the article and I have also brought a phrase one phrase from the article let&#x27;s take a look the article was posted on September mber 5th this year so basically this paragraph says the fertility rate in</p><p id="p3"><span class="ts-link" data-t="2:08">2:08</span>2022 was 0.78 which means 78 babies for every 100 women were born and it has dropped down to 0.72 in 2023 and earlier projections estimated a steeper drop down to 0.68 for 2024 which is the lowest fertility rate in the world not only Elon Musk has posted this graph on his social media but he has also mentioned that the Humanity&#x27;s greatest risk in the short term is artificial intelligence but in the long term it is the collapse of the global population citing South Korea&#x27;s birth rate as an example and he talked about this at a forum called future investment</p><p id="p4"><span class="ts-link" data-t="3:05">3:05</span>initiative Institute that was held last month in Saudi Arabia I have brought some more research done by the demographers so I&#x27;m going to read you the research over here the population of South Korea by the year 20000 will be half of what it was in the year 20 ,000 and also demographers view 2050</p><p id="p5"><span class="ts-link" data-t="3:36">3:36</span>2050 as a significant year this is because if the current fertility rate remains unchanged it is projected that by 2050 the population aged 60 and older will make up exactly half of the total population with the other half being younger than 60 also by the year 2050 it is expected</p><p id="p6"><span class="ts-link" data-t="4:02">4:02</span>that 177% of the population will be aged 80 and older at that time it is predicted that for every newborn child three elderly people will pass away in other words the rate of population decline is expected to accelerate and that sounds very serious there are 26 years left until the year 2050 and by the year 2050 I will be 58</p><p id="p7"><span class="ts-link" data-t="4:38">4:38</span>years old I am 32 right now so after 26 years I will be 58 and even though I become 58 years old I will still be younger than half of the population and that sounds very weird because my parents are are 58 right now exactly 58 right now and you know I become their age and I will still be younger than half of the population just just imagine how the Society of South Korea will be by the year 2050 you walk on the streets and more than half of the population will look six and above which is definitely a very</p><p id="p8"><span class="ts-link" data-t="5:33">5:33</span>aged country and imagine that happening in the future just you know sounds very weird the reason why we don&#x27;t feel the impact of population decline yet is because it has just started to begin so the population of South Korea has reached its peak in 2020 which is only four years ago and it has started to decrease slowly every year and that</p><p id="p9"><span class="ts-link" data-t="6:09">6:09</span>is why we don&#x27;t you know feel it yet but it&#x27;s coming and the population decline will accelerate faster this country I am living right now has reached its highest population in its history and perhaps perhaps this might be considered as South Korea&#x27;s Golden Era and if no effective policies are taken by the government I will likely experience the decline of South Korea as</p><p id="p10"><span class="ts-link" data-t="6:47">6:47</span>I grow older so it is a serious topic anyways I am going to end the video here today thank you for watching my video once again everyone see you next time byebye</p></div></div>
       
       
@@ -351,7 +404,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -391,7 +444,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

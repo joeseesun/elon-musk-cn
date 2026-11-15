@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -292,7 +345,7 @@
 <li data-z="72">听到“这不可能量产”这类判断时，先看说这话的人靠什么赚钱。马斯克当年把对手的动机直接摆到台面上，这个习惯可以借来用：判断一个技术预言，先判断预言者的利益位置。</li>
 <li data-z="73">看制造业的时间表，把“产线装好”和“产能爬坡”当成两个独立的里程碑。前者是 capex，后者是组织能力，混在一起看会严重低估难度。</li>
 <li data-z="74">如果你是产品经理，把马斯克那句“车应该做你大概率希望它做的事”抄下来。任何自动化功能的设计起点，都该是这句话，而不是“我们能监测多少参数”。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=OOW6RFUXNuA" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>and your modeless let&#x27;s hear ni sweet oh wow go car including two kids in the back people now he&#x27;s going to go to so yeah I guess as you can</p><p id="p1"><span class="ts-link" data-t="1:58">1:58</span>see yeah you&#x27;ve been working so late and you broke your B everyone L up and as you can see the long not only put seven people plus baggage but actually</p><p id="p2"><span class="ts-link" data-t="2:28">2:28</span>eight so this is a great thing to have here I&#x27;m really I&#x27;m glad to have have you guys come here thank you for coming thank you for having us I we want to make sure that has a chance to to get a ride in the car and really experience what an electric car can do it&#x27;s got incredible</p><p id="p3"><span class="ts-link" data-t="3:09">3:09</span>performance and I&#x27;ll talk about in the moment but I&#x27;ll start off by talking about safety and my my will be driving in the car as you can see my plans my family you guys D the car we do everything we possibly can to make sure that this is the safest car in the world and in fact we we we&#x27;re aiming to have thisy five star crash rated on on every category and we think that this car will actually be the only car that&#x27;s five star in every category without exception and the way we can do that if you look at the crash video now most companies are Prett reluctant to show this but normally what you&#x27;ve got in the front is you&#x27;ve got a huge engine and when you&#x27;ve got a huge engine</p><p id="p4"><span class="ts-link" data-t="3:59">3:59</span>your PO to compromise between having a short crumple Zone or or having the engine into the passenger compartment the the big advantage that we have here with electric car that&#x27;s really fundamental is that there&#x27;s no big engine there and so you&#x27;ve got a l comle zone to absorb the impact so you can see that you can this is a car driving into a concrete wall and you look at the at the at the you look at the area where the driver and passenger are it&#x27;s undamaged you can literally drive into a concete b and step out of the car it&#x27;s just not possible with with the other types of cars where you&#x27;ve got a huge engine in front the back pack also helps with</p><p id="p5"><span class="ts-link" data-t="4:45">4:45</span>side impact where the B pack being the FL of of the of the car it&#x27;s a very rigid structure and prevents side po intrusion which is which is very very important so so that that&#x27;s really first and foremost to make sure that the car is as safe as possible then in terms of performance</p><p id="p6"><span class="ts-link" data-t="5:12">5:12</span>the car the basic problem is do under 06 under 300 06 under 6 seconds and because the again cuz the battery pack is in the floor plan and and you&#x27;ve got that very low center of gravity the the the center of gravity is in line with the axle so you don&#x27;t have the the front rear dive that you nor have in a car you know instead of the normal gasoline car it&#x27;s like having a a sort of Bubblehead effect where you&#x27;ve got a mass on a spring and it&#x27;s constantly wanting to move in One Direction or another but here because the bom pack is in line with with the axle it it it&#x27;s it feels more like a a race bar even though it&#x27;s an electrican so it has handling that&#x27;s</p><p id="p7"><span class="ts-link" data-t="6:05">6:05</span>really unsurpassed in in in in the portal category the and the reason we&#x27;re able to get to that high level of performance and to High safety is because the car is designed with an all of structure so if it was steel it would be too heavy so as as an or structure it still able to maintain that safety and still be light and agile as far so that&#x27;s</p><p id="p8"><span class="ts-link" data-t="6:40">6:40</span>that&#x27;s in terms of performance the you&#x27;re going into the inside of the</p><p id="p9"><span class="ts-link" data-t="6:58">6:58</span>CL so as El car it&#x27;s important that the sound be really good because you can actually hear sound really well so our goal here is to have that&#x27;s incredibly quiet nor but has a great sound system and then terms of the the center display if get a 17in touchcreen it&#x27;s like a giant iPad so you can do things like</p><p id="p10"><span class="ts-link" data-t="7:39">7:39</span>obviously navigation you go to the full screen you can go to the internet you read the Times while you dve</p><p id="p11"><span class="ts-link" data-t="8:17">8:17</span>theong of course you can get to a local FM and AM and satellite radio you can also go to the internet you can get radio you get any radio station or so if you wanted to listen to any from you know BBC to KCRW you can get that access right there obviously it&#x27;ll sink with your iPhone and Android or Android phone seamlessly and download all the SS so they can be locally stored on the</p><p id="p12"><span class="ts-link" data-t="8:58">8:58</span>car and let&#x27;s say that I&#x27;m not really happy with anything on the radio or in my personal collection and i&#x27; I&#x27;d really just like to pick some some band at random so so what I&#x27;m going to do is I&#x27;m just going to ask for anything so play The Rolling Stones so now what it&#x27;s doing is it&#x27;s going it&#x27;s using Google Voice doing voice recognition on what I asked for then going to the selector picking up a list of potential songs</p><p id="p13"><span class="ts-link" data-t="9:58">9:58</span>so so that&#x27;s just basically pulling it off the internet so you can Bas you have access to any song any band any time at</p><p id="p14"><span class="ts-link" data-t="10:20">10:20</span>well the car just visually represent the car so it just shows things like sunroof</p><p id="p15"><span class="ts-link" data-t="10:47">10:47</span>this is actually I think the largest panary group on any car in fact it&#x27;s the closest thing to being a convertible with the car without the car actually being a convertible it&#x27;s a huge your joke and then in terms of climate we really want to touch that that climate is something that you know you really never need to think about very much so being an electric car the power source is always there so if you leave the car in a hot cold environment the car is going to attempt to maintain temperature automatically for a couple hours so if it&#x27;s if you&#x27;re in the snow or it&#x27;s a really hot day you&#x27;re not coming back to a frozen car or a really hot car you&#x27;re coming back to a car</p><p id="p16"><span class="ts-link" data-t="11:36">11:36</span>that&#x27;s comfortable and then the co will gradually step it step it the temperature down or up in order to be so power but then even if you come to the car the next morning it&#x27;s still going to be a reasonable temperature will keep it above freezing point and Below stearing you know to of keep it at a comfortable range so the car is going to kind of be intelligent and try try to predict what what would my driver want to want me to do I mean this seems like a really obvious thing like the car should be trying to do the things you let you probably wanted to do so that&#x27;s that&#x27;s going to be I think pretty cool and yeah</p><p id="p17"><span class="ts-link" data-t="12:22">12:22</span>so there&#x27;s so much that I I can&#x27;t in this short period of time get into all all the details of the car but there&#x27;s so much that going to surprise and light you I think you&#x27;ll be super happy with with the where you get it and next question what what what I&#x27;d really like you to do is as much as possible</p><p id="p18"><span class="ts-link" data-t="12:42">12:42</span>be ambassadors for electric vehicles you know one one of the tough things that that we will face is the I mean there there&#x27;s pretty powerful and trenched interests that that they don&#x27;t want electric C to be to get out there they&#x27;re you know they&#x27;re they&#x27;re really you know it&#x27;s it&#x27;s tough fighting the X ons of the world that that Mak $10 billion a quarter we need your help is what I&#x27;m</p><p id="p19"><span class="ts-link" data-t="13:27">13:27</span>saying so we need your help to go out there and say hey I saw this car I drove it it&#x27;s real electric cars can be better than gasoline cars you know cuz that&#x27;s the story that the inan interests want you to believe is that you electric cars can&#x27;t work the truth is they don&#x27;t want it to work and and but here it is they would</p><p id="p20"><span class="ts-link" data-t="13:56">13:56</span>they would say that this car is the equivalent of a unicorn well I mean tonight you had an opportunity to ride a unicorn so yeah so and not just the car but also the factory the mainu facturing team has done an amazing job I mean if you can believe it we moved into this Factory 12 months ago so the change all the robots all the the lines that you see here will put together in 12 months you know where will we be in another 12 months pretty</p><p id="p21"><span class="ts-link" data-t="14:46">14:46</span>far so yeah so in closing let me just say thank you thank you very much for coming I really appreciate the fact that youve traveled and you come here especially you see this car thank you for your help in promoting electric vehicles being part of the Revolution you&#x27;re really really big VI as being part of the Tesla family you know you&#x27;re not just not just customers you&#x27;re really part of the family thank you I can&#x27;t than you&#x27;re not you</p></div></div>
       
       
@@ -320,7 +373,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -360,7 +413,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

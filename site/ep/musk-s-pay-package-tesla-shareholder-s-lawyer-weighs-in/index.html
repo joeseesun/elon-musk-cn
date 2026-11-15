@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -285,7 +338,7 @@
 <li data-z="68">如果你是创业者或准备做股权激励，把董事会独立性当成融资前要解决的结构问题，别拖到上市前才补手续。关联董事的比例、私交关系的披露，都会在关键时刻被重新翻出来审视。</li>
 <li data-z="69">如果你在准备股东投票，记住投赞成票并不等于放弃追责权。信息如果存在重大误导，投票结果本身可以被推翻。</li>
 <li data-z="70">如果你关注公司迁注册地的动议，先看董事会给出的理由和独立财务顾问意见，再看有没有条款在实质上削弱小股东权利。迁址本身合法，动机和配套条款才是重点。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=KYNSxz3bumI" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>will you expect an appeals now do you think that the board will go back and just try to restructure some sort of payment for Alon wouldn&#x27;t surprise me at all if we saw an appeal under Delaware practice there is a direct appeal to the Delaware Supreme Court which is the final word on matters like this so it&#x27;s likely there&#x27;ll be an appeal and Max from Elon Inc your expertise of all things I mean he has been avidly against Delaware more broadly clearly there has been concerns about from Elon himself a lack of control of his own company now what do you think happens after this payack I mean this is a huge development not just because of the amount of money that is</p><p id="p1"><span class="ts-link" data-t="0:36">0:36</span>at stake in these options of value the options I&#x27;ve seen you know figures as high as 50 billion reported of course he hasn&#x27;t exercised them yet but also because this kind of throws not just Tesla into chaos they have to figure out a way to try to retain Elon Musk he&#x27;s already been sort of making these kind of veiled threats that he might be doing AI research outside of the company if he doesn&#x27;t get a bigger pay package and then at the same time you have all his other companies which of course depend on his financing and we remember one of the kind of one of the reasons he wanted all this money supposedly was to pay for his you know Mars exploration so</p><p id="p2"><span class="ts-link" data-t="1:10">1:10</span>you have to ask where every where all of this goes last thing I&#x27;ll say is this is another big loss on Del remember Delaware forced him to buy Twitter for $44 billion so now even for the world&#x27;s richest man 44 billion 50 billion that&#x27;s starting to add up Greg good morning it&#x27;s Ed in in San Francisco as far as I can tell you and your clients are the only ones to actually ever take a look at the compensation package so as a starting point Greg what was it in the first place that that worried you or or that you thought was unusual about the package that caused you and your clients to look you know I I I have to say that I have a hard time articulating 55</p><p id="p3"><span class="ts-link" data-t="1:54">1:54</span>billion dollar I often misspeak and say $ 55 million $55 billion is such a large pay package that it basically skewed dramatically upward the entire data set for the compensation Consulting industry I think we put out a press release yesterday referring to it as a gargantuan package let me start by saying it was so large that we looked at it specifically because no one had ever tried to come this close and oh by the way when you look at the nearest comparable it&#x27;s elon&#x27;s prior pay package</p><p id="p4"><span class="ts-link" data-t="2:32">2:32</span>okay but Greg here&#x27;s the thing it may be the biggest compensation package in history but there are a really large body of of Tesla investors out there that say so what 73% of those investors voted in favor of the package in 2018 when it was awarded and there is a big body of people out there Greg I hope you don&#x27;t mind me saying that are pretty mad at you and your client who are Tesla shareholders because they say look at the share performance of Tesla since that package was awarded look at Tesla&#x27;s position as the market incumbent in EVs and their growth globally in other products why does it matter well you know there&#x27;s this idea in efficient Capital markets that</p><p id="p5"><span class="ts-link" data-t="3:17">3:17</span>shareholders ought to have a say in things like this and this package was in fact put to shareholders but it was put to shareholders on appr proxy that the court found to be materially misleading in several respects and look the bottom line is capital markets don&#x27;t work if you don&#x27;t tell stockholders material facts when asking them to take action and that&#x27;s exactly what happened here Max this puts into question the board in particular the accusations from many an investor is there is no push back the judge articulated there was at no point any sort of questioning that this pay package was ever perhaps excessive what does it mean for the board of Tesla well</p><p id="p6"><span class="ts-link" data-t="3:58">3:58</span>it&#x27;s not clear to me you know it&#x27;s it&#x27;s as Ed is kind of hinting at many Tesla shareholders were aware that the Tesla board of directors was essentially a a rubber stamp right you have a lot of people who are very close friends with Elon and and I think one of the reasons he lost this case is because you had nominally independent directors who were going on vacation with him we had clear clearly had a close relationship with now that&#x27;s kind of like how Elon Musk has done business and and by Elon what&#x27;s what&#x27;s so I think Difficult about this going forward is that that&#x27;s kind of been if you asked Elon Musk like what is your playbook how have you been able</p><p id="p7"><span class="ts-link" data-t="4:33">4:33</span>to achieve so much he would say well it&#x27;s because I have a you know I&#x27;ve been able to do essentially whatever I want to do and and again as I said earlier he&#x27;s been asking for even more control from where he got so so I don&#x27;t know where that goes I do think there is some piece of risk that probably didn&#x27;t exist yesterday that Elon Musk could either threaten to or even and again I think this is a far off possibility decide to walk away from Tesla I mean this is why the share price is somewhat what Under Pressure not massive moves Greg but the articulation from the judge was at no point did it seem that this 55 billion or these options awarded was necessary</p><p id="p8"><span class="ts-link" data-t="5:09">5:09</span>to keep Elon motivated but then to that end why not recompense the leader a Founder with such a significant upside if he&#x27;s going to deliver for shareholders well the judge made the point I think very cogently and that is I believe his net worth increased in increments of1 billion dollar based on the stock he already held without this pay package for each increment that was identified in this pay package and so I think the judge&#x27;s point of view was if you look at other successful Founders Bezos Zuckerberg others they don&#x27;t take pay packages or they don&#x27;t take any material pay package they rely on driving value for their shareholders in their own</p><p id="p9"><span class="ts-link" data-t="5:54">5:54</span>underlying stock Mr musk had the opportunity to to increase his is net worth by almost a hundred billion I have to stop and make sure I get the B right a hundred billion if he accomplished what he set out to accomplish under this pay package without getting a single option and you know at the end of the day this is a car company it&#x27;s not a space exp exploration company and it&#x27;s a public company and public companies live by different rules than private companies right if you&#x27;re a if you&#x27;re watching us live now on Bloomberg television and you&#x27;re a terminal subscriber you can send questions to us via IB Greg I I told our audience on social media you</p><p id="p10"><span class="ts-link" data-t="6:37">6:37</span>were coming on and that there were lots of questions I think the most common is is just a want for deeper understanding of what the pathway forward is so you talk with Caroline about a likely appeal I think my understanding from sources is that&#x27;s likely as well but the other thing is that this current board which is different to what it was in 2018 could put together a new compensation plan and then take it to to shareholders to to be ratified how involved do you think you will be with your client how involved do you think Kathleen J McCormack will be in that process if at all well the simple answer to that is that&#x27;s a question for the board to</p><p id="p11"><span class="ts-link" data-t="7:18">7:18</span>determine in the first instance and assuming it fulfills its fiduciary duties and uses ordinary and reasonable means to arrive at a result my guess is I won&#x27;t be involved at all and my guess as well as the judge won&#x27;t be involved at all if the board comes out with a package which either facially is ridiculous gargantuan or</p><p id="p12"><span class="ts-link" data-t="7:41">7:41</span>otherwise raises concerns from a fiduciary perspective I suspect you&#x27;ll see my firm and I involved as well right Max there&#x27;s so much to discuss here I guess the board could also say well here&#x27;s another $55 billion package looks different same number I mean one thing I&#x27;m curious about you know Musk overnight was sort of threatening to leave Delaware and to reincorporate in Texas I believe or you know I think x he moved from Delaware to Nevada is that a re is that can he do that and and is that like like will there be another sort of you know trch of lawsuits if it happens because shareholders were say oh he&#x27;s he&#x27;s just doing this to to reduce our rights or</p><p id="p13"><span class="ts-link" data-t="8:21">8:21</span>something so look the simple answer to that is musk can&#x27;t do anything himself that&#x27;s a matter that the board has to decide in the first instance and then it&#x27;s presented to shareholders for a vote if shareholders upon the board&#x27;s recommendation decide to move to Nevada they have a right to do that but it&#x27;s not a musk decision let me also say that I&#x27;m not an expert in all 50 states laws but I suspect I get I would guess that even Nevada prohibits you from putting out misleading proxy statements and that if musk wants to go to Nevada and do the same thing he&#x27;s probably going to run into some some problems there as well it&#x27;s this little idea of telling the</p><p id="p14"><span class="ts-link" data-t="8:57">8:57</span>truth you know it&#x27;s it&#x27;s real basic right hey Greg real quick an audience question I&#x27;m just going to read do you worry about changing the Norms around Delaware corporate law away from non-intervention that was a follow on from what Max asked we have about 30 seconds no not at all I think it&#x27;s very important to recognize and and this is something that&#x27;s deeply embedded in Delaware law that every decision is twice tested both from a legal perspective and an equitable perspective and when fiduciaries act in a way that&#x27;s not equ or in violation of their duties you&#x27;re squarely within the long tradition of the Delaware law to call them on that</p></div></div>
       
       
@@ -313,7 +366,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -353,7 +406,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

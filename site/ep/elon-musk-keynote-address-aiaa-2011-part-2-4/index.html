@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -353,7 +406,7 @@
 <li data-z="103">用冗余分层代替单点加固。龙飞船的四层冗余靠的是让四套独立系统各自可靠，把一套系统做到极致可靠那条路它没走。工程上，分散失效点通常比强化单点更划算。</li>
 <li data-z="104">需求等不来。飞机早期的先驱没法预测后来的航班密度。如果你在做一件基础设施级别的事，别指望市场调研能告诉你天花板在哪，你得自己把供给做出来。</li>
 <li data-z="105">把大目标翻译成可核算的数字。几十万人、几百万吨、50吨运力、每年几千次航班，这些数字听着粗糙，却能让讨论从“值不值得”变成“差多少”。空谈愿景的人很多，能把愿景换算成工程参数的很少。</li>
-</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+</ul></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=rjzMs4nvfcc" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:00">0:00</span>and all of these things are important revenue streams because they they&#x27;re they&#x27;re needed to fund future developments and you know we&#x27;ve got obviously Falcon I and Falcon heavy we&#x27;ve got the Merin engine which is about to go through its a fourth iteration with the Merin 1D and it&#x27;s it&#x27;s the the highest efficiency hydrocarbon us hydrocarbon engine ofc flight and then we we&#x27;ll probably be a be able to announce maybe late this year or early next year a a new engine development that we&#x27;re going to do which is going to be very exciting and that that that&#x27;ll be super high efficiency stage combustion engine and we want to make sure we have all L ducks in the row before we</p><p id="p1"><span class="ts-link" data-t="0:52">0:52</span>announce announce that development but I think that&#x27;s going to be very exciting and and also something like that&#x27;s very important for you know if you if we want to take significant amounts of of cargo and people to to Mars because I think ultimately the the the thing that is super important in in the grand scale of history is are we on a path to becoming a multiplet species or not and and if we&#x27;re not</p><p id="p2"><span class="ts-link" data-t="1:21">1:21</span>well that&#x27;s that&#x27;s not a very bright future you know we&#x27;ll simply be hanging out on Earth until some eventual Calamity claims us so so that that&#x27;s really the important thing and so that that&#x27;s kind of you know how I&#x27;m judging SpaceX like are we are we helping move things in that direction and in order to have a self-sustaining civilization on Mars you have to be able to transport hundreds of probably hundreds of thousands maybe millions of people and and millions of tons of cargo so so clearly very significant breakthroughs are are needed and I I think the most fundamental breakthrough is a rapidly and fully reusable rocket and</p><p id="p3"><span class="ts-link" data-t="2:13">2:13</span>those are important qualifiers it doesn&#x27;t help if it&#x27;s partially reusable and it doesn&#x27;t help if it&#x27;s not rapidly reusable because if you think of any other motor transport like U really any any motor transport from bicycles cars planes boats they&#x27;re all rapidly and completely reusable I mean apart from occasional maintenance items so and and that that&#x27;s why they function well you know if if you had a car if you had a car where you had to say you know replace the tires on every trip or could you could only use it once a week that wouldn&#x27;t be a very good car or plane or anything so it&#x27;s got to be fully and rapidly reusable just like when you know when the R Brothers</p><p id="p4"><span class="ts-link" data-t="2:59">2:59</span>invented create the airplane they actually didn&#x27;t didn&#x27;t invent something that flu they invent they invented controlled power flight that that was really those those are really what what made an airplane very useful and so so that that&#x27;s that&#x27;s something that either SpaceX or or some some organization has to invent I think that&#x27;s a critical element in revolutionizing space you</p><p id="p5"><span class="ts-link" data-t="3:27">3:27</span>if you look at say the say the Falcon 9 the cost of propellant on falcon9 is about 3% of the cost of of the mission so you know the that means if if we could fully reuse the the vehicle I mean it&#x27;s at least a two order of magnitude increase in the cost efficiency of the of the flight you</p><p id="p6"><span class="ts-link" data-t="3:51">3:51</span>know or sort of another way you know it&#x27;s one thing to ask for say 3% of of the GDP P to establish life on another planet it is another thing to ask for 100% of the GDP that it will simply not occur people need food and think you know basic stuff like that so that that&#x27;s something that I think is also an important long-term thing that has to occur and and in that regard I&#x27;m I&#x27;m a fan of vertical takeoff and Landing because obviously if you&#x27;re going to go to to other places in the solar system you know there there no air on the moon and there&#x27;s no runways so wings are not a great idea and yeah so</p><p id="p7"><span class="ts-link" data-t="4:37">4:37</span>so those are sort of the things that we hope to do in in in the future and we&#x27;re hiring a lot of people last year we we grew by 50% in in Personnel we&#x27;re continuing to grow rapidly this year so we&#x27;re now about 1,500 people and yeah and we have significant operations in Florida Texas and California and in the DC Virginia</p><p id="p8"><span class="ts-link" data-t="5:05">5:05</span>area so Ro always looking for great talent so if if anyone&#x27;s interested in joining SpaceX please send us your resume and let&#x27;s say I think I think with that I&#x27;d be happy to open the floor to any questions you have sure so the question is do do do we have an architecture planned out for M trips</p><p id="p9"><span class="ts-link" data-t="5:45">5:45</span>we we do I wouldn&#x27;t say it is fleshed out to a detailed level but we know what the ingredients are you know which is a vehicle that&#x27;s capable of of delivering substan stantial Mass to the surface of Mars and and then returning to Earth as well and but I think we&#x27;ll take this in steps certainly something like Falcon heavy could deliver you know decent payload to the surface of Mars it&#x27;s sort of on the order of 12 to 15 metric tons so that that&#x27;s not bad I I think you probably want a vehicle that can deliver something a loader of 50 metric tons you know and be able to do that in a fully reusable manner then then the whole equation Works and there&#x27;s more than one way</p><p id="p10"><span class="ts-link" data-t="6:39">6:39</span>to skin that cat but yeah you that that&#x27;s that&#x27;s what I think yes I have a question on the reusable vehicle that you talked about I I&#x27;ve seen a lot of studies of these vehicles and the key to to making it work seems to be to get on the order of two or 300 missions a year to keep the cost down what do you see as the the Commercial Drive that will will result in the need for two or 300 launches a year yeah I mean it that&#x27;s always a tough question to answer and and I suspect in the early days of of airplanes people didn&#x27;t imagine that there would be this many airplane trips but I I think the biggest driver for that is is really a base on mars or you know</p><p id="p11"><span class="ts-link" data-t="7:31">7:31</span>potentially based on the moon I don&#x27;t think there&#x27;s really a need for that many satellites for example and I I I also don&#x27;t think it&#x27;s that there&#x27;s a rational basis for like you know think things like mining helium 3 on the moon and or really I have a hard time imagining mining anything anywhere and bringing it to Earth because Earth has got a lot of stuff Earth as Christ has got almost every I mean Earth is Big but I do think there is a market</p><p id="p12"><span class="ts-link" data-t="8:05">8:05</span>for people who would want to move to the moon or move to Mars and and and that that I think is is is interesting and it could support a huge number of flights that thousands of flights a year can you tell us your plans for the driving capsule and time get sure question just about our Dragon spacecraft and what we&#x27;re going to do with respect to carrying transporting astronauts and whatnot so the we actually designed the Falcon 9 and dragon to meet the published</p><p id="p13"><span class="ts-link" data-t="8:52">8:52</span>NASA human rating design guidelines so you know things like subd designing to a 1.4 factor of safety instead of 1.25 having a multi being multi failure to tolerance drag a Dragon for example can lose any two engines at any at any time and still be safe with respect to the space station can still translate and rotate as needed and we actually have a sort of a secondary heat shield behind the primary heat shield the avionics all two</p><p id="p14"><span class="ts-link" data-t="9:26">9:26</span>fail tent all that sort of stuff it&#x27;s it&#x27;s got window so the question is what doesn&#x27;t it have really the main thing is just the Escape system so so in terms of upgrading it we need to add a launch Escape and in this we&#x27;re taking a a sort of a different path than has been done before which is to tap the onboard propellant which is ANH as Escape propellant and because you either need to maneuver on orbit or you need to escape you don&#x27;t need to do both and this this makes for a very eff Mass efficient design it and it also means</p><p id="p15"><span class="ts-link" data-t="10:06">10:06</span>that you can carry High Velocity Escape capability all the way to orbit as opposed to having to dump a launch Tower kind of early on and and then a sort of optional bonus is we can use those same engines to land propulsively now we&#x27;re still going to retain redundant parachutes on dragons so you still have redundant you know parachutes so effectively you&#x27;d have almost four levels of redundancy because the The Landing engines are themselves redundant and then you&#x27;ve got redundant main parachutes so like four things would have to fail before actually only on yeah the yeah four things in a row would have to fail in to for loss of life but then the neat</p><p id="p16"><span class="ts-link" data-t="10:57">10:57</span>thing about that is you could use it to propulse land in other places like Mars or moon or somewhere so I think it&#x27;s it&#x27;s got potential as a generalized science delivery platform for for other you know missions in the solar system</p></div></div>
       
       
@@ -381,7 +434,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -421,7 +474,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>

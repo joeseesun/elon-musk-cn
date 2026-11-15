@@ -81,6 +81,8 @@
     if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
     var mm = el.closest('.modal');
     if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var of = el.closest('[data-offline]');
+    if (of) { if (window.__pwaSaveOffline) window.__pwaSaveOffline(); return; }
     var sh = el.closest('[data-share]');
     if (sh) {
       var data = { title: document.title, url: location.href.split('#')[0] };
@@ -112,16 +114,67 @@
     if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
     else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  var SW_OK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  var pwaTimer = null;
+  function pwaToast(msg, actionLabel, onAction, sticky) {
+    var box = document.getElementById('pwaToast');
+    if (!box) {
+      var css = document.createElement('style');
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      document.head.appendChild(css);
+      box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+    }
+    box.textContent = '';
+    var span = document.createElement('span'); span.textContent = msg; box.appendChild(span);
+    if (actionLabel) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { box.classList.remove('show'); if (onAction) onAction(); });
+      box.appendChild(b);
+    }
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'pwa-x'; x.setAttribute('aria-label', '关闭'); x.textContent = '×';
+    x.addEventListener('click', function () { box.classList.remove('show'); }); box.appendChild(x);
+    requestAnimationFrame(function () { box.classList.add('show'); });
+    clearTimeout(pwaTimer);
+    if (!sticky) pwaTimer = setTimeout(function () { box.classList.remove('show'); }, 8000);
+  }
+  window.__pwaSaveOffline = function (urls) {
+    if (!SW_OK || !navigator.serviceWorker.controller) return pwaToast('离线保存暂不可用，请刷新后重试');
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_URLS', urls: [].concat(urls || location.href) });
+    pwaToast('已保存：断网后也能读这一页');
+  };
+  window.addEventListener('appinstalled', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = true; });
+    pwaToast('已安装到主屏幕 · 读过的文章可离线看');
+  });
+  if (SW_OK) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              pwaToast('有新版本可用', '立即更新', function () { nw.postMessage({ type: 'SKIP_WAITING' }); }, true);
+            }
+          });
+        });
+      }).catch(function () {});
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return; refreshing = true;
+        pwaToast('已更新到最新版本');
+      });
+    });
   }
 })();
 </script>
+<script src="/i18n.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
 <link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
 <link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
-<link rel="stylesheet" href="/style.css?v=9">
+<link rel="stylesheet" href="/style.css?v=14">
 </head>
 <body>
 <a class="skip-link" href="#main">跳到主要内容</a>
@@ -341,7 +394,7 @@
 
 <p data-z="98">最后一条是整场对话里最不显眼、也最容易被跳过的地方。马斯克讲了一整套关于删除和简化的哲学，最后卡住他的，是一秒钟里几次十几兆瓦的功率跳变。方法论能帮你砍掉多余的步骤，砍不掉物理规律。</p>
 
-<p data-z="99">分清哪些东西可以删、哪些东西必须扛，这大概是这套算法真正的终点。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
+<p data-z="99">分清哪些东西可以删、哪些东西必须扛，这大概是这套算法真正的终点。</p></div><aside class="colophon" aria-label="致读者"><div class="colo-k">致读者</div><p>这篇精读来自 elon.qiaomu.ai，一个人独立维护的非营利项目：从公开视频与文稿出发，经 AI 改写与逐篇校验，把几十分钟的访谈压缩成一篇值得静心读完的中文长文。这里没有广告，也不设付费墙。如果它让你有所收获，欢迎请作者喝杯咖啡。</p><div class="colo-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button><button type="button" class="colo-link" data-share>分享这篇</button><button type="button" class="colo-link" data-offline>离线保存</button><a class="colo-link" href="/feed.xml">RSS 订阅更新</a></div></aside></div>
       <div class="tab-panel" id="panel-tr" data-panel="tr"><div class="tr-note">YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。已按语句合并成段落，并去掉 um、uh 等口头填充词。 文稿来源：<a href="https://www.youtube.com/watch?v=CDZ9REOh2xA" target="_blank" rel="noopener">YouTube（自动/人工字幕）</a>。</div><div class="transcript-text"><p id="p0"><span class="ts-link" data-t="0:02">0:02</span>It&#x27;s very difficult. - Can you just speak to what it takes for a great engineering team for you? What I saw in Memphis, the supercomputer cluster is just this intense drive towards simplifying the process, understanding the process, constantly improving it, constantly iterating it.</p><p id="p1"><span class="ts-link" data-t="0:23">0:23</span>- Well, (laughs) it&#x27;s easy to say simplify, and it&#x27;s very difficult to do it. I have this very basic first principles algorithm that I run kind of as like a mantra, which is to first question the requirements, make the requirements less dumb. The requirement is always dumb to some degree.</p><p id="p2"><span class="ts-link" data-t="0:46">0:46</span>So if you wanna start off by reducing the number of requirements, and no matter how smart the person is who gave you those requirements, they&#x27;re still dumb to some degree. You have to start there because otherwise, you could get the perfect answer to the wrong question. So try to make the question the least wrong possible.</p><p id="p3"><span class="ts-link" data-t="1:04">1:04</span>That&#x27;s what question the requirements means. And then the second thing is try to delete whatever the step is. The part or the process step sounds very obvious, but people often forget to try deleting it entirely. And if you&#x27;re not forced to put back at least 10% of what you&#x27;d delete, you&#x27;re not deleting enough.</p><p id="p4"><span class="ts-link" data-t="1:31">1:31</span>And somewhat illogically, people often, most of the time, feel as though they&#x27;ve succeeded if they&#x27;ve not been forced to put things back in. But actually, they haven&#x27;t because they&#x27;ve been overly conservative and have left things in there that shouldn&#x27;t be. And only the third thing is try to optimize it or simplify it.</p><p id="p5"><span class="ts-link" data-t="1:57">1:57</span>Again, these all sound I think very obvious when I say them, but the number of times I&#x27;ve made these mistakes is more than I care to remember. That&#x27;s why I have this mantra. So in fact, I&#x27;d say that the most common mistake of smart engineers is to optimize a thing that should not exist.</p><p id="p6"><span class="ts-link" data-t="2:17">2:17</span>- Right. So like you say, you run through the algorithm and basically show up to a problem, show up to the supercomputer cluster and see the process and ask, &quot;Can this be deleted?&quot; - Yeah, first try to delete it. Yeah. - Yeah, that&#x27;s not easy to do. - No, and actually, what generally makes people uneasy</p><p id="p7"><span class="ts-link" data-t="2:41">2:41</span>is that you&#x27;ve gotta delete at least some of the things that you&#x27;d delete, you will put back in. But going back to sort of where our limbic system can steer us wrong is that we tend to remember, with sometimes a jarring level of pain, where we deleted something that we subsequently needed.</p><p id="p8"><span class="ts-link" data-t="3:02">3:02</span>And so people will remember that one time, they forgot to put in this thing three years ago and that caused them trouble. And so they overcorrect, and then they put too much stuff in there and over complicate things. So you actually have to say, &quot;No, we&#x27;re deliberately gonna delete more than we should.&quot;</p><p id="p9"><span class="ts-link" data-t="3:20">3:20</span>So we&#x27;re putting at least 1 in 10 things, we&#x27;re gonna add back in. - And I&#x27;ve seen you suggest just that, that something should be deleted and you can kind of see the pain. - Oh yeah, absolutely. - Everybody feels a little bit of the pain. - Absolutely, and I tell &#x27;em in advance, like, yeah, some of the things that we delete, we&#x27;re gonna put back in.</p><p id="p10"><span class="ts-link" data-t="3:42">3:42</span>And that people get a little shook by that. But it makes sense because if you&#x27;re so conservative as to never have to put anything back in, you obviously have a lot of stuff that isn&#x27;t needed. So you gotta overcorrect. This is, I would say, like a cortical override to Olympic instinct.</p><p id="p11"><span class="ts-link" data-t="4:02">4:02</span>- One of many that probably leaves us astray. - Yeah. And there&#x27;s like a step four as well, which is any given thing can be sped up, however fast you think it can be done. Like whatever the speed is being done, it can be done faster. But you shouldn&#x27;t speed things up until it&#x27;s off, until you&#x27;ve tried to delete it and optimize.</p><p id="p12"><span class="ts-link" data-t="4:21">4:21</span>Otherwise, you&#x27;re speeding up something that shouldn&#x27;t exist is absurd. And then the fifth thing is to automate it. - Damn. - And I&#x27;ve gone backwards so many times where I&#x27;ve automated something, sped it up, simplified it, and then deleted it. And I got tired of doing that. So that&#x27;s why I&#x27;ve got this mantra that is a very effective five-step process.</p><p id="p13"><span class="ts-link" data-t="4:45">4:45</span>It works great. - Well, when you&#x27;ve already automated, deleting must be real painful. - Yeah, that&#x27;s great. It&#x27;s like, wow, I really wasted a lot of effort there. - Yeah. - I mean, what you&#x27;ve done with the cluster in Memphis is incredible, just in a handful of weeks. - Yeah, it&#x27;s not working yet.</p><p id="p14"><span class="ts-link" data-t="5:04">5:04</span>So I don&#x27;t wanna pop the champagne corks. In fact, I have a call in a few hours with the Memphis team &#x27;cause we&#x27;re having some power fluctuation issues. So yeah, it&#x27;s like kind of a, when you do synchronized training, you&#x27;ve all these computers that are training where the training is synchronized to the sort of millisecond level.</p><p id="p15"><span class="ts-link" data-t="5:38">5:38</span>It&#x27;s like having an orchestra, and the orchestra can go loud to silent very quickly at subsecond level. And then the electrical system kind of freaks out about that. Like if you suddenly see giant shifts, 10, 20 megawatts several times a second, this is not what electrical systems are expecting to see.</p><p id="p16"><span class="ts-link" data-t="6:01">6:01</span>- So that&#x27;s one of the main things you have to figure out the cooling, the power, and then on the software as you go up the stack on how to do the distributed compute, all of that, all of that. - Today&#x27;s problem is dealing with extreme power jitter. - Jitter, power jitter. - Yeah.</p><p id="p17"><span class="ts-link" data-t="6:19">6:19</span>- That&#x27;s a nice ring to that. So that&#x27;s, okay. And you stayed up late into the night as you often do there. - Last week, yeah. - Last week? - Yeah. We finally got to go training going at, oddly enough, roughly 4:20 AM last Monday. - Total coincidence. - Yeah, I mean, maybe it was 422 or something.</p><p id="p18"><span class="ts-link" data-t="6:42">6:42</span>- Yeah, yeah, yeah. It&#x27;s that universe again with the jokes. - Yeah, exactly, just love it. - I mean, I wonder if you could speak to the fact that one of the things that you did when I was there is you went through all the steps of what everybody&#x27;s doing, Just to get a sense that you yourself understand it and everybody understands it so they can understand when something is dumb or some something is inefficient or that kinda stuff.</p><p id="p19"><span class="ts-link" data-t="7:05">7:05</span>- Yeah. - Can you speak to that? - Yeah, so look, I try to do, whatever the people at the front lines are doing, I try to do it at least a few times myself. So connecting fiber optic cables, diagnosing a faulty connection, that tends to be the limiting factor for large training clusters is the cabling.</p><p id="p20"><span class="ts-link" data-t="7:24">7:24</span>So many cables, because for a coherent training system where you&#x27;ve got RDMA remote, direct memory access, the whole thing is like one giant brain. So you&#x27;ve got to any connection. So any GPU can talk to any GPU out of 100,000. That is a crazy cable layout. - It looks pretty cool.</p><p id="p21"><span class="ts-link" data-t="7:54">7:54</span>- Yeah. - It&#x27;s like the human brain, but like at a scale that humans can visibly see. It is brain. - Yeah. I mean, the human brain also has, a massive amount of the brain tissue is the cables. - [Lex] Yeah. - So like the gray matter which is the compute, and then the white matter which is cables.</p><p id="p22"><span class="ts-link" data-t="8:15">8:15</span>The big percentage of your brain is just cables. - That&#x27;s what it felt like walking around in the supercomputer center is like, we&#x27;re walking around inside the brain. We&#x27;ll one day build a super intelligent, super, super intelligence system.</p></div></div>
       
       
@@ -369,7 +422,7 @@
         <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
       <nav class="ft-col" aria-label="关于"><h2>关于</h2>
         <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
-        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+        <a href="/stats/#corpus">下载语料</a><a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
       <div class="ft-col ft-support"><h2>支持这个项目</h2>
         <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
         <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
@@ -409,7 +462,7 @@
 </div>
 
 <script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
-<script src="/ep.js?v=6"></script>
+<script src="/ep.js?v=7"></script>
 <script src="/kit.js?v=1"></script>
 </body>
 </html>
