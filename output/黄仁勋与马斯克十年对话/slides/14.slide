@@ -1,0 +1,49 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>彼此眼中的对方</Text>
+    </Box>
+    <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>从文稿里，读出两个人的互相评价</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 26, marginTop: 24, flex: 1 }}>
+      <Box style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 28, borderTop: '4px solid #63A7D4', flexDirection: 'column' }}>
+        <Text style={{ fontSize: 16, color: '#63A7D4', letterSpacing: 2, fontWeight: 'bold' }}>马斯克 说 黄仁勋</Text>
+        <Box style={{ flexDirection: 'column', gap: 18, marginTop: 22 }}>
+          {[
+            { q: '"Jensen\'s awesome."', s: 'DealBook 2023 · 被问到黄仁勋时' },
+            { q: '"全世界只有一个人能建成 Colossus。"', s: '转述黄仁勋的评价 · 罗恩·巴伦访谈' },
+            { q: '"我这辈子没见过有东西建得这么快。"', s: '引黄仁勋评价 Terafab' },
+            { q: '"非常钦佩。"', s: '2025 股东大会 · 谈英伟达的赌注' },
+          ].map((it, i) => (
+            <Box key={i} style={{ flexDirection: 'column' }}>
+              <Text style={{ fontSize: 21, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.35 }}>{it.q}</Text>
+              <Text style={{ fontSize: 13, color: '#8FBCE4', marginTop: 4 }}>{it.s}</Text>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+      <Box style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 28, borderTop: '4px solid #8ED1A8', flexDirection: 'column' }}>
+        <Text style={{ fontSize: 16, color: '#8ED1A8', letterSpacing: 2, fontWeight: 'bold' }}>黄仁勋 说 马斯克 / 两人之间</Text>
+        <Box style={{ flexDirection: 'column', gap: 18, marginTop: 22 }}>
+          {[
+            { q: '"AI 会让马斯克更忙，也会让我更忙。"', s: '美沙论坛 · 谈生产力与工作' },
+            { q: '"这家公司直接飞出图表了。"', s: '谈拿到马斯克这个大客户的 Humain' },
+            { q: '"工程师中的工程师。"', s: 'GTC 2015 · 介绍马斯克上台' },
+            { q: '"就像火星一样。"', s: '调侃马斯克的时间表 · GTC 2015' },
+          ].map((it, i) => (
+            <Box key={i} style={{ flexDirection: 'column' }}>
+              <Text style={{ fontSize: 21, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.35 }}>{it.q}</Text>
+              <Text style={{ fontSize: 13, color: '#8FBCE4', marginTop: 4 }}>{it.s}</Text>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 14, marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#08131F' }}>结论：</Text>
+      <Text style={{ fontSize: 16, color: '#08131F' }}>十年间，两个人的措辞始终克制而有分寸——这是对手之间才有的敬意。</Text>
+    </Box>
+  </Box>
+</Slide>

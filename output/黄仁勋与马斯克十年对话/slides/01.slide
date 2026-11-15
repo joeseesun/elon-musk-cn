@@ -1,0 +1,20 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 0 }}>
+  <Box style={{ position: 'relative', width: 1280, height: 720 }}>
+    <Image src="assets/cover.png" style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, objectFit: 'cover' }} />
+    <Box style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, background: 'linear-gradient(0deg, rgba(6,14,26,0.96) 0%, rgba(6,14,26,0.82) 24%, rgba(6,14,26,0.25) 56%, rgba(6,14,26,0.05) 100%)' }} />
+    <Box style={{ position: 'absolute', bottom: 0, left: 0, width: 1280, height: 8, background: 'linear-gradient(90deg, #63A7D4 0%, #4DA3FF 48%, #8ED1A8 100%)' }} />
+    <Box style={{ position: 'absolute', left: 78, top: 78, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 22, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 15, color: '#A9CFE7', letterSpacing: 3, fontWeight: 600 }}>横跨 2015 — 2026 · 十一段公开对话</Text>
+    </Box>
+    <Box style={{ position: 'absolute', left: 78, bottom: 96, width: 1040 }}>
+      <Text style={{ fontSize: 84, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.08, letterSpacing: 1 }}>黄仁勋 <span style={{ color: '#63A7D4' }}>×</span> 马斯克</Text>
+      <Text style={{ fontSize: 30, color: '#E7E8E9', marginTop: 18, lineHeight: 1.35 }}>跨越十年的对话：从 651 段文稿里读出的算力与赌注</Text>
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 22, marginTop: 30 }}>
+        <Text style={{ fontSize: 17, color: '#A9CFE7' }}>GTC 2015 · 美沙投资论坛 2025 · xAI 全员会</Text>
+        <Box style={{ width: 1, height: 18, background: '#60676F' }} />
+        <Text style={{ fontSize: 17, color: '#8FBCE4' }}>非官方内容整理</Text>
+      </Box>
+    </Box>
+  </Box>
+</Slide>

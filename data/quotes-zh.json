@@ -1,0 +1,3598 @@
+{
+ "ep": {
+  "tesla-q3-2026-financial-results-and-q-a-webcast": [
+   {
+    "g": 0,
+    "t": -1,
+    "en": "We're, I think, aiming for 5 million vehicles a year by approximately 2030. And that's -- I think we've got a good shot of achieving that goal.",
+    "zh": "我们，我想，目标是到大约2030年达到每年500万辆车。而且——我认为我们很有机会实现这个目标。"
+   },
+   {
+    "g": 1,
+    "t": -1,
+    "en": "So we need to make, I think, on the order of 10,000 or 20,000 bots and then have them do self-play and we're building up an Optimus Academy where Optimus can practice doing a very wide range of tasks.",
+    "zh": "所以我们需要制造，我想，大约1万到2万台机器人，然后让它们进行自我对弈；我们正在建立一个Optimus学院，让Optimus练习执行非常广泛的任务。"
+   },
+   {
+    "g": 2,
+    "t": -1,
+    "en": "In terms of the initial customers for Optimus, I think it probably would be things that are industrial applications at first, things that are like dangerous repetitive tasks, things that people really don't want to do.",
+    "zh": "就Optimus的初始客户而言，我认为一开始很可能是工业应用，比如危险、重复性的任务，那些人们真的不想做的事。"
+   },
+   {
+    "g": 4,
+    "t": -1,
+    "en": "But the vast majority of the Cybercab stuff will be essentially Tesla-owned and transport as a service.",
+    "zh": "但Cybercab的绝大部分业务本质上将由Tesla拥有，并作为运输即服务来提供。"
+   },
+   {
+    "g": 11,
+    "t": -1,
+    "en": "But real production would be late '28, which is lightning fast by fab standards.",
+    "zh": "但真正的生产要到28年末，按晶圆厂的标准这已经是快得惊人。"
+   },
+   {
+    "g": 12,
+    "t": -1,
+    "en": "I think at some point, there will be more humanoid robots on Earth than there are humans.",
+    "zh": "我认为到了某个时候，地球上的人形机器人数量将超过人类数量。"
+   },
+   {
+    "g": 13,
+    "t": -1,
+    "en": "I think Tesla will end up doing a majority of all passenger miles on Earth in any country where it is allowed to operate freely.",
+    "zh": "我认为，在任何允许Tesla自由运营的国家，Tesla最终将承担地球上大部分客运里程。"
+   },
+   {
+    "g": 15,
+    "t": -1,
+    "en": "I'd be stunned if anyone has a robot that is remotely competitive with Optimus when we go -- when we start delivering it to customers, which is likely to be towards the end of next year.",
+    "zh": "如果在我们开始向客户交付Optimus时——那很可能是在明年年底——有人拥有一个能与Optimus有丝毫竞争力的机器人，我会感到震惊。"
+   }
+  ],
+  "tesla-q2-2026-financial-results-and-q-a-webcast": [
+   {
+    "g": 18,
+    "t": -1,
+    "en": "So there is no humanoid robot that is actually able to do generalized tasks. Optimus will be the first one that is capable of doing that, where it's not just a demo, it's genuinely useful in day-to-day life.",
+    "zh": "所以，目前还没有哪个人形机器人真正能完成通用任务。Optimus 将是第一个有能力做到这一点的，它不是演示，而是在日常生活中真正有用。"
+   },
+   {
+    "g": 21,
+    "t": -1,
+    "en": "We expect to be vertically integrated with robotaxi as we are in the rest of our business. So I don't think we're going to have any demand challenges with robotaxi.",
+    "zh": "我们预计 robotaxi 会像我们其他业务一样垂直整合。所以我认为 robotaxi 不会有什么需求挑战。"
+   },
+   {
+    "g": 23,
+    "t": -1,
+    "en": "You also got Starlink being integrated into the Cybercab and Starlink will be integrated into all of our vehicles, at least for markets that Starlink is active. Because for a robotaxi situation, you need to have coverage everywhere.",
+    "zh": "你们还会看到 Starlink 被整合进 Cybercab，而且 Starlink 将整合到我们所有车辆中，至少在 Starlink 活跃的市场如此。因为对 robotaxi 来说，你需要到处都有网络覆盖。"
+   },
+   {
+    "g": 24,
+    "t": -1,
+    "en": "One of the things for Cybercab should be noted is because it is a new vehicle chassis, we need to accumulate driving data that is specific to the Cybercab before we can put a lot of them on the road.",
+    "zh": "关于 Cybercab，有一点应该注意：因为它是全新的车辆底盘，我们需要积累 Cybercab 专属的驾驶数据，然后才能把大量车辆投放到路上。"
+   },
+   {
+    "g": 25,
+    "t": -1,
+    "en": "So an autonomous Semi is actually going to be very important to address the shortage of truck drivers.",
+    "zh": "所以，自动驾驶 Semi 对于解决卡车司机短缺问题实际上会非常重要。"
+   },
+   {
+    "g": 27,
+    "t": -1,
+    "en": "And that we aim to have an order of magnitude more production of Optimus 4 than Optimus 3. So sort of aspirationally 10 million units a year versus 1 million units a year of Optimus 3.",
+    "zh": "而且我们的目标是 Optimus 4 的产量比 Optimus 3 高一个数量级。所以，理想情况下是每年 1000 万台，而 Optimus 3 是每年 100 万台。"
+   },
+   {
+    "g": 28,
+    "t": -1,
+    "en": "And we're -- I'm very excited about the design of the Tesla AI chip. I think it's -- I think it's going to be the best edge computing chip in the world.",
+    "zh": "而且我们——我对 Tesla AI 芯片的设计非常兴奋。我认为它——我认为它将成为世界上最好的边缘计算芯片。"
+   },
+   {
+    "g": 29,
+    "t": -1,
+    "en": "But I think probably this is the fastest industrial scale-up since World War II in America.",
+    "zh": "但我认为这可能是美国自二战以来最快的工业扩张。"
+   },
+   {
+    "g": 32,
+    "t": -1,
+    "en": "I mean the solar battery combination will be how the vast majority of energy in the world is produced in the future.",
+    "zh": "我的意思是，太阳能与电池的组合将成为未来世界上绝大多数能源的生产方式。"
+   }
+  ],
+  "just-recorded-elon-musk-interviewed-by-jp-morgan-s-jamie-dimon": [
+   {
+    "g": 35,
+    "t": -1,
+    "en": "The peak bandwidth of a human is a few hundred bits per second, but bandwidth of a computer can be a trillion bits a second.",
+    "zh": "人类的峰值带宽是每秒几百比特，而计算机的带宽可以达到每秒一万亿比特。"
+   },
+   {
+    "g": 36,
+    "t": -1,
+    "en": "So Mars — I call Mars a fixer-upper of a planet, but it’s got a lot of potential.",
+    "zh": "所以火星——我称火星为一颗有待修缮的行星，但它潜力巨大。"
+   },
+   {
+    "g": 38,
+    "t": -1,
+    "en": "When they built Union Pacific back in the day, people thought they were crazy because, why are you trying to carry all this cargo and people to California? No one’s there. But now California is the biggest state in the country.",
+    "zh": "当年他们修建 Union Pacific 时，人们觉得他们疯了，因为——你为什么要把这么多货物和人运到加利福尼亚？那儿根本没人。但现在加利福尼亚是美国最大的州。"
+   },
+   {
+    "g": 39,
+    "t": -1,
+    "en": "An aircraft journey would be very expensive if you had to throw the plane away every time. And that’s how rockets have been in the past.",
+    "zh": "如果每次飞完都得把飞机扔掉，那坐飞机就会非常昂贵。而过去的火箭正是这样。"
+   },
+   {
+    "g": 42,
+    "t": -1,
+    "en": "And then Starship V4, we’re aiming for over 200 tons per mission and then being able to launch every hour.",
+    "zh": "然后 Starship V4，我们的目标是每次任务超过 200 吨，并且能够每小时发射一次。"
+   },
+   {
+    "g": 44,
+    "t": -1,
+    "en": "It’s worth noting that there’s not a single high-volume computer memory fab in America right now. Zero.",
+    "zh": "值得注意的是，美国目前没有一座大规模量产的计算机内存晶圆厂。零。"
+   },
+   {
+    "g": 47,
+    "t": -1,
+    "en": "We want to make humanity a spacefaring civilization. We want to take humanity to Mars and the moon and ultimately beyond. We want to make — it’s like science fiction — make it real.",
+    "zh": "我们想让人类成为太空文明。我们想把人类带到火星、月球，并最终走向更远的地方。我们想让——就像科幻小说那样——让它成真。"
+   },
+   {
+    "g": 48,
+    "t": -1,
+    "en": "But I think maybe the future AI will say, “Not bad for a human.”",
+    "zh": "但我觉得，未来的 AI 也许会说：“对一个人来说，不算差。”"
+   }
+  ],
+  "breaking-elon-musk-s-first-interview-since-jury-rejected-claim-a": [
+   {
+    "g": 55,
+    "t": -1,
+    "en": "I didn’t originally think I wanted to be doing things in AI because AI was somewhat of a double-edged sword.",
+    "zh": "我最初并不觉得自己想从事AI，因为AI某种程度上是一把双刃剑。"
+   },
+   {
+    "g": 56,
+    "t": -1,
+    "en": "And I do want to emphasize, like, being a multi-planet civilization doesn’t mean like we leave Earth and go somewhere else, because that would just be a single-planet civilization somewhere else.",
+    "zh": "我想强调，成为多行星文明并不意味着我们离开地球去别处，因为那只会是在别处的一个单行星文明。"
+   },
+   {
+    "g": 57,
+    "t": -1,
+    "en": "Earth is extremely easy and comfortable compared to the Moon, Mars, or pretty much anywhere else.",
+    "zh": "与月球、火星或几乎其他任何地方相比，地球都极其容易且舒适。"
+   },
+   {
+    "g": 66,
+    "t": -1,
+    "en": "It’s pretty obvious that we’re going to have AI that is vastly smarter than humans. And already, in some ways, it already is.",
+    "zh": "很明显，我们将拥有远比人类聪明的人工智能。而且在某些方面，它已经如此了。"
+   },
+   {
+    "g": 68,
+    "t": -1,
+    "en": "I think digital intelligence will exceed the sum of all human intelligence.",
+    "zh": "我认为数字智能将超过所有人类智能的总和。"
+   },
+   {
+    "g": 69,
+    "t": -1,
+    "en": "I predict that the economy is probably twice its current size in 5, maybe 6 years. 5 to 7 years.",
+    "zh": "我预测，经济规模在5年、也许6年后可能是当前的两倍。5到7年。"
+   },
+   {
+    "g": 70,
+    "t": -1,
+    "en": "All of human civilization currently uses less than a trillionth of the energy, of the power emitted by the Sun. Much less than a trillionth.",
+    "zh": "目前，全部人类文明使用的能量还不到太阳释放能量的万亿分之一。远不到万亿分之一。"
+   },
+   {
+    "g": 72,
+    "t": -1,
+    "en": "But if you have a transport network that is 3-dimensional with tunnels going all over the place, then you can address any arbitrary level of traffic.",
+    "zh": "但如果你有一个三维的交通网络，隧道遍布各处，那么你就能应对任意水平的交通流量。"
+   },
+   {
+    "g": 73,
+    "t": -1,
+    "en": "If you just know what to program into that synthetic RNA strand, you can basically, I think, cure almost anything.",
+    "zh": "如果你知道该往那段合成RNA里编写什么，你基本上就能，我认为，治愈几乎任何疾病。"
+   }
+  ],
+  "tesla-ceo-elon-musk-speaks-at-the-world-economic-forum-in-davos": [
+   {
+    "g": 87,
+    "t": -1,
+    "en": "The way I view it is, the image in my mind is of a tiny candle in a vast darkness, a tiny candle of consciousness that could easily go out.",
+    "zh": "我的看法是，我脑海中浮现的画面是：在广阔黑暗中有一支微小的蜡烛，那是一簇很容易熄灭的微小意识烛光。"
+   },
+   {
+    "g": 89,
+    "t": -1,
+    "en": "if you have a large number of humanoid robots, the economic output is the average productivity per robot times the number of robots.",
+    "zh": "如果你有大量人形机器人，经济产出就等于每台机器人的平均生产力乘以机器人的数量。"
+   },
+   {
+    "g": 98,
+    "t": -1,
+    "en": "I think the limiting factor for AI deployment is fundamentally electrical power.",
+    "zh": "我认为，AI 部署的限制因素从根本上说是电力。"
+   },
+   {
+    "g": 101,
+    "t": -1,
+    "en": "So the sun is 99.8% of the mass of the solar system. Jupiter is about 0.1% and everything else is miscellaneous.",
+    "zh": "所以太阳占太阳系质量的 99.8%。木星约占 0.1%，其余一切都只是零头。"
+   },
+   {
+    "g": 111,
+    "t": -1,
+    "en": "I think self-driving cars is essentially a solved problem at this point.",
+    "zh": "我认为，自动驾驶汽车在现阶段基本上已经是一个被解决的问题。"
+   },
+   {
+    "g": 115,
+    "t": -1,
+    "en": "So Starship, hopefully this year we should prove full reusability for Starship, which will be a profound invention because the cost of access to space will drop by a factor of a hundred when you achieve full reusability.",
+    "zh": "所以，Starship 希望今年能证明完全可重复使用；这将是一项意义深远的发明，因为一旦实现完全可重复使用，进入太空的成本将下降一百倍。"
+   },
+   {
+    "g": 117,
+    "t": -1,
+    "en": "So net effect is that the lowest cost place to put AI will be space, and that'll be true within two years, maybe three. Three at the latest.",
+    "zh": "所以净效果是，部署 AI 成本最低的地方将是太空，而且这会在两年内成真，也许三年。最迟三年。"
+   },
+   {
+    "g": 118,
+    "t": -1,
+    "en": "I think we might have AI that is smarter than any human by the end of this year. And I would say no later than next year.",
+    "zh": "我认为，到今年年底，我们可能就会拥有比任何人类都聪明的 AI。而且我要说，最迟明年。"
+   },
+   {
+    "g": 130,
+    "t": -1,
+    "en": "I've been asked a few times, \"Do I want to die on Mars?\" And I'm like, \"Yes, but just not on impact.\"",
+    "zh": "有人问过我几次：‘你想死在火星上吗？’我说：‘想，但别是撞上去那一刻。’"
+   },
+   {
+    "g": 132,
+    "t": -1,
+    "en": "And generally, I think for quality of life, it is actually better to err on the side of being an optimist and wrong rather than a pessimist and right.",
+    "zh": "总的来说，我认为就生活质量而言，宁可做一个乐观但判断错误的人，也比做一个悲观却判断正确的人更好。"
+   }
+  ],
+  "elon-musk-interview-with-katie-miller": [
+   {
+    "g": 142,
+    "t": -1,
+    "en": "Assuming the current trend of artificial intelligence and robotics continues, which seems likely, the AI and robots will be able to do anything that humans want them to do, essentially.",
+    "zh": "假设人工智能和机器人技术的当前趋势延续下去——这看起来很有可能——那么AI和机器人将基本能够做人类想让它们做的任何事。"
+   },
+   {
+    "g": 143,
+    "t": -1,
+    "en": "People will be able to do whatever they want with their free time. Work will be optional.",
+    "zh": "人们将能够用空闲时间做任何自己想做的事。工作将变成可选项。"
+   },
+   {
+    "g": 148,
+    "t": -1,
+    "en": "I tried having less than six hours sleep, but although I’m awake more hours per day, my cognitive function is reduced.",
+    "zh": "我试过睡不到六小时，但虽然每天醒着的时间更多，我的认知功能却下降了。"
+   },
+   {
+    "g": 149,
+    "t": -1,
+    "en": "I try to segment the days so that there’s not too much context switching, because arguably fear is not the mind killer, context switching is.",
+    "zh": "我尽量把每天分段，避免太多任务切换，因为可以说，恐惧不是心智杀手，任务切换才是。"
+   },
+   {
+    "g": 160,
+    "t": -1,
+    "en": "If there are historians in the future, they’ll look back at Starship and say it was one of the most profound things that ever happened.",
+    "zh": "如果未来有历史学家，他们会回顾Starship，说它是有史以来最深刻的事件之一。"
+   },
+   {
+    "g": 167,
+    "t": -1,
+    "en": "I have seen no evidence of aliens. No one on the SpaceX senior team has any evidence of aliens.",
+    "zh": "我没有看到任何外星人存在的证据。SpaceX高级团队里也没有任何人掌握外星人存在的证据。"
+   },
+   {
+    "g": 193,
+    "t": -1,
+    "en": "I do have this theory about predicting the future, which is that the most interesting outcome is the most likely.",
+    "zh": "我确实有一个预测未来的理论：最有趣的结果最有可能发生。"
+   },
+   {
+    "g": 214,
+    "t": -1,
+    "en": "It should be possible for somebody to post content as a new user with no followers. And if that content is excellent, it gets seen by a lot of people.",
+    "zh": "应该有可能让某人以新用户身份、在没有粉丝的情况下发布内容。如果那内容很出色，它就会被很多人看到。"
+   },
+   {
+    "g": 224,
+    "t": -1,
+    "en": "I did originally come to North America with, I don’t know, $2,500 Canadian. So I don’t know, maybe $2,000 U.S., one bag of books and one bag of clothes in Montreal at age 17. So that is how I started out.",
+    "zh": "我最初来北美时，17岁，在蒙特利尔，带着——我也不知道——2500加元。所以，我不知道，也许2000美元，一包书和一包衣服。这就是我的起点。"
+   }
+  ],
+  "elon-musk-a-different-conversation-w-nikhil-kamath-full-episode": [
+   {
+    "g": 262,
+    "t": -1,
+    "en": "In fact, safe to say that a single human cannot make a spaceship. I could not make a spaceship by myself. But with a collection of humans, we can make spaceships.",
+    "zh": "事实上，可以说单个人造不出飞船。我自己就造不出飞船。但一群人合作，我们就能造出飞船。"
+   },
+   {
+    "g": 264,
+    "t": -1,
+    "en": "So you know, physics, I would say, is the study of that which has predictive value.",
+    "zh": "所以你知道，我会说，物理学研究的是那些具有预测价值的东西。"
+   },
+   {
+    "g": 279,
+    "t": -1,
+    "en": "My prediction is in less than 20 years, working will be optional. Working at all will be optional, like a hobby, pretty much.",
+    "zh": "我的预测是，不到20年，工作将变成可选项。完全可以不工作，差不多就像爱好一样。"
+   },
+   {
+    "g": 281,
+    "t": -1,
+    "en": "But then at a certain point AI will actually saturate on anything humans can think of. And then at that point it becomes a situation where AI is doing things for AI and robotics are doing things for AI and robotics because they run out of things to do to make the humans happy.",
+    "zh": "但到了某个时点，AI 实际上会穷尽人类能想到的一切。到那时，就会变成 AI 为 AI 做事、机器人为 AI 和机器人做事，因为它们已经想不出还能做什么来让人类开心。"
+   },
+   {
+    "g": 293,
+    "t": -1,
+    "en": "So energy is, energy is the real, is the true currency. This is why I said Bitcoin is based on energy. You can’t legislate energy.",
+    "zh": "所以能源是，能源才是真正的、真正的货币。这就是我说比特币基于能源的原因。你没法靠立法变出能源。"
+   },
+   {
+    "g": 310,
+    "t": -1,
+    "en": "So I think that from a Darwinian perspective, the simulations most likely to survive are going to be the ones that are the most interesting simulations, which therefore means that the most interesting outcome is the most likely.",
+    "zh": "所以我认为，从达尔文主义的角度看，最可能存留下来的模拟，将会是最有趣的模拟，因此这意味着最有趣的结果最有可能发生。"
+   },
+   {
+    "g": 345,
+    "t": -1,
+    "en": "But like I said, the AI and robots, AI and robotics is a supersonic tsunami. So this is really going to be the most radical change that we’ve ever seen.",
+    "zh": "但就像我说的，AI 和机器人，AI 与机器人技术是一场超音速海啸。所以这真的将是我们见过的最剧烈的变化。"
+   },
+   {
+    "g": 348,
+    "t": -1,
+    "en": "The central lesson being, don’t force an AI to lie.",
+    "zh": "核心教训是：不要强迫 AI 撒谎。"
+   },
+   {
+    "g": 400,
+    "t": -1,
+    "en": "Would you want tariffs between each state within the United States? No, that would be disastrous for the economy. So then why do you want tariffs between countries?",
+    "zh": "你会希望美国各州之间也有关税吗？不会，那对经济会是灾难性的。那么，为什么你会希望国家之间有关税呢？"
+   },
+   {
+    "g": 412,
+    "t": -1,
+    "en": "It’s very easy to give money away to get the appearance of goodness. It is very difficult to give money away for the reality of goodness. Very difficult.",
+    "zh": "把钱给出去、换来善的表象很容易。为了善的实质而把钱给出去非常困难。非常困难。"
+   }
+  ],
+  "neuralink-update-summer-2025": [
+   {
+    "g": 794,
+    "t": 104,
+    "en": "So you are your brain, and your experiences are these neurons firing with trillions of synapses that somehow lead to conscious comprehension of the world.",
+    "zh": "所以你就是你的大脑，你的体验就是这些神经元以数万亿个突触放电，不知怎地产生了对世界的有意识理解。"
+   },
+   {
+    "g": 800,
+    "t": 319,
+    "en": "So what we're creating here with a Neuralink device is a generalized input output technology for the brain.",
+    "zh": "我们用 Neuralink 设备打造的，是一种面向大脑的通用输入输出技术。"
+   },
+   {
+    "g": 802,
+    "t": 393,
+    "en": "So a human bandwidth output is less than one bit per second over the course of a day.",
+    "zh": "所以，按一天来算，人类的输出带宽不到每秒一比特。"
+   },
+   {
+    "g": 809,
+    "t": 633,
+    "en": "So people actually are already a cyborg.",
+    "zh": "所以人类其实已经是赛博格了。"
+   },
+   {
+    "g": 850,
+    "t": 1985,
+    "en": "The future's gonna be weird.",
+    "zh": "未来会很奇怪。"
+   },
+   {
+    "g": 852,
+    "t": 2049,
+    "en": "So you could reanimate the body. So that if you have a neural link implant in the brain and then one in the spinal cord, then you can actually bridge the signals and you could walk again and have full body functionality.",
+    "zh": "所以你可以让身体重新动起来。也就是说，如果大脑里有一个 Neuralink 植入物，脊髓里也有一个，你就能桥接信号，重新行走，恢复全身功能。"
+   },
+   {
+    "g": 857,
+    "t": 2199,
+    "en": "Instead of typing with your finger or like moving the mouse or talking to your phone, you'll be able to interact with computer with a speed of thought.",
+    "zh": "你不用再用手指打字、移动鼠标或对着手机说话，你将能以思维的速度与计算机交互。"
+   },
+   {
+    "g": 873,
+    "t": 2668,
+    "en": "If your neural signals didn't drift, you couldn't grow. When you wake up the next day, you're not the same person you were the day before.",
+    "zh": "如果你的神经信号不漂移，你就无法成长。第二天醒来时，你已不是前一天的那个人。"
+   },
+   {
+    "g": 894,
+    "t": 3267,
+    "en": "And so in some sense, we're really extending the fundamental substrate of the brain.",
+    "zh": "所以某种意义上，我们确实在扩展大脑的基本基质。"
+   },
+   {
+    "g": 901,
+    "t": 3471,
+    "en": "We are trying to drastically expand the amount of bandwidth that you have access to to have a much richer experience and superhuman capabilities.",
+    "zh": "我们正试图大幅扩展你能访问的带宽，从而获得更丰富的体验和超人的能力。"
+   }
+  ],
+  "joe-rogan-experience-2404-elon-musk": [
+   {
+    "g": 457,
+    "t": 1068,
+    "en": "But that's the largest flying object ever made.",
+    "zh": "但那是史上最大的飞行物体。"
+   },
+   {
+    "g": 467,
+    "t": 1369,
+    "en": "And each Raptor engine is producing twice as much thrust as all four engines on a 747.",
+    "zh": "而且每台 Raptor 发动机产生的推力，相当于一架 747 上全部四台发动机总推力的两倍。"
+   },
+   {
+    "g": 470,
+    "t": 1481,
+    "en": "And if the gravity was even 10% or 20% higher, we'd be stuck on Earth forever. We could not use, certainly couldn't use conventional rockets. You'd have to blow yourself off the surface with a nuclear bomb or something crazy.",
+    "zh": "而如果重力再高10%或20%，我们就会永远被困在地球上。我们无法使用——肯定无法使用常规火箭。你得用核弹之类疯狂的东西把自己从地表炸出去。"
+   },
+   {
+    "g": 472,
+    "t": 1552,
+    "en": "So it's fair to say that we have not yet succeeded in achieving full reusability, but we at last have a rocket where full reusability is possible. And I think we'll achieve it next year.",
+    "zh": "所以可以公平地说，我们还没有成功实现完全可重复使用，但我们终于有了一枚让完全可重复使用成为可能的火箭。而且我认为我们明年就会实现。"
+   },
+   {
+    "g": 483,
+    "t": 1895,
+    "en": "So like, I think it's, we want the future to look like the future.",
+    "zh": "所以就像，我觉得，我们希望未来看起来像未来。"
+   },
+   {
+    "g": 494,
+    "t": 2234,
+    "en": "The Cybertruck can clear a quarter mile while towing a Porsche 911, faster than a Porsche 911. It can out tow an F350 diesel.",
+    "zh": "Cybertruck 可以拖着保时捷 911 跑完四分之一英里，而且比保时捷 911 还快。它的拖拽能力能超过 F350 柴油版。"
+   },
+   {
+    "g": 509,
+    "t": 2758,
+    "en": "I think that simply allowing the truth to be told was just shedding sunlight is the best disinfectant, as they say. And just allowing sunlight kills the virus.",
+    "zh": "我认为，仅仅允许真相被讲出来，就是让阳光照进来——俗话说，阳光是最好的消毒剂。而仅仅让阳光照进来就能杀死病毒。"
+   },
+   {
+    "g": 546,
+    "t": 3817,
+    "en": "I think you should view any given messaging system as not whether it's secure or not, but there are degrees of insecurity. So there's just some things that are less insecure than others.",
+    "zh": "我认为，你应该把任何消息系统看作不是安全或不安全，而是存在不同程度的不安全。所以有些东西只是没那么不安全而已。"
+   },
+   {
+    "g": 552,
+    "t": 4009,
+    "en": "And I think that there won't be operating systems. There won't be apps. In the future, there won't be operating systems or apps.",
+    "zh": "而且我认为，不会再有操作系统。不会再有应用。未来不会再有操作系统或应用。"
+   },
+   {
+    "g": 555,
+    "t": 4108,
+    "en": "Yeah, and there'll be, like most of what people consume in five or six years, maybe sooner than that, will be just AI-generated content.",
+    "zh": "是的，而且大概五六年内，也许更早，人们消费的大部分内容都会只是 AI 生成的内容。"
+   }
+  ],
+  "tesla-q3-2025-financial-results-and-q-a-webcast": [
+   {
+    "g": 1002,
+    "t": -1,
+    "en": "If you buffer the energy with batteries, you can effectively double the energy output in the United States just with batteries, pulling no incremental power plants.",
+    "zh": "如果用电池来缓冲能量，仅靠电池就能让美国的能源输出实际上翻倍，而不需要新增发电厂。"
+   },
+   {
+    "g": 1003,
+    "t": -1,
+    "en": "We do expect to be operating robotaxi in, I think, about eight to ten metro areas by the end of the year.",
+    "zh": "我们确实预计，到今年年底会在约八到十个都市区运营 robotaxi。"
+   },
+   {
+    "g": 1005,
+    "t": -1,
+    "en": "With a humanoid robot, there is no supply chain. In order to manufacture that, Tesla actually has to be very vertically integrated and manufacture very deep into the supply chain, manufacture the parts internally because there just is no supply chain.",
+    "zh": "对人形机器人来说，根本不存在现成的供应链。为了制造它，Tesla 实际上必须高度垂直整合，深入供应链进行制造，内部生产零件，因为根本没有供应链。"
+   },
+   {
+    "g": 1006,
+    "t": -1,
+    "en": "By some metrics, the AI five chip will be 40 times better than the AI four chip. Not 40%, 40 times.",
+    "zh": "从某些指标看，AI five 芯片将比 AI four 芯片好 40 倍。不是 40%，是 40 倍。"
+   },
+   {
+    "g": 1008,
+    "t": -1,
+    "en": "At this point, I feel essentially 100% confident, I say not essentially, 100% confident that we can solve unsupervised full self-driving at a safety level much greater than human.",
+    "zh": "此时此刻，我基本上 100% 有信心——不，不是基本上，是 100% 有信心——我们能解决无监督全自动驾驶，并且安全水平远高于人类。"
+   },
+   {
+    "g": 1009,
+    "t": -1,
+    "en": "You can think of Tesla as, like, I don't know, a dozen startups in one company. I've initiated every one of those startups.",
+    "zh": "你可以把 Tesla 看成，怎么说呢，一家公司里的十几家初创公司。每一家都是我发起的。"
+   },
+   {
+    "g": 1012,
+    "t": -1,
+    "en": "All it takes is one in 10,000 trips to go wrong, and you've got an issue.",
+    "zh": "只要一万次行程里有一次出问题，你就麻烦了。"
+   },
+   {
+    "g": 1013,
+    "t": -1,
+    "en": "The first priority when we release a major new software architecture for Autopilot is safety. It starts off with safety, obviously, safety prioritized, and then solve comfort thereafter.",
+    "zh": "我们发布 Autopilot 重大新软件架构时，第一优先级是安全。显然，一开始就是安全优先，然后再解决舒适性。"
+   },
+   {
+    "g": 1017,
+    "t": -1,
+    "en": "I'm confident in saying that Tesla has the highest intelligence density. When you look at the intelligence per gigabyte, I think Tesla AI is probably an order of magnitude better than anyone else.",
+    "zh": "我可以自信地说，Tesla 拥有最高的智能密度。如果看每 GB 的智能，我认为 Tesla AI 可能比任何其他人都好一个数量级。"
+   },
+   {
+    "g": 1018,
+    "t": -1,
+    "en": "We're going to be building a million units Optimus production line, hopefully with the production start towards the end of next year.",
+    "zh": "我们将建设一条 100 万台 Optimus 的生产线，希望明年年底前后开始生产。"
+   }
+  ],
+  "tesla-q1-2025-financial-results-and-q-a-webcast": [
+   {
+    "g": 940,
+    "t": -1,
+    "en": "I continue to believe that Tesla, with excellent execution, will be the most valuable company in the world by far.",
+    "zh": "我仍然相信，只要执行出色，Tesla将远远成为世界上最有价值的公司。"
+   },
+   {
+    "g": 942,
+    "t": -1,
+    "en": "I predict that there'll be millions of Teslas operating fully autonomously in the second half of next year.",
+    "zh": "我预测，明年下半年会有数百万辆Tesla实现完全自动驾驶运营。"
+   },
+   {
+    "g": 952,
+    "t": -1,
+    "en": "we want autonomy to be definitively safer than manual driving. So it's not enough that it'd just be as safe, it needs to be meaningfully safer than if it's cars manually driven.",
+    "zh": "我们希望自动驾驶明确比人工驾驶更安全。所以仅仅一样安全还不够，它必须比人工驾驶的汽车显著更安全。"
+   },
+   {
+    "g": 953,
+    "t": -1,
+    "en": "I don't see anyone being able to compete with Tesla at present.",
+    "zh": "目前我看不到有谁能与Tesla竞争。"
+   },
+   {
+    "g": 969,
+    "t": -1,
+    "en": "The factory is the product as much as the car is the product.",
+    "zh": "工厂本身就是产品，和汽车一样。"
+   },
+   {
+    "g": 977,
+    "t": -1,
+    "en": "The best of all possible worlds would be figuring out how to have no anode. Best part being no part.",
+    "zh": "最理想的情况是想办法不用负极。最好的零件就是没有零件。"
+   },
+   {
+    "g": 984,
+    "t": -1,
+    "en": "anyone here who tells you they can predict, with precision, the production ramp of a truly new product doesn't know what they're talking about. It is literally impossible.",
+    "zh": "这里任何告诉你他们能精确预测一款全新产品量产爬坡的人，都不知道自己在说什么。这根本不可能。"
+   },
+   {
+    "g": 986,
+    "t": -1,
+    "en": "The reality is that, in the future, most people are not going to buy cars.",
+    "zh": "现实是，未来大多数人不会买车。"
+   },
+   {
+    "g": 987,
+    "t": -1,
+    "en": "In the future, in the not too distant future, buying a gasoline car that is not autonomous will be like riding a horse while using a flip phone.",
+    "zh": "未来，在不太遥远的未来，买一辆非自动驾驶的汽油车，就像骑着马用翻盖手机。"
+   },
+   {
+    "g": 1000,
+    "t": -1,
+    "en": "\"Any country that cannot manufacture its own drones is doomed to be the vassal state of any country that can.\"",
+    "zh": "任何无法自己制造无人机的国家，都注定会成为能制造无人机的国家的附庸国。"
+   }
+  ],
+  "2025-annual-shareholder-meeting-tesla": [
+   {
+    "g": 905,
+    "t": -1,
+    "en": "Optimus will actually eliminate poverty. Optimus will actually give people incredible medical care.",
+    "zh": "Optimus 真的能消除贫困。Optimus 真的能给人们提供极好的医疗。"
+   },
+   {
+    "g": 907,
+    "t": -1,
+    "en": "Actually, Tesla will be way, way, way bigger than Berkshire long term.",
+    "zh": "其实，长期来看，Tesla 会比 Berkshire 大得多得多得多。"
+   },
+   {
+    "g": 911,
+    "t": -1,
+    "en": "So aspirationally, we’d aim to increase vehicle production by about 50% by the end of next year.",
+    "zh": "所以，作为目标，我们希望到明年年底把汽车产量提高约 50%。"
+   },
+   {
+    "g": 917,
+    "t": -1,
+    "en": "Optimus and, I think, Tesla vehicles will play a big role on the moon and Mars.",
+    "zh": "我认为，Optimus 和 Tesla 车辆将在月球和火星上发挥重要作用。"
+   },
+   {
+    "g": 919,
+    "t": -1,
+    "en": "And so if the output of goods and services grows faster than the money supply, then you necessarily have deflation or vice versa.",
+    "zh": "所以，如果商品和服务的产出增长快于货币供应增长，那就必然会出现通缩，反之亦然。"
+   },
+   {
+    "g": 920,
+    "t": -1,
+    "en": "I actually think miles driven will increase because it is now much less painful to travel somewhere.",
+    "zh": "我其实认为，行驶里程会增加，因为现在去某个地方出行没那么痛苦了。"
+   },
+   {
+    "g": 923,
+    "t": -1,
+    "en": "Now with Starship, like, I see a path to Starship cost per ton to orbit being lower than air flight.",
+    "zh": "现在有了 Starship，我认为有一条路可以让 Starship 每吨入轨成本低于航空飞行。"
+   },
+   {
+    "g": 926,
+    "t": -1,
+    "en": "So I think Tesla could actually end up having the largest—Tesla might end up having the most amount of AI inference compute in the world.",
+    "zh": "所以我认为，Tesla 最终可能拥有最大的——Tesla 最终可能拥有世界上最多的 AI 推理算力。"
+   },
+   {
+    "g": 933,
+    "t": -1,
+    "en": "If artificial intelligence vastly exceeds the sum of human intelligence, it is difficult to imagine that any humans will actually be in charge.",
+    "zh": "如果人工智能远超人类智能的总和，很难想象还会有任何人类真正掌权。"
+   },
+   {
+    "g": 936,
+    "t": -1,
+    "en": "So we will actually have to spend a lot of money on training. Like, ultimately, it will be tens of billions of dollars on training compute.",
+    "zh": "所以我们实际上必须在训练上花很多钱。最终，训练算力上的投入会达到数百亿美元。"
+   }
+  ],
+  "tesla-q4-and-full-year-2025-financial-results-and-q-a-webcast": [
+   {
+    "g": 1020,
+    "t": -1,
+    "en": "I think with the advent or continued growth of AI and robotics, I think we actually are headed to a future of universal income, not universal basic income, but universal high income.",
+    "zh": "我认为，随着人工智能和机器人技术的出现或持续增长，我们实际上正走向一个全民收入的时代，不是全民基本收入，而是全民高收入。"
+   },
+   {
+    "g": 1023,
+    "t": -1,
+    "en": "The vast majority of miles traveled will be autonomous in the future.",
+    "zh": "未来绝大多数行驶里程都将是自动驾驶。"
+   },
+   {
+    "g": 1024,
+    "t": -1,
+    "en": "You would expect CyberCab to be used probably fifty or sixty hours a week instead of the ten or eleven hours a week that a driven vehicle is used.",
+    "zh": "你可以预期 CyberCab 每周大概使用五六十个小时，而不是有人驾驶车辆每周使用十到十一个小时。"
+   },
+   {
+    "g": 1025,
+    "t": -1,
+    "en": "I really think long-term, the only vehicles that we'll make will be autonomous vehicles with the exception of the next generation Roadster which we're hoping to debut in April.",
+    "zh": "我真的认为，长期来看，我们唯一会制造的车辆将是自动驾驶汽车，例外是下一代 Roadster，我们希望它在四月首次亮相。"
+   },
+   {
+    "g": 1028,
+    "t": -1,
+    "en": "We wouldn't expect to have any kind of significant Optimus production volume until probably the end of this year.",
+    "zh": "我们预计在今年年底之前，Optimus 不会有任何可观的产量。"
+   },
+   {
+    "g": 1030,
+    "t": -1,
+    "en": "We don't have any layoff plans. We expect to actually increase headcount.",
+    "zh": "我们没有任何裁员计划。我们实际上预计会增加员工人数。"
+   },
+   {
+    "g": 1034,
+    "t": -1,
+    "en": "When I look ahead at what's the limiting factor for Tesla, Inc. growth if you go three or four years out, I think it actually is chip production.",
+    "zh": "当我展望三四年后 Tesla, Inc. 增长的限制因素时，我认为实际上就是芯片生产。"
+   },
+   {
+    "g": 1035,
+    "t": -1,
+    "en": "I think maybe memory is an even bigger limiter than AI logic.",
+    "zh": "我认为内存可能是比 AI 逻辑更大的限制因素。"
+   },
+   {
+    "g": 1039,
+    "t": -1,
+    "en": "I actually think Tesla, Inc. is ahead of the rest of the world in intelligence density of AI by an order of magnitude or more.",
+    "zh": "我实际上认为，Tesla, Inc. 在 AI 的智能密度上领先世界其他地方一个数量级甚至更多。"
+   },
+   {
+    "g": 1040,
+    "t": -1,
+    "en": "I do think that by far, the biggest competition for humanoid robots will be from China.",
+    "zh": "我确实认为，人形机器人领域最大的竞争将来自中国，而且遥遥领先。"
+   }
+  ],
+  "elon-musk-interview-with-ben-shapiro-full-interview": [
+   {
+    "g": 1205,
+    "t": 75,
+    "en": "Fundamental to the free market or capitalism is meritocracy. It made the best product or service win, and the best product or service will be made by the team that works the hardest, as the most talented, and that is what results in great products and services in a capitalist economy.",
+    "zh": "自由市场或资本主义的根本是唯才是举。它让最好的产品或服务胜出，而最好的产品或服务将由最努力、最有才华的团队做出，这就是资本主义经济中产生伟大产品和服务的原因。"
+   },
+   {
+    "g": 1207,
+    "t": 140,
+    "en": "It wasn't West Berlin that built the wall.",
+    "zh": "建墙的不是西柏林。"
+   },
+   {
+    "g": 1213,
+    "t": 316,
+    "en": "I do think in a positive AI future that there will be no shortage of goods and services. So it won't be universal basic income, it'll be universal high income.",
+    "zh": "我确实认为，在积极的 AI 未来里，商品和服务不会短缺。所以那不会是全民基本收入，而会是全民高收入。"
+   },
+   {
+    "g": 1227,
+    "t": 764,
+    "en": "The window of opportunity to make life multi-planetary and secure the future of consciousness may be open for a long time or may be open for a short time. I think it will be wise to, not assume that it will be open for a long time.",
+    "zh": "让生命成为多行星物种、确保意识未来的机会窗口，可能长时间敞开，也可能只敞开很短时间。我认为，明智的做法是不要假定它会长时间敞开。"
+   },
+   {
+    "g": 1240,
+    "t": 1147,
+    "en": "The point of fighting racism, sexism, and whatnot was not to replace it with another form of racism and sexism, but to get rid of racism and get rid of sexism, not to change it to another form. DEI is fundamentally racist and sexist.",
+    "zh": "反对种族主义、性别歧视之类的东西，目的不是用另一种形式的种族主义和性别歧视取而代之，而是消除种族主义、消除性别歧视，不是把它换成另一种形式。DEI 本质上是种族主义和性别歧视的。"
+   },
+   {
+    "g": 1242,
+    "t": 1205,
+    "en": "Well, we're hoping to have the first humans on the moon in less than five years. Mars may be a little longer than five years. I'd be surprised if we don't have humans on Mars within ten years.",
+    "zh": "我们希望在不到五年内让首批人类登上月球。火星可能比五年稍晚一些。如果十年内我们没有把人类送上火星，我会感到意外。"
+   },
+   {
+    "g": 1251,
+    "t": 1475,
+    "en": "I mean, to be clear, at the start of SpaceX, I gave us less than 10% chance of success. I thought we'd probably die. But I think if something is important enough, it's worth doing, even if you think it's going to fail.",
+    "zh": "我是说，说清楚一点，在 SpaceX 起步时，我给我们的成功概率不到 10%。我以为我们很可能会死掉。但我认为，如果一件事足够重要，就值得去做，即使你认为它会失败。"
+   },
+   {
+    "g": 1254,
+    "t": 1556,
+    "en": "Tesla had many close calls with death. The natural state of a car company, America, is dead. I mean, the only two car companies that have not gone bankrupt are Ford and Tesla.",
+    "zh": "Tesla 有很多次差点死掉。在美国，汽车公司的自然状态就是死亡。我的意思是，仅有的两家没有破产的汽车公司是 Ford 和 Tesla。"
+   },
+   {
+    "g": 1263,
+    "t": 1834,
+    "en": "In fact, that's obviously the true test for free speech is that someone says something you don't like, because otherwise it's obviously not free speech.",
+    "zh": "事实上，言论自由的真正考验显然就是有人说了你不喜欢的话，因为否则那显然就不是言论自由。"
+   },
+   {
+    "g": 1291,
+    "t": 2688,
+    "en": "the political class operates almost solely on the basis that the pie is fixed. Because if the pie is fixed, then the way that you get elected is by promising more of that pie to such and such a person.",
+    "zh": "政治阶层几乎完全基于一个前提运作：蛋糕是固定的。因为如果蛋糕是固定的，那么你当选的方式就是承诺把更多蛋糕分给某某人。"
+   }
+  ],
+  "elon-musk-wisconsin-town-hall-full-fox-5-news": [
+   {
+    "g": 1047,
+    "t": 128,
+    "en": "So we want to restore individual freedoms, freedom of speech, just in general, get the government off your back. And then make sure that you succeed in the United States as a function of your hard work and your talent and nothing else.",
+    "zh": "所以我们要恢复个人自由、言论自由，总的来说，就是让政府别管你。然后确保你在美国获得成功，靠的是你的努力和才华，而不是别的。"
+   },
+   {
+    "g": 1050,
+    "t": 283,
+    "en": "I totally understand if somebody doesn't want to buy a product, yeah, it's up to you, it's a free country, but you don't have to burn it down, okay? It's a bit much. That's somebody else's car, leave it alone.",
+    "zh": "我完全理解如果有人不想买某个产品，是的，这由你决定，这是个自由国家，但你没必要把它烧了，好吗？这有点过了。那是别人的车，别动它。"
+   },
+   {
+    "g": 1051,
+    "t": 335,
+    "en": "I mean, it is astounding how much anti-American propaganda is pushed on kids today in schools. It's mind blowing. It's like, what the hell is going on?",
+    "zh": "我的意思是，今天学校里向孩子们灌输那么多反美宣传，真是令人震惊。简直让人瞠目结舌。这到底是怎么回事？"
+   },
+   {
+    "g": 1060,
+    "t": 1153,
+    "en": "With Grok, our aspiration is a maximally truth seeking AI, which is like you always want to try to get as close to the truth as possible, even if the truth is unpopular. And that's our goal, which I think is a very important goal.",
+    "zh": "对于Grok，我们的愿景是做一个最大程度追求真相的AI，也就是说，你总想尽可能接近真相，即使真相不受欢迎。这就是我们的目标，我认为这是一个非常重要的目标。"
+   },
+   {
+    "g": 1063,
+    "t": 1377,
+    "en": "But let's just say, that there's a lot of strangely wealthy members of Congress, where I'm trying to connect the dots of how did they become rich while earning… How'd they get $20 million, if they're earning $200,000 a year? Nobody can explain that.",
+    "zh": "但这么说吧，国会里有很多富得蹊跷的人，我试着把线索串起来：他们怎么在挣钱的同时…他们一年挣20万美元，怎么会有2000万美元？没人能解释这一点。"
+   },
+   {
+    "g": 1070,
+    "t": 1740,
+    "en": "At the risk of saying something outrageous, calling for murder is not cool.",
+    "zh": "冒着说点惊世骇俗的话的风险：呼吁谋杀可不酷。"
+   },
+   {
+    "g": 1078,
+    "t": 2066,
+    "en": "I think what really matters is that government spending is not far in excess of government revenue. That's a fundamental issue that we have where we have a deficit of $2 trillion, and we have interest payments that now exceed the entire budget of the military.",
+    "zh": "我认为真正重要的是，政府支出不能远远超过政府收入。这是我们面临的一个根本问题：我们有2万亿美元赤字，而利息支出现在已经超过整个军队预算。"
+   },
+   {
+    "g": 1080,
+    "t": 2269,
+    "en": "In trying to save a trillion dollars of expenditures, what we're saying is of the 7 trillion in government spending, let's see if we can make it 15%, one, five percent, more efficient. And I'm confident that we can. That's actually not a huge bar, by the way.",
+    "zh": "在努力节省一万亿美元支出时，我们要说的是，在7万亿美元政府开支中，看看能不能让效率提高15%——百分之十五。我相信我们能做到。顺便说，这其实不是多高的门槛。"
+   },
+   {
+    "g": 1115,
+    "t": 3704,
+    "en": "I think generally it's good to have decentralized systems because the more centralized something is, the more power that is in any one single entity, the more corruption you're likely to have. So decentralization I think is good to minimize corruption.",
+    "zh": "我认为一般来说，拥有去中心化系统是好事，因为某个东西越集中，权力越集中在单一实体手中，就越可能产生腐败。所以我认为去中心化有利于把腐败降到最低。"
+   },
+   {
+    "g": 1147,
+    "t": 4868,
+    "en": "People ask me what's the top advice? I'm like, \"Try to be useful.\" It's actually very difficult to be useful, but I have a lot of admiration for anyone who just does an honest day's work making products or producing services for their fellow human beings.",
+    "zh": "人们问我最好的建议是什么？我会说：“努力做到有用。”实际上，做到有用非常难，但我非常敬佩那些为同胞制造产品、提供服务、老老实实工作一天的人。"
+   }
+  ],
+  "bret-baier-s-full-interview-with-elon-musk-and-doge": [
+   {
+    "g": 1301,
+    "t": 14,
+    "en": "The government is not efficient and there's a lot of waste and fraud, so we feel confident that a 15% reduction can be done without affecting any of the critical government services.",
+    "zh": "政府效率不高，存在大量浪费和欺诈，所以我们有信心，在不影响任何关键政府服务的情况下，可以削减15%。"
+   },
+   {
+    "g": 1303,
+    "t": 61,
+    "en": "We routinely encounter wastes of a billion dollars or more. Casually.",
+    "zh": "我们经常遇到十亿美元甚至更多的浪费。随随便便就遇到。"
+   },
+   {
+    "g": 1307,
+    "t": 125,
+    "en": "We are cutting the waste and fraud in real time. Every day like that passes, our goal is to reduce the waste and fraud by $4 billion a day every day, seven days a week. And so far, we are succeeding.",
+    "zh": "我们正在实时削减浪费和欺诈。每过这样一天，我们的目标都是每天、每周七天削减40亿美元的浪费和欺诈。到目前为止，我们正在做到。"
+   },
+   {
+    "g": 1308,
+    "t": 160,
+    "en": "We want to measure twice, if not thrice, and cut once. And actually that is our approach.",
+    "zh": "我们想量两次，甚至三次，再下刀。实际上这正是我们的做法。"
+   },
+   {
+    "g": 1311,
+    "t": 454,
+    "en": "The retirement process is all by paper, literally with people carrying paper in manila envelopes into this gigantic mine.",
+    "zh": "退休流程全靠纸质文件，真的是有人把纸质文件装在马尼拉纸信封里，带进这个巨大的矿井。"
+   },
+   {
+    "g": 1314,
+    "t": 690,
+    "en": "As a result of the work of DOGE, legitimate recipients of Social Security will receive more money, not less money.",
+    "zh": "由于 DOGE 的工作，社会保障的合法领取者将拿到更多钱，而不是更少。"
+   },
+   {
+    "g": 1334,
+    "t": 1360,
+    "en": "One of the things I learned at PayPal was you know who complains the loudest and with the most amount of fake righteous indignation? The fraudsters. It's a tell.",
+    "zh": "我在 PayPal 学到的一件事是，你知道谁抱怨得最响、带着最多虚假的义愤吗？是骗子。这是一个信号。"
+   },
+   {
+    "g": 1338,
+    "t": 1606,
+    "en": "So, if a commercial company operated the way the federal government is, then it would immediately go bankrupt. It would be delisted. The officers would be arrested.",
+    "zh": "所以，如果一家商业公司像联邦政府这样运作，它会立刻破产。它会被退市。高管会被逮捕。"
+   },
+   {
+    "g": 1339,
+    "t": 1668,
+    "en": "The oldest American is 114. So, safe to say if their age is 115 or above, they're fake or they should be in the Guinness Book of World Records. And we should not be giving out loans to babies.",
+    "zh": "美国最年长的人是114岁。所以可以说，如果年龄在115岁或以上，那要么是假的，要么就该进《吉尼斯世界纪录》。而且我们不应该给婴儿发贷款。"
+   },
+   {
+    "g": 1349,
+    "t": 1943,
+    "en": "The Pentagon has not passed an audit in a very long time. I mean, it's crazy as it sounds. They will lose $ 20, $30 billion a year and they literally don't know where it went.",
+    "zh": "五角大楼很久没有通过审计了。我是说，听起来很疯狂。他们每年会损失200亿、300亿美元，而且他们真的不知道钱去哪儿了。"
+   }
+  ],
+  "trump-elon-musk-interview-with-hannity-full-video-february-18-20": [
+   {
+    "g": 1374,
+    "t": 162,
+    "en": "I mean, I think the way you think of me is, I'm a technologist and I try to make technologies that improve the world and make life better.",
+    "zh": "我的意思是，我想你对我的看法是，我是一个技术专家，我努力制造能改善世界、让生活更好的技术。"
+   },
+   {
+    "g": 1377,
+    "t": 205,
+    "en": "And if the bureaucracy is fighting the will of the people, and preventing the president from implementing what the people want, then what we live in is a bureaucracy and not a democracy.",
+    "zh": "如果官僚体系在与人民的意志作对，阻止总统落实人民想要的东西，那我们生活的就是官僚体制，而不是民主。"
+   },
+   {
+    "g": 1385,
+    "t": 710,
+    "en": "They always ask me like, \"Do you want to die on Mars?\" And I say, \"~Well, yes, but not on impact.\"",
+    "zh": "他们总是问我：“你想死在火星上吗？”我说：“嗯，想，但不要是撞上去那一刻死。”"
+   },
+   {
+    "g": 1389,
+    "t": 756,
+    "en": "Neuralink, we've implanted Neuralink in three patients so far who are quadriplegics, and it allows them to directly control their phone and computer just using their mind, just by thinking. So we call this product telepathy.",
+    "zh": "Neuralink，我们迄今已为三名四肢瘫痪患者植入了 Neuralink，这让他们能仅靠意念、仅靠思考就直接控制手机和电脑。我们把这个产品叫作 telepathy。"
+   },
+   {
+    "g": 1390,
+    "t": 794,
+    "en": "The scientific method fundamentally is about always questioning the science.",
+    "zh": "科学方法从根本上说，就是始终质疑科学。"
+   },
+   {
+    "g": 1396,
+    "t": 867,
+    "en": "But it's fair to say that the software engineers at DOGE could be earning millions of dollars a year, and instead of earning a small fraction of that as federal employees.",
+    "zh": "但可以说，DOGE 的软件工程师本可以一年赚数百万美元，而作为联邦雇员，他们只赚其中很小一部分。"
+   },
+   {
+    "g": 1401,
+    "t": 934,
+    "en": "Well, we don't want to be complacent, but we have brought astronauts back from the Space station many times before, and always with success.",
+    "zh": "嗯，我们不想自满，但我们以前多次把宇航员从空间站带回来，而且每次都成功。"
+   },
+   {
+    "g": 1408,
+    "t": 1024,
+    "en": "You can't reason with people.",
+    "zh": "你没法跟人讲道理。"
+   },
+   {
+    "g": 1409,
+    "t": 1071,
+    "en": "If looks could kill, I would've been dead several times over.",
+    "zh": "如果眼神能杀人，我已经死过好几回了。"
+   }
+  ],
+  "elon-musk-neuralink-and-the-future-of-humanity-lex-fridman-podca": [
+   {
+    "g": 1501,
+    "t": 457,
+    "en": "If you think what is the average bits per second of a human, it is less than one bit per second over the course of a day.",
+    "zh": "如果你想想人类平均每秒多少比特，一天下来还不到每秒1比特。"
+   },
+   {
+    "g": 1566,
+    "t": 1783,
+    "en": "Death is fundamentally the loss of information, the loss of memory.",
+    "zh": "死亡从根本上说是信息的丧失，是记忆的丧失。"
+   },
+   {
+    "g": 1577,
+    "t": 2066,
+    "en": "Well, we feel pretty confident that I think maybe within the next year or two, that someone with a Neuralink implant will be able to outperform a pro gamer.",
+    "zh": "我们相当有信心，我觉得也许在未来一两年内，植入Neuralink的人就能超过职业游戏玩家。"
+   },
+   {
+    "g": 1606,
+    "t": 2648,
+    "en": "I have this very basic first principles algorithm that I run kind of as a mantra, which is to first question the requirements, make the requirements less dumb.",
+    "zh": "我有一个非常基础的第一性原理算法，几乎当作口头禅来执行：先质疑需求，让需求别那么蠢。"
+   },
+   {
+    "g": 1628,
+    "t": 3169,
+    "en": "But at a certain point, yeah, the AI will be smarter than all humans combined.",
+    "zh": "但在某个时刻，是的，AI会比所有人类加起来还聪明。"
+   },
+   {
+    "g": 1630,
+    "t": 3240,
+    "en": "So, I think if you force AIs to lie or train them to lie, you’re really asking for trouble, even if that lie is done with good intentions.",
+    "zh": "所以我认为，如果你强迫AI说谎，或者训练AI说谎，那你就是在自找麻烦，哪怕这个谎言出于善意。"
+   },
+   {
+    "g": 1661,
+    "t": 4372,
+    "en": "At a fundamental level, if a civilization does not at least maintain its numbers, it’ll disappear.",
+    "zh": "从根本上说，如果一个文明连自己的人数都维持不住，它就会消失。"
+   },
+   {
+    "g": 1677,
+    "t": 4712,
+    "en": "But the marginal value of a better decision can easily be, in the course of an hour, a hundred million dollars.",
+    "zh": "但一个更好的决策，其边际价值在一小时内很容易就是1亿美元。"
+   },
+   {
+    "g": 1680,
+    "t": 5084,
+    "en": "Digital super intelligence is possibly a great filter.",
+    "zh": "数字超级智能可能是一个大过滤器。"
+   },
+   {
+    "g": 1683,
+    "t": 5265,
+    "en": "There will be billions of robots.",
+    "zh": "将会有数十亿个机器人。"
+   }
+  ],
+  "elon-musk-war-ai-aliens-politics-physics-video-games-and-humanit": [
+   {
+    "g": 1812,
+    "t": 805,
+    "en": "I think we shouldn’t discount the possibility of nuclear war. It is a civilizational threat.",
+    "zh": "我认为我们不应低估核战争的可能性。这是文明层面的威胁。"
+   },
+   {
+    "g": 1817,
+    "t": 1154,
+    "en": "Whoever goes on the offensive will lose massive numbers of people and history will not look kindly upon them.",
+    "zh": "任何发动进攻的一方都会损失大量人员，历史也不会善待他们。"
+   },
+   {
+    "g": 1828,
+    "t": 2017,
+    "en": "Something must stop the cycle of reciprocal violence. Something must stop it, or it’ll never stop.",
+    "zh": "必须有某种东西来打破以暴易暴的循环。必须阻止它，否则它永远不会停止。"
+   },
+   {
+    "g": 1837,
+    "t": 2401,
+    "en": "Reality is the ultimate judge. Like physics is the law, everything else is a recommendation. I’ve seen plenty of people break the laws made by man, but none break the laws made by physics.",
+    "zh": "现实是最终裁判。物理法则是法律，其他一切都是建议。我见过很多人违反人制定的法律，但没有人能违反物理定律。"
+   },
+   {
+    "g": 1862,
+    "t": 3088,
+    "en": "I think the smart move here is to make life multiplanetary while it’s possible to do so. We don’t want to be one of those lame one planet civilizations that just dies out.",
+    "zh": "我认为明智之举是在还有可能的时候让生命成为多行星生命。我们不想成为那种只待在一颗星球上、然后消亡的差劲文明。"
+   },
+   {
+    "g": 1886,
+    "t": 3789,
+    "en": "What I’m saying is that there is an argument that if you wish for no war, you should be careful what you wish for because what’s required in order for there to be no war might be worse than a little war.",
+    "zh": "我的意思是，有一种观点认为：如果你希望没有战争，那你要小心自己的愿望，因为实现没有战争所需付出的代价，可能比一场小规模战争更糟。"
+   },
+   {
+    "g": 1908,
+    "t": 4333,
+    "en": "So energy usage right now is roughly one third, very rough terms, one third electricity, one third transport, one third heating. And so in order for everything to go sustainable, to go electric, you need to triple electricity output.",
+    "zh": "所以目前能源使用粗略来说大约三分之一是电力、三分之一是交通、三分之一是供暖。因此，为了让一切可持续、全面电气化，你需要把发电量提高到三倍。"
+   },
+   {
+    "g": 1927,
+    "t": 5208,
+    "en": "And the name, the open in open AI is supposed to mean open source, and it was created as a nonprofit open source, and now it is a closed source for maximum profit, which I think is not good karma.",
+    "zh": "而 OpenAI 里的 open 本应意味着开源，它创立时是一个非营利的开源项目，现在却成了为了利润最大化的闭源项目，我认为这不是好报。"
+   },
+   {
+    "g": 1965,
+    "t": 6127,
+    "en": "So there’s a diversity of viewpoints and free speech only matters if people you don’t like are allowed to say things you don’t like. Because if that’s not the case, you don’t have free speech and it’s only a matter of time before the censorship has turned upon you.",
+    "zh": "所以存在多种观点，而言论自由只有在你不喜欢的人被允许说你不喜欢的话时才有意义。因为如果不是这样，你就没有言论自由，而且审查迟早会落到你头上。"
+   },
+   {
+    "g": 2035,
+    "t": 7633,
+    "en": "The thinking part of our brain is less than 10 watts. And those 10 watts can still produce a much better novel than a 10 megawatt GPU cluster.",
+    "zh": "我们大脑中用于思考的部分功耗不到 10 瓦。而这 10 瓦仍然能写出比 10 兆瓦 GPU 集群好得多的小说。"
+   }
+  ],
+  "joe-rogan-experience-2054-elon-musk": [
+   {
+    "g": 2062,
+    "t": 224,
+    "en": "The manufacturing is somewhere between 100 and 1,000 times harder than making a prototype.",
+    "zh": "制造比制作原型难大约100到1000倍。"
+   },
+   {
+    "g": 2065,
+    "t": 325,
+    "en": "In fact, the amazing thing about automobiles was not so much the invention of the automobile but the invention of the factory, the mass manufacturing.",
+    "zh": "事实上，汽车真正了不起的地方，与其说是发明了汽车，不如说是发明了工厂，也就是大规模制造。"
+   },
+   {
+    "g": 2086,
+    "t": 985,
+    "en": "The battery range is not a problem at this point. I mean the Model S will go 400 miles, Model 3, Model Y will do over 300 miles.",
+    "zh": "电池续航现在不是问题。Model S 能跑400英里，Model 3、Model Y 能跑300多英里。"
+   },
+   {
+    "g": 2098,
+    "t": 1356,
+    "en": "I thought our probability of success was less than 10%.",
+    "zh": "我当时认为我们成功的概率不到10%。"
+   },
+   {
+    "g": 2120,
+    "t": 2082,
+    "en": "But you could actually power the entire United States with 100 miles by 100 miles of solar.",
+    "zh": "但你其实可以用100英里乘100英里的太阳能给整个美国供电。"
+   },
+   {
+    "g": 2139,
+    "t": 2612,
+    "en": "The people, like Republicans were suppressed at 10 times the rate of Democrats.",
+    "zh": "共和党人这类人被压制的频率是民主党人的10倍。"
+   },
+   {
+    "g": 2153,
+    "t": 3082,
+    "en": "In my view, there have been severe First Amendment violations by multiple government agencies. And there should be repercussions for that.",
+    "zh": "在我看来，多个政府机构严重违反了第一修正案。这应该被追责。"
+   },
+   {
+    "g": 2165,
+    "t": 3450,
+    "en": "Most people just don't want to rock the boat.",
+    "zh": "大多数人只是不想惹是生非。"
+   },
+   {
+    "g": 2186,
+    "t": 4096,
+    "en": "Well 80% of the people they put up ventilators died.",
+    "zh": "他们给上呼吸机的人中，有80%死了。"
+   }
+  ],
+  "elon-musk-on-racism-bailing-out-trump-hate-speech-and-more-the-d": [
+   {
+    "g": 2371,
+    "t": 92,
+    "en": "Free speech, as much as possible within the bounds of the law.",
+    "zh": "言论自由，尽可能在法律允许的范围内。"
+   },
+   {
+    "g": 2373,
+    "t": 160,
+    "en": "Well, I think I see X as, it’s really the number one source of news in the world.",
+    "zh": "嗯，我认为我把X看作，它确实是世界上头号新闻来源。"
+   },
+   {
+    "g": 2387,
+    "t": 554,
+    "en": "The political donations of old Twitter were 99% Democrat. Does that sound Left wing or Right wing to you?",
+    "zh": "旧Twitter的政治捐款有99%给了民主党。这在你听来像左翼还是右翼？"
+   },
+   {
+    "g": 2409,
+    "t": 804,
+    "en": "The Cybertruck is a once a decade product. It is so special and I think it’s our best product.",
+    "zh": "Cybertruck是十年一遇的产品。它太特别了，我认为它是我们最好的产品。"
+   },
+   {
+    "g": 2438,
+    "t": 1223,
+    "en": "I’m typically putting in 16 hour days. That’s normal for me and it’s rare for me to even take off a weekend day.",
+    "zh": "我通常每天工作16个小时。这对我很正常，我甚至连周末的一天都很少休息。"
+   },
+   {
+    "g": 2445,
+    "t": 1354,
+    "en": "From a standpoint of Wall Street, what matters is execution. Are you building value for investors? Tesla is worth about as much as the rest of the car industry combined.",
+    "zh": "从华尔街的角度看，重要的是执行力。你在为投资者创造价值吗？Tesla的市值大约相当于其余汽车行业的总和。"
+   },
+   {
+    "g": 2449,
+    "t": 1629,
+    "en": "You don’t need a conspiracy when you have basic incentives.",
+    "zh": "当你有基本激励时，你不需要阴谋论。"
+   },
+   {
+    "g": 2463,
+    "t": 1873,
+    "en": "The way to build trust is transparency.",
+    "zh": "建立信任的方式是透明。"
+   },
+   {
+    "g": 2492,
+    "t": 2308,
+    "en": "I’m in favor of freedom of speech and freedom of speech only is relevant when people you don’t like say things you don’t like. Otherwise it has no meaning.",
+    "zh": "我支持言论自由，而言论自由只有在你不喜欢的人说你不想听的话时才真正有意义。否则它就没有意义。"
+   },
+   {
+    "g": 2561,
+    "t": 3696,
+    "en": "I acquired X in order to preserve freedom of speech in America, the First Amendment, and I’m going to stick to that. And if that means making less money, so be it.",
+    "zh": "我收购X是为了在美国维护言论自由，维护第一修正案，我会坚持这一点。如果这意味着少赚钱，那就少赚钱吧。"
+   }
+  ],
+  "joe-rogan-experience-1609-elon-musk": [
+   {
+    "g": 2584,
+    "t": 163,
+    "en": "We expect it to explode. It's weird if it doesn't explode, frankly.",
+    "zh": "我们预计它会爆炸。坦白说，不爆炸才奇怪。"
+   },
+   {
+    "g": 2586,
+    "t": 230,
+    "en": "If current trends continue, if we plot the points on the curve of progress, then we should be doing regular orbital flights with a high probability of safe landing in two years.",
+    "zh": "如果当前趋势延续，如果我们把进步曲线上的点画出来，那么两年内我们就应该能以很高的安全着陆概率进行定期轨道飞行。"
+   },
+   {
+    "g": 2590,
+    "t": 357,
+    "en": "This is the holy grail of rocketry. This is to have a fully reusable rocket.",
+    "zh": "这是火箭技术的圣杯。也就是要拥有完全可重复使用的火箭。"
+   },
+   {
+    "g": 2593,
+    "t": 452,
+    "en": "I think one thing to appreciate is getting to space is easy, getting to orbit is hard.",
+    "zh": "我觉得有一点要明白：进入太空很容易，进入轨道很难。"
+   },
+   {
+    "g": 2609,
+    "t": 980,
+    "en": "So we're stuck with gas. Yeah. Until some insane breakthrough dealing with gravity or something.",
+    "zh": "所以我们就只能用气体推进了。是的。除非在引力之类方面出现某种疯狂的突破。"
+   },
+   {
+    "g": 2645,
+    "t": 2147,
+    "en": "a species that does not become multi-ponetary is simply waiting around until there is some extinction event.",
+    "zh": "一个不成为多行星物种的物种，就是在坐等某场灭绝事件发生。"
+   },
+   {
+    "g": 2670,
+    "t": 2936,
+    "en": "I think arguably the meaning of life is to understand the nature of the universe and figure out what the meaning of life is.",
+    "zh": "我认为可以说，生命的意义就是理解宇宙的本质，并弄清楚生命的意义是什么。"
+   }
+  ],
+  "tesla-q1-2024-financial-results-and-q-a-webcast": [
+   {
+    "g": 2975,
+    "t": -1,
+    "en": "It's become very clear that the vision-based approach with end-to-end neural networks is the right solution for scalable autonomy.",
+    "zh": "现在已经非常清楚，基于视觉的端到端神经网络方案，是实现可规模化自动驾驶的正确解决方案。"
+   },
+   {
+    "g": 2976,
+    "t": -1,
+    "en": "I think Optimus will be more valuable than everything else combined.",
+    "zh": "我认为Optimus将比其余所有业务加起来更有价值。"
+   },
+   {
+    "g": 2977,
+    "t": -1,
+    "en": "So, I actually do not think that there will be significant regulatory barriers provided, there was conclusive data that the autonomous car is safer than a human-driven car.",
+    "zh": "所以我其实不认为会有重大的监管障碍，前提是有确凿数据表明自动驾驶汽车比人类驾驶的汽车更安全。"
+   },
+   {
+    "g": 2978,
+    "t": -1,
+    "en": "So, if you can imagine future, perhaps where there's a fleet of 100 million Teslas, and on average, they've got like maybe a kilowatt of inference compute. That's 100 gigawatts of inference compute distributed all around the world.",
+    "zh": "所以，如果你能想象未来，也许有1亿辆Tesla组成的车队，平均每辆车大约有1千瓦的推理算力。那就是分布在全球各地的100吉瓦推理算力。"
+   },
+   {
+    "g": 2980,
+    "t": -1,
+    "en": "But really, the way to think of Tesla is almost entirely in terms of solving autonomy and being able to turn on that autonomy for a gigantic fleet.",
+    "zh": "但真正看待Tesla的方式，几乎完全在于它能否解决自动驾驶，并让一个庞大的车队启用自动驾驶。"
+   },
+   {
+    "g": 2982,
+    "t": -1,
+    "en": "We're in conversations with one major automaker regarding licensing FSD.",
+    "zh": "我们正在与一家大型车企就授权FSD进行谈判。"
+   },
+   {
+    "g": 2986,
+    "t": -1,
+    "en": "So, I mean, if somebody doesn't believe Tesla is going to solve autonomy, I think they should not be an investor in the company.",
+    "zh": "所以我的意思是，如果某人不相信Tesla会解决自动驾驶，我认为他就不该投资这家公司。"
+   },
+   {
+    "g": 2992,
+    "t": -1,
+    "en": "I think we've now with 12.3, if you just have the car drive you around, it is obvious that our solution with a relatively low-cost inference computer and standard cameras can achieve self-driving. No LiDARs, no radars, ultrasonic. Nothing.",
+    "zh": "我认为，现在有了12.3，你只要让车带你四处开，就会明显看出：我们用相对低成本的推理计算机和标准摄像头就能实现自动驾驶。没有激光雷达，没有雷达，没有超声波。什么都没有。"
+   },
+   {
+    "g": 3017,
+    "t": -1,
+    "en": "We did the cell program in order to address the crazy increase in cost per kilowatt hour from our suppliers due to gigantic orders placed by every carmaker on Earth.",
+    "zh": "我们做电芯项目，是为了应对供应商每千瓦时成本疯狂上涨，而这是因为地球上每家车企都下了巨额电池订单。"
+   },
+   {
+    "g": 3019,
+    "t": -1,
+    "en": "So, we're seeing much more competitive prices for sales from our suppliers, dramatically more competitive than in the past. It is clear that a lot of our suppliers have excess capacity.",
+    "zh": "所以，我们看到供应商给出的售价竞争性强得多，比过去强得多。很明显，很多供应商产能过剩。"
+   }
+  ],
+  "elon-musk-reveals-new-tesla-owners-are-not-buying-full-self-driv": [
+   {
+    "g": 3031,
+    "t": 174,
+    "en": "And in my opinion, autopilot gives you like 90% of what you need on the highway anyway compared to FSD.",
+    "zh": "而且在我看来，在高速上，和 FSD 相比，Autopilot 已经能提供你所需的大约 90%。"
+   },
+   {
+    "g": 3035,
+    "t": 265,
+    "en": "The Model Y was the best selling car in 2023, officially, and even selling all of those Model Ys over the year, it seems that the use of FSD is not really going up.",
+    "zh": "Model Y 正式成为 2023 年最畅销的车型，而即便这一年卖出了那么多 Model Y，FSD 的使用量似乎并没有真正上升。"
+   },
+   {
+    "g": 3039,
+    "t": 348,
+    "en": "If you used FSD three years ago and it was total garbage and you're using it today and you think about that comparison, it's a lot easier to be like, man, this is amazing.",
+    "zh": "如果你三年前用过 FSD，当时它完全是垃圾，而今天你再用它，并想到这种对比，你就更容易觉得：天哪，这太神奇了。"
+   },
+   {
+    "g": 3042,
+    "t": 416,
+    "en": "Although it's called FSD and it doesn't actually fully drive itself.",
+    "zh": "虽然它叫 FSD，但它其实并不能真正完全自动驾驶。"
+   },
+   {
+    "g": 3045,
+    "t": 485,
+    "en": "Think of somebody who's thinking about spending all this money on software when their wipers don't even work. Do they really trust that a company's going to be able to make a car drive itself when the company can't even make the wipers wipe when there's something on the windshield?",
+    "zh": "想想那些正考虑花这么多钱买软件的人，而他们的雨刷甚至都不工作。当一家公司连挡风玻璃上有东西时都没法让雨刷刮起来，他们真的相信这家公司能让汽车自己驾驶吗？"
+   },
+   {
+    "g": 3049,
+    "t": 569,
+    "en": "Now still in my opinion, if you're sitting facing forward and you have a hand on the wheel, the car's not going to bug you.",
+    "zh": "不过在我看来，如果你面朝前方坐着，并且有一只手放在方向盘上，车就不会来烦你。"
+   },
+   {
+    "g": 3059,
+    "t": 774,
+    "en": "I would say within three to six months after version 12 FSD wide release, I think we're really gonna start to see some magic in that the car is gonna be incredibly, incredibly capable and taking us much farther distances without intervention than we thought was possible previously.",
+    "zh": "我会说，在 FSD version 12 广泛发布后的三到六个月内，我认为我们真的会开始看到一些神奇之处：这辆车会变得极其、极其有能力，能在没有干预的情况下把我们带到比我们之前认为可能更远的距离。"
+   }
+  ],
+  "elon-musk-x-donald-trump-full-spaces-interview": [
+   {
+    "g": 3116,
+    "t": 1777,
+    "en": "Frankly, I think this is a fundamental existential issue for the United States. And if we have another four more years of open borders, and with another four more years, it’s going to be even worse than it’s been for the past three and a half years. I’m not sure we’ve got a country at that point.",
+    "zh": "坦率地说，我认为这对美国是一个根本性的生存问题。如果我们再来四年开放边境，再过四年，情况会比过去三年半还要糟。到那时，我不确定我们还有没有这个国家。"
+   },
+   {
+    "g": 3118,
+    "t": 1831,
+    "en": "And America is only about 4% or 5% of the population of Earth. It would only take a few percent of the rest of Earth to overwhelm everything in the US.",
+    "zh": "而美国只占地球人口的约4%到5%。只要地球其他地区的一小部分人涌来，就足以让美国的一切不堪重负。"
+   },
+   {
+    "g": 3123,
+    "t": 2221,
+    "en": "There’s some real tough characters out there and if they don’t think the American president is tough, they will do what they want to do.",
+    "zh": "外面有一些真正难缠的家伙，如果他们不认为美国总统强硬，他们就会为所欲为。"
+   },
+   {
+    "g": 3128,
+    "t": 2706,
+    "en": "I think people underrate the risk of World War III. When looking at the risk of global thermonuclear warfare, it’s game over for humanity.",
+    "zh": "我认为人们低估了第三次世界大战的风险。看看全球热核战争的风险，那对人类就是全完了。"
+   },
+   {
+    "g": 3131,
+    "t": 2872,
+    "en": "Inflation comes from government overspending because the checks never bounce when it’s written by the government. So if the government spends far more than it brings in, that increases the money supply.",
+    "zh": "通胀来自政府超支，因为政府开的支票永远不会跳票。所以，如果政府花的钱远远超过它挣的钱，就会增加货币供应。"
+   },
+   {
+    "g": 3141,
+    "t": 3277,
+    "en": "So I think we should not be complacent in the United States and thinking that and taking our prosperity for granted, because with bad government policy, we can run the country into the ground. That’s just something people should bear in mind. Don’t take prosperity for granted.",
+    "zh": "所以我认为，美国不应自满，不应想当然地认为我们的繁荣理所当然，因为糟糕的政府政策会把国家拖垮。这一点人们应该记住。不要把繁荣视为理所当然。"
+   },
+   {
+    "g": 3153,
+    "t": 3972,
+    "en": "And if we were to stop using oil and gas right now, we would all be starving and the economy would collapse. So I don’t think it’s right to vilify the oil and gas industry.",
+    "zh": "如果我们现在就停止使用石油和天然气，我们都会挨饿，经济也会崩溃。所以我不认为丑化石油和天然气行业是正确的。"
+   },
+   {
+    "g": 3163,
+    "t": 4510,
+    "en": "And it’s actually, people have this fear of nuclear electricity generation, but it’s actually one of the safest forms of electricity generation. It’s just a huge misunderstanding.",
+    "zh": "而且实际上，人们害怕核能发电，但它实际上是最安全的发电方式之一。这完全是一个巨大的误解。"
+   },
+   {
+    "g": 3203,
+    "t": 5557,
+    "en": "I think we could build a base on the moon. We could send American astronauts to Mars.",
+    "zh": "我认为我们可以在月球上建基地。我们可以把美国宇航员送上火星。"
+   },
+   {
+    "g": 3239,
+    "t": 6800,
+    "en": "You want to have empathy, but you also have to have empathy for the victims of the criminals. And if you just have empathy for the criminals, it’s actually shallow empathy. It’s not real.",
+    "zh": "你想有同理心，但你也必须对犯罪行为的受害者有同理心。如果你只对罪犯有同理心，那其实是肤浅的同理心。那不是真正的同理心。"
+   }
+  ],
+  "working-for-elon-musk-ex-employees-reveal-his-management-strateg": [
+   {
+    "g": 3409,
+    "t": 0,
+    "en": "You have 30 seconds to make your point.",
+    "zh": "你只有30秒时间把观点说清楚。"
+   },
+   {
+    "g": 3414,
+    "t": 126,
+    "en": "You just have to put in, you know, 80 hour, 80 to 100 hour weeks every week.",
+    "zh": "你每周就得投入，你知道，80小时、80到100小时。"
+   },
+   {
+    "g": 3415,
+    "t": 156,
+    "en": "For example, in 2012, when Tesla was preparing to ramp up production of the Model S Luxury sedan, Musk sent his team an email with a subject line ultra-hardcore, telling them to prepare for a level of intensity that most of them had never experienced before.",
+    "zh": "例如，2012年，特斯拉准备提高Model S豪华轿车产量时，马斯克给团队发了一封主题为 ultra-hardcore 的邮件，让他们准备好面对大多数人此前从未经历过的强度。"
+   },
+   {
+    "g": 3416,
+    "t": 182,
+    "en": "Musk himself leads by hardcore example.",
+    "zh": "马斯克本人就是以硬核方式以身作则。"
+   },
+   {
+    "g": 3420,
+    "t": 297,
+    "en": "Musk is also known to quickly make his company's leaner. When he became CEO of Tesla, he cut about 20% of the workforce.",
+    "zh": "马斯克也以迅速精简公司而闻名。他出任特斯拉CEO时，裁掉了约20%的员工。"
+   },
+   {
+    "g": 3421,
+    "t": 320,
+    "en": "Back in the day at Tesla, Elon would often say that people who work for him are special forces.",
+    "zh": "当年在特斯拉，埃隆经常说为他工作的人是特种部队。"
+   },
+   {
+    "g": 3422,
+    "t": 348,
+    "en": "If Elon was interested in something you were doing, he would come and talk directly to you. He's not going to go through a bunch of different layers of management and have the information filter up.",
+    "zh": "如果埃隆对你正在做的事感兴趣，他会直接过来跟你谈。他不会经过一层又一层管理层，让信息逐级过滤上来。"
+   },
+   {
+    "g": 3424,
+    "t": 403,
+    "en": "If you proved yourself to be capable, innovative, especially on a technical level, then that led to very, very rapid advancement throughout the company.",
+    "zh": "如果你证明自己有能力、有创新精神，尤其是在技术层面，那就会在整个公司里获得非常、非常快的晋升。"
+   }
+  ],
+  "elon-musk-slaughters-cnbc-reporter-in-live-interview": [
+   {
+    "g": 3860,
+    "t": 29,
+    "en": "Soros hates humanity.",
+    "zh": "索罗斯仇视人类。"
+   },
+   {
+    "g": 3866,
+    "t": 197,
+    "en": "I'll say what I want to say and if the consequence of that is losing money so be it.",
+    "zh": "我想说什么就说什么，如果这样做的代价是损失金钱，那就这样吧。"
+   },
+   {
+    "g": 3871,
+    "t": 357,
+    "en": "somebody's conspiracy theories have turned out to be true.",
+    "zh": "有些人的阴谋论后来被证明是真的。"
+   }
+  ],
+  "elon-musk-on-advertisers-trust-and-the-wild-storm-in-his-mind-de": [
+   {
+    "g": 3898,
+    "t": 310,
+    "en": "I think it’s a real weakness to want to be liked, a real weakness. I do not have that.",
+    "zh": "我认为想被人喜欢是一种真正的弱点，真正的弱点。我没有这个弱点。"
+   },
+   {
+    "g": 3899,
+    "t": 356,
+    "en": "If you want satellites sent to orbit reliably, SpaceX will do 80% of all mass to orbit this year. China will do 12%. The rest of the world will do eight.",
+    "zh": "如果你想让卫星可靠入轨，SpaceX今年将承担所有入轨质量的80%。中国将承担12%。世界其他地区将承担8%。"
+   },
+   {
+    "g": 3914,
+    "t": 678,
+    "en": "If somebody’s going to try to blackmail me with advertising, blackmail me with money, go fuck yourself.",
+    "zh": "如果有人想用广告敲诈我，用钱敲诈我，去你妈的。"
+   },
+   {
+    "g": 3955,
+    "t": 1483,
+    "en": "Innovation is not the problem. Execution is the problem.",
+    "zh": "创新不是问题。执行才是问题。"
+   },
+   {
+    "g": 3962,
+    "t": 1754,
+    "en": "At the point at which you can properly frame the question, the answer is actually the easy part.",
+    "zh": "当你能正确地把问题框定清楚时，答案其实是容易的部分。"
+   },
+   {
+    "g": 3968,
+    "t": 2137,
+    "en": "I have these various little sayings that I’ve come up with, that physics is the law and everything else is a recommendation.",
+    "zh": "我编过各种小格言，其中一句是：物理是法则，其他一切都是建议。"
+   },
+   {
+    "g": 4000,
+    "t": 3031,
+    "en": "You may think you want a magic genie, but once that genie’s out of the bottle, it’s hard to say what happens.",
+    "zh": "你可能以为自己想要一个魔法精灵，但一旦这个精灵出了瓶子，就很难说会发生什么。"
+   },
+   {
+    "g": 4017,
+    "t": 3553,
+    "en": "AI is more dangerous than nuclear bombs and we regulate nuclear bombs. You can’t just go make a nuclear bomb in your backyard. I think we should have some kind of regulation with AI.",
+    "zh": "AI比核弹更危险，而我们监管核弹。你不能就在自家后院造核弹。我认为我们应该对AI有某种监管。"
+   },
+   {
+    "g": 4035,
+    "t": 4045,
+    "en": "And as soon as you throw in the towel and concede to censorship, it is only a matter of time before someone censors you. And that is why we have the First Amendment.",
+    "zh": "而一旦你认输、向审查让步，那么迟早会有人来审查你。这就是为什么我们有第一修正案。"
+   }
+  ],
+  "2023-investor-day-tesla": [
+   {
+    "g": 3430,
+    "t": 1934,
+    "en": "In fact, you could support a civilization much bigger than Earth, much more than the 8 billion humans could actually be supported sustainably on Earth.",
+    "zh": "事实上，我们可以支撑一个比地球大得多的文明，远超地球能以可持续方式实际支撑的80亿人口。"
+   },
+   {
+    "g": 3432,
+    "t": 1997,
+    "en": "Over 80% of global energy, primary energy, comes from fossil fuels. and only one third of that global energy actually ends up delivering useful work or heat.",
+    "zh": "全球一次能源中，超过80%来自化石燃料，而全球能源中只有三分之一真正最终转化为有用的功或热。"
+   },
+   {
+    "g": 3447,
+    "t": 2473,
+    "en": "60% of the generation added to the US grid was solar in 2022. And actually, on a year-on-year basis, solar deployment is growing 50% year-on-year as of 2022.",
+    "zh": "2022年，美国电网新增发电量中有60%来自太阳能。而且实际上，截至2022年，太阳能部署正以50%的同比增长速度发展。"
+   },
+   {
+    "g": 3448,
+    "t": 2504,
+    "en": "And I think really all cars will go to fully electric and autonomous.",
+    "zh": "而且我认为，实际上所有汽车都会走向纯电动和自动驾驶。"
+   },
+   {
+    "g": 3453,
+    "t": 2654,
+    "en": "Model 3 can drive over a mile on the energy it takes to boil a pot of water for pasta, and then it can drive another mile on the energy it took to cook the pasta.",
+    "zh": "Model 3 用煮一锅意面水所需的能量能行驶超过一英里，然后还能用煮意面所耗的能量再行驶一英里。"
+   },
+   {
+    "g": 3462,
+    "t": 2909,
+    "en": "Shipping accounts for 3% of Global CO2. It's ripe for electrification. Even with lithium iron phosphate, long haul ships can be fully battery powered.",
+    "zh": "航运占全球二氧化碳排放的3%。它非常适合电动化。即使使用磷酸铁锂，长途船舶也能完全由电池驱动。"
+   },
+   {
+    "g": 3473,
+    "t": 3244,
+    "en": "And then when we look at what really happens as we move forward, history teaches the more we look, the more we find.",
+    "zh": "然后，当我们审视前进过程中真正发生的事，历史告诉我们：我们看得越多，发现得就越多。"
+   },
+   {
+    "g": 3475,
+    "t": 3294,
+    "en": "Lithium is extremely common. It's one of the most common elements on earth. There's no country that has monopoly on lithium, or even close to it.",
+    "zh": "锂极其常见。它是地球上最常见的元素之一。没有任何国家垄断锂，甚至连接近垄断都没有。"
+   },
+   {
+    "g": 3480,
+    "t": 3452,
+    "en": "Earth can and will move to a sustainable energy economy, and will do so in your lifetime.",
+    "zh": "地球能够也必将转向可持续能源经济，而且会在你有生之年实现。"
+   }
+  ],
+  "elon-musk-reveals-the-goal-of-the-new-twitter": [
+   {
+    "g": 3834,
+    "t": 25,
+    "en": "You know, we just revalued the company at less than half of the acquisition price.",
+    "zh": "你知道，我们刚把公司估值调到不到收购价的一半。"
+   },
+   {
+    "g": 3836,
+    "t": 93,
+    "en": "free speech is the bedrock of a functioning democracy.",
+    "zh": "言论自由是运转良好的民主制度的基石。"
+   },
+   {
+    "g": 3837,
+    "t": 125,
+    "en": "sometimes truth can be a little bit elusive but you can still aspire to get closer to it.",
+    "zh": "有时真相会有点难以捉摸，但你仍然可以努力更接近它。"
+   },
+   {
+    "g": 3839,
+    "t": 178,
+    "en": "And the public will speak with their actions.",
+    "zh": "公众会用自己的行动说话。"
+   },
+   {
+    "g": 3843,
+    "t": 297,
+    "en": "People's attention is limited, so just make sure you put the stuff that's most important there.",
+    "zh": "人的注意力有限，所以一定要把最重要的内容放在那里。"
+   },
+   {
+    "g": 3849,
+    "t": 471,
+    "en": "So one of the things that we're about to release is the ability to encrypt your DMs.",
+    "zh": "所以我们即将推出的一项功能，就是给你的私信加密。"
+   },
+   {
+    "g": 3857,
+    "t": 696,
+    "en": "I didn't vote for Donald Trump. I actually voted for Biden.",
+    "zh": "我没有投票给唐纳德·特朗普。我实际上投给了拜登。"
+   }
+  ],
+  "elon-full-bbc-interview-12-april-2023": [
+   {
+    "g": 4200,
+    "t": 676,
+    "en": "What are you really going to trust? Are you going to trust some sort of black box algorithm from some other site? Or are you going to trust something that you can actually see and understand?",
+    "zh": "你到底会信任什么？你会信任其他网站那种黑箱算法吗？还是你会信任一个你能真正看见并理解的东西？"
+   },
+   {
+    "g": 4213,
+    "t": 1027,
+    "en": "At the point in which the transaction closed, Twitter was tracking to lose over $3 billion a year, and had $1 billion in the bank. So that's four months to death.",
+    "zh": "在交易完成时，Twitter 正朝着每年亏损超过 30 亿美元的方向发展，银行里只有 10 亿美元。所以那距离死亡只有四个月。"
+   },
+   {
+    "g": 4220,
+    "t": 1347,
+    "en": "But nonetheless, free speech is meaningless unless you allow people you don't like to say things you don't like. Otherwise it's irrelevant.",
+    "zh": "但话说回来，言论自由毫无意义，除非你允许你不喜欢的人说你不喜欢的话。否则它就是无关紧要的。"
+   },
+   {
+    "g": 4276,
+    "t": 2592,
+    "en": "Well, I think the media is the driver of misinformation much more than the media would like to admit that they are.",
+    "zh": "我认为媒体才是虚假信息的驱动者，远超媒体愿意承认的程度。"
+   },
+   {
+    "g": 4277,
+    "t": 2600,
+    "en": "And I think in a lot of cases, it is the average citizen that knows more than the journalist.",
+    "zh": "而且我认为在很多情况下，普通公民比记者知道得更多。"
+   },
+   {
+    "g": 4283,
+    "t": 2735,
+    "en": "So my prediction is that any social media company that does not insist on paid verification will simply be overwhelmed by advanced AI bots.",
+    "zh": "所以我的预测是，任何不坚持付费验证的社交媒体公司，都会被先进的 AI 机器人彻底淹没。"
+   },
+   {
+    "g": 4285,
+    "t": 2798,
+    "en": "And over time, I think if Twitter is the best source of truth, it will succeed. And if we are not the best source of truth, we will fail.",
+    "zh": "而且随着时间推移，我认为如果 Twitter 是最好的真相来源，它就会成功。如果我们不是最好的真相来源，我们就会失败。"
+   },
+   {
+    "g": 4325,
+    "t": 3291,
+    "en": "don't tweet if you're wasted or really upset about something.",
+    "zh": "如果你喝醉了，或者对某件事非常生气，就不要发推。"
+   },
+   {
+    "g": 4350,
+    "t": 3799,
+    "en": "But I think we can be the best, the least inaccurate. That's our goal.",
+    "zh": "但我认为我们可以做到最好，也就是错误最少。这就是我们的目标。"
+   },
+   {
+    "g": 4384,
+    "t": 4403,
+    "en": "In fact, in general, part of the issue with the prior management of Twitter is they have all these rules, but they'd only enforce them against some people and not against others.",
+    "zh": "事实上，总的来说，Twitter 前管理层的问题之一在于，他们有所有这些规则，却只对一些人执行，而不对另一些人执行。"
+   }
+  ],
+  "elon-musk-interviewed-by-ron-baron-4-november-2022": [
+   {
+    "g": 4446,
+    "t": 106,
+    "en": "And then for SpaceX, I think it's important for the future to be exciting and for humanities existence to be insured over the long term. I think we must become a multi-planet species",
+    "zh": "然后对SpaceX来说，我认为让未来令人兴奋、并让人类的存在得到长期保障很重要。我认为我们必须成为多行星物种"
+   },
+   {
+    "g": 4448,
+    "t": 180,
+    "en": "So I think it's important we take the actions to ensure that the light of consciousness continues. Because we should really view consciousness as a small candle in a vast darkness. It could easily go out.",
+    "zh": "所以我认为，我们必须采取行动，确保意识之光延续下去。因为我们应该把意识真正看作广袤黑暗中的一支小蜡烛。它很容易熄灭。"
+   },
+   {
+    "g": 4455,
+    "t": 416,
+    "en": "So if there were autonomous, you could probably drive, the cars could drive for 50 or 60 hours. So you would see a five-fold increase in the utility of the car, you know, that could be autonomy. This is a really, really gigantic thing.",
+    "zh": "所以如果实现自动驾驶，汽车大概能开50到60个小时。这样汽车的效用会提高五倍，你知道，这就是自动驾驶。这是一件非常非常大的事。"
+   },
+   {
+    "g": 4460,
+    "t": 590,
+    "en": "And the requirements must be given from a person who can explain the requirement, not from a department, because then you don't know who to talk to.",
+    "zh": "而且，需求必须由能够解释这个需求的人提出，而不是由一个部门提出，因为那样你不知道该找谁谈。"
+   },
+   {
+    "g": 4473,
+    "t": 1013,
+    "en": "And one of my good friends of mine is saying like starting a company is like eating glass and staring into the abyss. So my people will tell me, what can you do to encourage entrepreneurs to start companies? I'm like, if you need encouragement, don't start a company.",
+    "zh": "我的一位好朋友说，创办公司就像吞玻璃、凝视深渊。所以人们会问我，你能做什么来鼓励创业者创办公司？我说，如果你需要鼓励，就别创办公司。"
+   },
+   {
+    "g": 4479,
+    "t": 1218,
+    "en": "With Starship, we're going for 100% reusable. I cannot, it's able to say how profound a change this will be, but a fully and rapidly reusable orbital rocket has the potential to drop the cost of access to space by a factor of a thousand.",
+    "zh": "有了Starship，我们要做到100%可重复使用。我无法说清这会带来多么深远的变化，但一枚完全且快速可重复使用的轨道火箭，有可能把进入太空的成本降低一千倍。"
+   },
+   {
+    "g": 4481,
+    "t": 1287,
+    "en": "So with known physics, it is only barely possible to make a fully reusable orbital rocket, only barely possible. This was a video game, the setting is extreme difficulty.",
+    "zh": "所以在已知物理规律下，制造一枚完全可重复使用的轨道火箭只是勉强可能，仅仅是勉强可能。这就像一款电子游戏，难度设定是极端困难。"
+   },
+   {
+    "g": 4495,
+    "t": 1771,
+    "en": "Life can't just be about solving one problem or another. There needs to be reasons to be inspired. Reasons to move your heart and say yes, the future is going to be great.",
+    "zh": "生活不能只是解决一个又一个问题。需要有理由让人受到鼓舞，有理由打动你的心，让你说：是的，未来会很棒。"
+   },
+   {
+    "g": 4537,
+    "t": 3192,
+    "en": "I'd say that autonomy is an insanely fundamental breakthrough And and no one is even close to Tesla for solving generalized autonomy, generalized self-driving vehicles.",
+    "zh": "我会说，自动驾驶是一个极其根本性的突破，而且在解决通用自动驾驶、通用无人驾驶汽车方面，没有谁接近Tesla。"
+   }
+  ],
+  "elon-musk-talks-twitter-tesla-and-how-his-brain-works-live-at-te": [
+   {
+    "g": 4654,
+    "t": 342,
+    "en": "The things that are currently missing are enough intelligence for the robot to navigate the real world and do useful things without being explicitly instructed. So the missing things are basically real world intelligence and scaling up manufacturing. Those are two things that Tesla is very good at.",
+    "zh": "目前缺的是足够的智能，让机器人能在现实世界中导航，并在没有明确指令的情况下做有用的事。所以缺的基本就是现实世界智能和扩大制造规模。而这两件事正是 Tesla 非常擅长的。"
+   },
+   {
+    "g": 4661,
+    "t": 546,
+    "en": "If you can replace a $30,000, $40,000 a year worker, which you have to pay every year, with a one-time payment of $25,000 for a robot that can work longer hours, doesn't go on vacation, and it could be a pretty rapid replacement of certain types of jobs.",
+    "zh": "如果你能用一次性支付 25,000 美元买一台能工作更久、不休假的机器人，去替代一个每年要付 3 万、4 万美元年薪的工人，那某些类型的工作可能会被相当迅速地替代。"
+   },
+   {
+    "g": 4662,
+    "t": 582,
+    "en": "I think we will have not people out of work but actually still a shortage of labor even in the future. But this really will be a world of abundance.",
+    "zh": "我认为我们不会让人失业，实际上即便在未来也仍会缺劳动力。但这真的将是一个富足的世界。"
+   },
+   {
+    "g": 4667,
+    "t": 763,
+    "en": "Twitter has become kind of the de facto town square. So it's just really important that people have both the reality and the perception that they're able to speak freely within the bounds of the law.",
+    "zh": "Twitter 已经有点成了事实上的城市广场。所以真正重要的是，人们既有现实也有感知：在法律允许的范围内，他们能够自由发言。"
+   },
+   {
+    "g": 4681,
+    "t": 1260,
+    "en": "And a good sign as to whether there's free speech is someone you don't like allowed to say something you don't like. And if that is the case, then we have free speech.",
+    "zh": "言论自由的一个好迹象是：你不喜欢的人被允许说你不喜欢的话。如果情况如此，那我们就拥有言论自由。"
+   },
+   {
+    "g": 4711,
+    "t": 2310,
+    "en": "At this point, I think I know more about manufacturing than anyone currently alive on Earth.",
+    "zh": "到这个时候，我认为我比地球上任何在世的人都更懂制造。"
+   },
+   {
+    "g": 4727,
+    "t": 2859,
+    "en": "I was just absolutely obsessed with truth, just obsessed with truth. And so the obsession with truth is why I studied physics because physics attempts to understand the truth of the universe. Physics is just what are the provable truths of the universe, and truths that have predictive power.",
+    "zh": "我就是绝对痴迷于真相，纯粹痴迷于真相。所以对真相的痴迷是我学物理的原因，因为物理试图理解宇宙的真相。物理就是宇宙中可证明的真相，以及有预测力的真相。"
+   },
+   {
+    "g": 4733,
+    "t": 3076,
+    "en": "And to the degree that we expand the scope and scale of consciousness, biological and digital, we would be better able to ask these questions, to frame these questions, and to understand why we're here, how we got here, what the heck is going on.",
+    "zh": "而我们扩展意识——生物意识和数字意识——的范围和规模的程度越高，就越能提出这些问题、框定这些问题，并理解我们为什么在这里、我们怎么来到这里、到底发生了什么。"
+   },
+   {
+    "g": 4736,
+    "t": 3180,
+    "en": "The future cannot just be that one miserable thing after another, solving one sad problem after another. There have got to be things that get you excited, like you want to live.",
+    "zh": "未来不能只是一件接一件的惨事，解决一个又一个悲伤的问题。必须有一些让你兴奋、让你想活下去的事情。"
+   }
+  ],
+  "elon-musk-a-future-worth-getting-excited-about-tesla-texas-gigaf": [
+   {
+    "g": 4753,
+    "t": 424,
+    "en": "People should be optimistic about the future. The humanity will solve sustainable energy. It will happen.",
+    "zh": "人们应该对未来保持乐观。人类会解决可持续能源问题。这一定会发生。"
+   },
+   {
+    "g": 4761,
+    "t": 668,
+    "en": "But in order to solve full self-driving, probably you actually just, you have to solve real world AI.",
+    "zh": "但为了解决全自动驾驶，可能你实际上就是必须解决真实世界 AI。"
+   },
+   {
+    "g": 4785,
+    "t": 1414,
+    "en": "I do think there should be a regulatory agency for AI. I've said this for many years. I don't love being regulated, but I think this is an important thing for public safety.",
+    "zh": "我确实认为应该有一个针对 AI 的监管机构。这话我已经说了很多年。我不喜欢被监管，但我认为这对公共安全很重要。"
+   },
+   {
+    "g": 4792,
+    "t": 1617,
+    "en": "Any goods and services will be available to anyone who wants them. It will be so cheap to have goods and services. It will be ridiculous.",
+    "zh": "任何商品和服务都将提供给任何想要它们的人。拥有商品和服务会变得极其便宜。会便宜得离谱。"
+   },
+   {
+    "g": 4811,
+    "t": 2241,
+    "en": "So the holy grail of rocketry or space transport is full and rapid reusability. This has never been achieved.",
+    "zh": "所以火箭或太空运输的圣杯就是完全、快速的重复使用。这一点从未实现过。"
+   },
+   {
+    "g": 4826,
+    "t": 2759,
+    "en": "Mars especially in the beginning will not be luxurious. It will be dangerous, cramped, difficult, hard work.",
+    "zh": "火星尤其在初期不会奢华。它会危险、拥挤、艰难，需要辛苦劳作。"
+   },
+   {
+    "g": 4829,
+    "t": 2858,
+    "en": "We're in this vast darkness of space and there's this little candle of consciousness that's only really come about after four and a half billion years. And it could just go out.",
+    "zh": "我们身处浩瀚黑暗的太空，而有一小簇意识之光，它是在45亿年后才真正出现的。而它可能就此熄灭。"
+   },
+   {
+    "g": 4860,
+    "t": 3851,
+    "en": "And in order to understand the nature of the universe and all these fundamental questions, we must expand the scope and scale of consciousness.",
+    "zh": "而为了理解宇宙的本质和所有这些根本问题，我们必须扩大意识的规模和范围。"
+   },
+   {
+    "g": 4863,
+    "t": 3960,
+    "en": "Well I think if you want the future to be good you must make it so. Take action to make it good and it will be.",
+    "zh": "我认为，如果你想让未来变好，你就必须让它变好。采取行动让它变好，它就会变好。"
+   }
+  ],
+  "go-up-spacex-s-starship-catching-robotic-launch-tower-with-elon": [
+   {
+    "g": 4868,
+    "t": 126,
+    "en": "I think, you know, at SpaceX, we specialize in converting things from impossible to late.",
+    "zh": "我认为，你知道，在SpaceX，我们擅长把不可能变成“迟到”。"
+   },
+   {
+    "g": 4873,
+    "t": 313,
+    "en": "Yes, success is one of the possible outcomes. The probability is uncertain, but it is above zero.",
+    "zh": "是的，成功是可能的结果之一。概率不确定，但高于零。"
+   },
+   {
+    "g": 4883,
+    "t": 618,
+    "en": "So, for satellite constellation, the thing that really matters is what is your total mass flux, useful mass flux to orbit.",
+    "zh": "所以，对于卫星星座来说，真正重要的是你送往轨道的总质量通量，也就是有用的质量通量。"
+   },
+   {
+    "g": 4885,
+    "t": 677,
+    "en": "The Starlink 2 in terms of useful bits of data is almost in order of magnitude better than the Starlink 1.",
+    "zh": "就有效数据比特而言，Starlink 2 几乎比 Starlink 1 好一个数量级。"
+   },
+   {
+    "g": 4898,
+    "t": 1189,
+    "en": "I think for the first time it is possible, that it's possible outcome to make life multi-planetary.",
+    "zh": "我认为，这是第一次，让生命成为多行星物种是可能的，是一个可能的结果。"
+   },
+   {
+    "g": 4899,
+    "t": 1235,
+    "en": "The key to making life multi-planetary is a fully reusable rocket. That's the key. So, full and rapid reusability, like an aircraft.",
+    "zh": "让生命成为多行星物种的关键，是完全可重复使用的火箭。这就是关键。所以，要像飞机一样实现完整且快速的重复使用。"
+   },
+   {
+    "g": 4902,
+    "t": 1347,
+    "en": "So the only way to prolong life as we know it is for us to become multi-planetary and ultimately multi-stellar and if we do not do that, or life on Earth will die.",
+    "zh": "所以，延长我们所知生命的唯一方式，就是让我们成为多行星物种，并最终成为多恒星物种；如果我们不这么做，地球上的生命就会消亡。"
+   },
+   {
+    "g": 4910,
+    "t": 1621,
+    "en": "So essentially, if one creates wealth, or creates great products and services, that is something that should be applauded. That is effectively increased the standard of living of the country and perhaps of the world.",
+    "zh": "所以本质上，如果一个人创造财富，或创造伟大的产品和服务，那是应该受到称赞的。那实际上提高了这个国家、也许还有全世界的生活水平。"
+   }
+  ],
+  "2022-elon-musk-explains-updates-to-starship-and-starbase": [
+   {
+    "g": 4934,
+    "t": 425,
+    "en": "The hot gas thruster was definitely over-engineered and unnecessary.",
+    "zh": "热燃气推进器绝对是过度设计，而且没有必要。"
+   },
+   {
+    "g": 4948,
+    "t": 827,
+    "en": "Grid fins are much more consistent than flaps as you go from hypersonic to super sonic to trans sonic to subsonic.",
+    "zh": "从高超音速到超音速、跨音速再到亚音速，栅格翼比襟翼稳定得多。"
+   },
+   {
+    "g": 4965,
+    "t": 1385,
+    "en": "But really, I wouldn't say that there's like, high confidence that the first flight will work.",
+    "zh": "但说实话，我不会说我们对首飞成功有很大信心。"
+   },
+   {
+    "g": 4975,
+    "t": 1719,
+    "en": "So your propellant is not being useful below thrust weight of one so you actually want to have a higher thrust to weight for a reusable vehicle than for an expendable.",
+    "zh": "所以在推重比低于一时，你的推进剂没有被有效利用，因此可重复使用飞行器实际上需要比一次性飞行器更高的推重比。"
+   },
+   {
+    "g": 4977,
+    "t": 1788,
+    "en": "At the end of the day, yes, the fully considered cost per ton to orbit is the optimization.",
+    "zh": "归根结底，是的，全面核算后的每吨入轨成本才是优化目标。"
+   },
+   {
+    "g": 4979,
+    "t": 1849,
+    "en": "So if the rover weighs a ton, then it costs a billion dollars to get there. It's a billion dollars per ton to Mars.",
+    "zh": "所以如果一辆火星车重一吨，把它送到那里就要十亿美元。也就是到火星每吨十亿美元。"
+   },
+   {
+    "g": 4996,
+    "t": 2465,
+    "en": "We are trying to generate drag and be as draggy as possible when we fall. So it's a very different optimization than an aircraft.",
+    "zh": "我们是在尽量产生阻力，下落时让阻力尽可能大。所以这和飞机的优化方向完全不同。"
+   },
+   {
+    "g": 4997,
+    "t": 2498,
+    "en": "So if you have a production line, you need a lot of stations, essentially, for a high production.",
+    "zh": "所以如果你要建生产线，本质上就需要很多工位来实现高产量。"
+   },
+   {
+    "g": 5000,
+    "t": 2590,
+    "en": "The ground systems are, ground systems, especially inclusive of the tower, are at least as complicated as the stage one or stage two.",
+    "zh": "地面系统，尤其是包括发射塔在内，至少和一级或二级一样复杂。"
+   }
+  ],
+  "tesla-ai-day-2022": [
+   {
+    "g": 5005,
+    "t": 943,
+    "en": "So if I go crazy, you can fire me.",
+    "zh": "所以如果我疯了，你们可以解雇我。"
+   },
+   {
+    "g": 5019,
+    "t": 1533,
+    "en": "An economy becomes quasi-infinite.",
+    "zh": "经济会变得近乎无限。"
+   },
+   {
+    "g": 5021,
+    "t": 1616,
+    "en": "Like it's very important that I can't just do what I want.",
+    "zh": "重要的是，我不能想干什么就干什么。"
+   },
+   {
+    "g": 5022,
+    "t": 1655,
+    "en": "Optimists, I think, has maybe a two order of magnitude, potential improvement in economic output. It's not clear what the limit actually even is.",
+    "zh": "我认为Optimus可能让经济产出提升两个数量级。极限到底在哪里，目前还不清楚。"
+   },
+   {
+    "g": 5024,
+    "t": 1728,
+    "en": "I think the road to hell is mostly paid with bad intentions but every now and again there's a good intention in there.",
+    "zh": "我认为通往地狱的道路主要是由坏意图铺成的，但偶尔也会夹杂一点好意图。"
+   },
+   {
+    "g": 5062,
+    "t": 2847,
+    "en": "If you think about it, we're just moving from a robot on wheels to a robot on legs.",
+    "zh": "如果你仔细想想，我们只是从轮式机器人转向腿式机器人。"
+   },
+   {
+    "g": 5126,
+    "t": 4764,
+    "en": "Just Phil's videos, it takes 1.4 billion frames to train that network, what you just saw. And if you have 100,000 GPU, it would take one hour, but if you have one GPU, it would take 100,000 hours.",
+    "zh": "仅Phil展示的那些视频，训练你们刚才看到的那个网络就需要14亿帧。如果有10万块GPU，训练只需一小时；如果只有一块GPU，则要10万小时。"
+   },
+   {
+    "g": 5127,
+    "t": 4796,
+    "en": "So this is why we've built in-house three supercomputers comprising of 14,000 GPUs, where we use 10,000 GPUs for training and run 4,000 GPUs for all labeling.",
+    "zh": "这就是为什么我们自建了三台超级计算机，共包含14000块GPU，其中10000块用于训练，4000块用于标注。"
+   },
+   {
+    "g": 5132,
+    "t": 4936,
+    "en": "Video is quite literally a dimension more complicated.",
+    "zh": "视频确实在维度上更复杂一层。"
+   }
+  ],
+  "2022-annual-shareholder-meeting-tesla": [
+   {
+    "g": 5368,
+    "t": 228,
+    "en": "So 10 years ago, we made less than 3,000 cars. And here we stand 10 years later, having made over 3 million.",
+    "zh": "所以10年前，我们造了不到3000辆车。而10年后站在这里，我们已经造了超过300万辆。"
+   },
+   {
+    "g": 5386,
+    "t": 896,
+    "en": "I think we're tracking to have Model Y be the highest of selling vehicle by revenue this year and the highest by unit volume next year.",
+    "zh": "我认为我们有望让 Model Y 今年成为按营收计最畅销的车型，明年成为按销量计最畅销的车型。"
+   },
+   {
+    "g": 5391,
+    "t": 1091,
+    "en": "The average life cycle emissions of an EV are dramatically lower than that of a gasoline car.",
+    "zh": "电动车的平均生命周期排放显著低于汽油车。"
+   },
+   {
+    "g": 5392,
+    "t": 1124,
+    "en": "If you add up all the energy produced over the last 10 years by Tesla solar panels, it is more energy than was used to manufacture all of our cars and charge all of our cars at superchargers and at home.",
+    "zh": "如果把 Tesla 太阳能板过去10年产生的所有能量加起来，它比制造我们所有汽车以及在超级充电站和家里给所有汽车充电所用的能量还多。"
+   },
+   {
+    "g": 5404,
+    "t": 1559,
+    "en": "eventually all cars will be self-driving. And the thing that would be hardest to replicate is Tesla's manufacturing technology.",
+    "zh": "最终所有汽车都会自动驾驶。而最难复制的东西是 Tesla 的制造技术。"
+   },
+   {
+    "g": 5416,
+    "t": 1980,
+    "en": "My guess is optimists will be more valuable than the car long term. In fact, it will, I think, turn the whole notion of what's an economy on its head.",
+    "zh": "我的猜测是，长期来看 Optimus 会比汽车更有价值。事实上，我认为它会颠覆整个经济的概念。"
+   },
+   {
+    "g": 5437,
+    "t": 2781,
+    "en": "Now making macroeconomic prognostications is a recipe for disaster. But my guess is that we're past peak inflation and that we will have a recession. I think it will be a relatively mild recession.",
+    "zh": "现在做宏观经济预测是灾难的配方。但我猜我们已经过了通胀峰值，而且会有一场衰退。我认为那会是一场相对温和的衰退。"
+   },
+   {
+    "g": 5445,
+    "t": 3052,
+    "en": "I think probably Tesla will be the most valuable company in the world.",
+    "zh": "我认为 Tesla 很可能会成为世界上最有价值的公司。"
+   },
+   {
+    "g": 5452,
+    "t": 3297,
+    "en": "to understand a company, you must use its products. And if you think the products are great, then the company's great.",
+    "zh": "要理解一家公司，你必须使用它的产品。如果你认为产品很棒，那这家公司就很棒。"
+   },
+   {
+    "g": 5455,
+    "t": 3401,
+    "en": "if you're a shareholder, a company is really like the net present value of future cash flows. And so one quarter is not really a big deal.",
+    "zh": "如果你是股东，一家公司其实就像未来现金流的净现值。所以一个季度并不是什么大事。"
+   }
+  ],
+  "elon-musk-on-life-the-universe-and-everything-interview-part-2": [
+   {
+    "g": 5513,
+    "t": 970,
+    "en": "If you eliminated all EV incentives tomorrow, Tesla's competitive position would improve significantly. I'll say that again, if you eliminated all tax credits, EV tax credits, Tesla's position would improve immediately.",
+    "zh": "如果明天取消所有电动车激励，Tesla 的竞争地位会显著改善。我再说一遍，如果取消所有税收抵免、电动车税收抵免，Tesla 的地位会立刻改善。"
+   },
+   {
+    "g": 5515,
+    "t": 1027,
+    "en": "the history of car companies is like, there have been like over a thousand car company startups in the United States and they're all dead.",
+    "zh": "汽车公司的历史是，美国有过上千家汽车初创公司，而它们全都死了。"
+   },
+   {
+    "g": 5518,
+    "t": 1117,
+    "en": "the difference between Tesla and not Tesla is how many years is sustainable energy accelerated.",
+    "zh": "Tesla 与没有 Tesla 的区别，就是可持续能源被加速了多少年。"
+   },
+   {
+    "g": 5522,
+    "t": 1240,
+    "en": "So you can sell high margin parts, replacement parts, for the existing fleet. and you can sell your new cars at effectively zero margin. It's like a razor and blades thing.",
+    "zh": "所以你可以向现有车队出售高利润的零件、替换零件。而你可以以几乎零利润出售新车。这就像剃刀和刀片模式。"
+   },
+   {
+    "g": 5523,
+    "t": 1272,
+    "en": "And in order to charge a lot more, have people actually buy it, the product must be so compelling that people are willing to pay the premium above the alternative cars from the incumbent car makers. This is the only way.",
+    "zh": "而为了能卖更高的价、还能让人真的买，产品必须足够有吸引力，让人们愿意支付高于现有车企替代车型的溢价。这是唯一的办法。"
+   },
+   {
+    "g": 5535,
+    "t": 1662,
+    "en": "As you raise the price, the percentage of people who can afford the car starts to drop exponentially.",
+    "zh": "随着你提高价格，能买得起这辆车的人所占比例会开始指数级下降。"
+   },
+   {
+    "g": 5557,
+    "t": 2307,
+    "en": "But the overwhelming focus is solving full self-driving. So yeah, and that's essential. And like, that's really the difference between Tesla being worth a lot of money and being worth basically zero.",
+    "zh": "但压倒性的重点是解决全自动驾驶。所以，是的，这很关键。这实际上就是 Tesla 值很多钱还是基本一文不值的区别。"
+   },
+   {
+    "g": 5569,
+    "t": 2680,
+    "en": "I believe it was in the same quarter that GM delivered 26 electric vehicles and Tesla delivered 300,000. It's like not 26,000, 26.",
+    "zh": "我相信就是在同一个季度，GM 交付了 26 辆电动车，而 Tesla 交付了 300,000 辆。注意不是 26,000 辆，是 26 辆。"
+   },
+   {
+    "g": 5593,
+    "t": 3506,
+    "en": "So I think it's very important that we become a multi-panned species while we can, and before technology potentially subsides below the level where it's possible.",
+    "zh": "所以我认为，非常重要的是，我们要趁还来得及、在技术可能降到不再可行的水平之前，成为多行星物种。"
+   }
+  ],
+  "elon-musk-unfiltered-interview-part-3-bonus-material": [
+   {
+    "g": 5605,
+    "t": 117,
+    "en": "And so literally the car that I was driving around LA is now in orbit around Earth and Mars.",
+    "zh": "所以，字面意义上，我过去在洛杉矶开的那辆车，现在正在环绕地球和火星的轨道上运行。"
+   },
+   {
+    "g": 5613,
+    "t": 352,
+    "en": "So the past two years have been an absolute nightmare of supply chain interruptions, one thing after another. And we're not out of it yet.",
+    "zh": "所以过去两年就是供应链中断的绝对噩梦，一件事接着一件事。而我们还没有走出困境。"
+   },
+   {
+    "g": 5617,
+    "t": 491,
+    "en": "So both Berlin and Austin factories are gigantic money furnaces right now.",
+    "zh": "所以柏林和奥斯汀两家工厂现在都是巨大的烧钱炉。"
+   },
+   {
+    "g": 5621,
+    "t": 629,
+    "en": "So a doubling of the price will drop the affordability by a factor of 10. It's a rough rule of thumb.",
+    "zh": "所以价格翻一倍，能负担得起的人会减少到十分之一。这是个粗略的经验法则。"
+   },
+   {
+    "g": 5640,
+    "t": 1138,
+    "en": "Basically, WeChat is kick-ass. And we don't have anything like WeChat outside of China.",
+    "zh": "基本上，微信非常厉害。而在中国之外，我们没有任何类似微信的东西。"
+   },
+   {
+    "g": 5654,
+    "t": 1524,
+    "en": "Nope, actually, the places that have the best social safety nets have the lowest birth rate.",
+    "zh": "不，实际上，社会保障体系最好的地方，生育率最低。"
+   },
+   {
+    "g": 5658,
+    "t": 1641,
+    "en": "Yeah, the population density is actually very low, and most parts of the world have no people in it.",
+    "zh": "是的，人口密度其实非常低，世界上大部分地区根本没有人。"
+   },
+   {
+    "g": 5680,
+    "t": 2303,
+    "en": "So I mean, Tesla's actually going to be in a situation where Tesla has a self-driving solution and no one else is even close, not even for five years.",
+    "zh": "所以我的意思是，Tesla 实际上会走到这样一个局面：Tesla 拥有自动驾驶解决方案，而其他任何人都差得远，甚至五年内都追不上。"
+   },
+   {
+    "g": 5689,
+    "t": 2606,
+    "en": "So it will be able to drive better than James Bond could possibly drive. Fortunately, the threshold for succeeding is just being better than a human.",
+    "zh": "所以它将能够开得比詹姆斯·邦德所能做到的还要好。幸运的是，成功的门槛只是比人类更好。"
+   },
+   {
+    "g": 5706,
+    "t": 3125,
+    "en": "Okay, so like the company that massively reduces deaths and accidents should not be penalized for the few that do occur.",
+    "zh": "好吧，所以，一家大幅减少死亡和事故的公司，不应该因为少数仍然发生的事故而受到惩罚。"
+   }
+  ],
+  "elon-musk-talks-about-colonizing-the-galaxy": [
+   {
+    "g": 5970,
+    "t": 40,
+    "en": "So you got to have all the things necessary to sustain civilization on Mars.",
+    "zh": "所以你必须拥有在火星上维持文明所需的一切。"
+   },
+   {
+    "g": 5971,
+    "t": 70,
+    "en": "So civilization here on Earth could end with a bang or a wimper.",
+    "zh": "所以地球上的文明可能轰然终结，也可能悄然消亡。"
+   },
+   {
+    "g": 5975,
+    "t": 202,
+    "en": "And then, but if there are no aliens, well, could it be that all civilizations are just destroyed before they become interstellar?",
+    "zh": "那么，但如果没有外星人，会不会所有文明都在成为星际文明之前就被毁灭了？"
+   },
+   {
+    "g": 5981,
+    "t": 377,
+    "en": "I mean if they wanted us to know obviously they could just show up and walk down Main Street.",
+    "zh": "我是说，如果他们想让我们知道，显然他们可以直接出现，走在主街上。"
+   },
+   {
+    "g": 5985,
+    "t": 499,
+    "en": "Everything that we found archeologically is consistent with the time, the technology they had at that time.",
+    "zh": "我们考古发现的一切都与那个时代、他们当时拥有的技术相符。"
+   },
+   {
+    "g": 5987,
+    "t": 558,
+    "en": "So if you gave, if you said a million years with current, with, and say there's no new physics, could you colonize the galaxy in a million years? Absolutely, the entire galaxy.",
+    "zh": "所以如果你说，用当前（技术），假设没有新物理学，你能在一百万年内殖民银河系吗？绝对可以，整个银河系。"
+   },
+   {
+    "g": 5988,
+    "t": 591,
+    "en": "Because our planet is just, we're too subject to natural disasters and our own folly and if the species is going to survive, we kind of have to escape.",
+    "zh": "因为我们的星球，我们太容易受到自然灾害和我们自身愚蠢的影响，如果物种要生存下去，我们某种程度上必须逃离。"
+   },
+   {
+    "g": 5989,
+    "t": 622,
+    "en": "So and then there have been so many extinction events, not like just a few.",
+    "zh": "所以，然后有过非常多的灭绝事件，不是只有几次。"
+   }
+  ],
+  "joe-rogan-experience-1470-elon-musk": [
+   {
+    "g": 6030,
+    "t": 354,
+    "en": "I think possessions kind of weigh you down and they're kind of an attack vector.",
+    "zh": "我觉得财产会拖累你，而且算是一种攻击面。"
+   },
+   {
+    "g": 6033,
+    "t": 419,
+    "en": "If you organize people in a better way to produce products and services that are better than what existed before and you have some ownership in that company then that essentially gives you the right to allocate more capital.",
+    "zh": "如果你以更好的方式组织人们，生产出比过去更好的产品和服务，并且你在这家公司拥有部分所有权，那这本质上就赋予了你配置更多资本的权利。"
+   },
+   {
+    "g": 6035,
+    "t": 498,
+    "en": "If a company is making compelling products and services, it should get more capital and if it's not, it should get less or go out of business.",
+    "zh": "如果一家公司能做出有吸引力的产品和服务，它就应该获得更多资本；如果不能，它就应该获得更少资本，或者倒闭。"
+   },
+   {
+    "g": 6036,
+    "t": 546,
+    "en": "We should have, I think, fewer people doing law and fewer people doing finance and more people making stuff.",
+    "zh": "我认为，我们应该让更少的人去做法律、更少的人去做金融，让更多的人去制造东西。"
+   },
+   {
+    "g": 6049,
+    "t": 950,
+    "en": "No, we're not testing on people yet, but I think it won't be too long. I think we may be able to implant a neural link in less than a year in a person I think.",
+    "zh": "不，我们还没有在人体上测试，但我认为不会太久。我想我们也许能在不到一年内把神经连接设备植入一个人体内。"
+   },
+   {
+    "g": 6088,
+    "t": 2501,
+    "en": "I mean, you don't always improve, but you can aspire to improve or you can aspire to be less wrong.",
+    "zh": "我的意思是，你不总会进步，但你可以力求进步，或者力求少犯错。"
+   },
+   {
+    "g": 6099,
+    "t": 2839,
+    "en": "You can think of a corporation as like a cybernetic collective that's far smarter than an individual.",
+    "zh": "你可以把一家公司看作一个控制论意义上的集体，它比任何个人都聪明得多。"
+   },
+   {
+    "g": 6149,
+    "t": 4770,
+    "en": "I just believe this is a free country. You should be allowed to do what you want as long as it does not endanger others.",
+    "zh": "我就是相信这是一个自由国家。只要不危及他人，你就应该被允许做自己想做的事。"
+   },
+   {
+    "g": 6152,
+    "t": 4898,
+    "en": "If you don't make stuff, there's no stuff.",
+    "zh": "如果你不制造东西，就没有东西。"
+   },
+   {
+    "g": 6178,
+    "t": 6236,
+    "en": "So if you want to improve the quality of your sleep and be healthier, it's do not eat right before we go to sleep. It's one of the worst things you could do.",
+    "zh": "所以，如果你想提高睡眠质量、变得更健康，就不要在睡觉前吃东西。这是你能做的最糟糕的事情之一。"
+   }
+  ],
+  "we-simulated-the-world-for-full-self-driving-elon-musk-interview": [
+   {
+    "g": 5993,
+    "t": 39,
+    "en": "But I think we're quite close to having the car be fully autonomous.",
+    "zh": "但我认为，我们已经非常接近让汽车实现完全自动驾驶了。"
+   },
+   {
+    "g": 5996,
+    "t": 120,
+    "en": "Maybe my guess is like 50 to 60 hours, which means that the utility of a passenger vehicle would increase by a factor of five.",
+    "zh": "我猜大概是50到60小时，这意味着乘用车的效用会提高五倍。"
+   },
+   {
+    "g": 5998,
+    "t": 176,
+    "en": "The chip rush is bigger than any gold rush that has ever existed.",
+    "zh": "芯片热潮比史上任何一场淘金热都更大。"
+   },
+   {
+    "g": 5999,
+    "t": 204,
+    "en": "I mean, I hope, I just hope the robots are nice to us, you know?",
+    "zh": "我的意思是，我希望，我只是希望机器人能善待我们，你懂的。"
+   },
+   {
+    "g": 6001,
+    "t": 266,
+    "en": "But I mean, I think we really are on the edge of one of the biggest technology revolution that has ever existed.",
+    "zh": "但我认为，我们确实正处于有史以来最大的技术革命之一的前沿。"
+   },
+   {
+    "g": 6002,
+    "t": 292,
+    "en": "Well, we live in the most interesting of times, the most interesting.",
+    "zh": "好吧，我们生活在最有趣的时代，最有趣的时代。"
+   },
+   {
+    "g": 6005,
+    "t": 373,
+    "en": "Then the next shortage will be electricity.",
+    "zh": "下一个短缺将是电力。"
+   },
+   {
+    "g": 6012,
+    "t": 557,
+    "en": "In fact, the simultaneous growth of electric cars and AI, both of which need electricity, both of which need voltage transformers, actually, I think, is creating a tremendous demand for electrical equipment and for electrical power generation.",
+    "zh": "事实上，电动汽车和AI同时增长，二者都需要电力，也都需要变压器，我认为这正在对电气设备和发电产生巨大的需求。"
+   },
+   {
+    "g": 6014,
+    "t": 614,
+    "en": "Well, our next generation vehicle will be a low cost vehicle. Also, that is very focused on autonomy.",
+    "zh": "嗯，我们的下一代汽车将是一款低成本汽车。它也非常专注于自动驾驶。"
+   }
+  ],
+  "tesla-battery-day": [
+   {
+    "g": 6219,
+    "t": 4721,
+    "en": "The U.S. average for collisions is at roughly 2.1 per million miles, and with autopilot engaged, it's 0.3. I mean, this is a profound difference, really massive, and this will get even better.",
+    "zh": "美国平均每百万英里大约发生2.1起碰撞，而开启Autopilot时是0.3起。我是说，这是巨大的差别，真的非常大，而且还会变得更好。"
+   },
+   {
+    "g": 6223,
+    "t": 4962,
+    "en": "I think manufacturing is underappreciated in general, and the difficulty of designing the machine that makes the machine is vastly harder than the machine itself.",
+    "zh": "我认为制造业总体上被低估了，而设计“制造机器的机器”的难度，远比机器本身大得多。"
+   },
+   {
+    "g": 6227,
+    "t": 5153,
+    "en": "It matters if sustainable energy happens faster or slower, and so that's really how I think about Tesla and how we should assess our progress. By how many years did we accelerate sustainable energy?",
+    "zh": "可持续能源来得更快还是更慢，这件事很重要；这就是我看待特斯拉、评估我们进展的方式。我们把可持续能源加速了多少年？"
+   },
+   {
+    "g": 6236,
+    "t": 6324,
+    "en": "But let's say it's like roughly 20 to 25 terawatt hours per year sustained for 15 to 25 years to transition the world to renewable.",
+    "zh": "但这么说吧：要让世界转向可再生能源，大约需要连续15到25年、每年20到25太瓦时的电池产能。"
+   },
+   {
+    "g": 6254,
+    "t": 7623,
+    "en": "Eventually every company will have autonomy, I think, but not every company will be a great at manufacturing. Tesla will be absolutely head and shoulders above anyone else in manufacturing, that is our goal.",
+    "zh": "我认为，最终每家公司都会拥有自动驾驶，但不是每家公司都能把制造做得极好。特斯拉将在制造上绝对遥遥领先于其他任何公司，这就是我们的目标。"
+   },
+   {
+    "g": 6256,
+    "t": 7802,
+    "en": "And then long-term, we're expecting to make on the order of a 3000 gigawatt hours or three terawatt hours per year. I think we've got a good chance of achieving this actually before 2030, but I'm highly confident that we could do it by 2030.",
+    "zh": "然后长期来看，我们预计每年生产约3000吉瓦时，也就是3太瓦时。我认为我们很有机会在2030年前实现，但我高度确信我们能在2030年前做到。"
+   },
+   {
+    "g": 6265,
+    "t": 8545,
+    "en": "Every vehicle in the United States can be converted to electric using only lithium that is available in the United States.",
+    "zh": "美国的每一辆车都可以仅用美国境内可获得的锂来转换成电动车。"
+   },
+   {
+    "g": 6281,
+    "t": 9364,
+    "en": "Long-term we want to try to replace at least 1% of the total vehicle fleet on Earth, which is about 2 billion vehicles. So long-term, we want to try and make about 20 million vehicles a year.",
+    "zh": "长期来看，我们希望至少替换掉地球上全部车辆中的1%，也就是约20亿辆车。所以长期来看，我们想努力做到每年生产约2000万辆车。"
+   },
+   {
+    "g": 6293,
+    "t": 10017,
+    "en": "The entire global economy is still more than 99% dependent on, or call it roughly 99% dependent on, fossil fuels. So although electric cars get a lot of press right now, as a percentage of the total global fleet it's practically nothing. I would say yes, less than 1% of the global fleet is electric right now.",
+    "zh": "整个全球经济仍然有超过99%依赖化石燃料，或者说大约99%依赖化石燃料。所以，尽管电动车现在很受关注，但放到全球车队总量中，它几乎可以忽略不计。我要说，是的，目前全球车队中电动车的比例还不到1%。"
+   },
+   {
+    "g": 6306,
+    "t": 11130,
+    "en": "Less than 1% of the global automotive fleet has been converted to electric and even maybe less than 0.1% of stationary storage has been done. So stationary storage has barely begun, converting the global vehicle fleet to electric, has barely begun.",
+    "zh": "全球汽车车队中只有不到1%转换成了电动，而固定式储能可能连0.1%都还没做到。所以固定式储能才刚刚开始，全球车队电动化也才刚刚开始。"
+   }
+  ],
+  "joe-rogan-experience-1169-elon-musk": [
+   {
+    "g": 6362,
+    "t": -1,
+    "en": "Now the thing that’s going to be tricky here is that it’s going to be very tempting to use AI as a weapon. It’s going to be very tempting. In fact, it will be used as a weapon.",
+    "zh": "现在这里棘手的地方在于，把 AI 当作武器会非常诱人。它会非常诱人。事实上，它会被用作武器。"
+   },
+   {
+    "g": 6365,
+    "t": -1,
+    "en": "Yes, I made this comment some years ago, but it feels like we are the biological bootloader for AI.",
+    "zh": "是的，我几年前说过这个话，但感觉我们就是 AI 的生物引导程序。"
+   },
+   {
+    "g": 6387,
+    "t": -1,
+    "en": "Your phone is already an extension of you. You’re already a cyborg. You don’t even—well, most people don’t realize they are already a cyborg.",
+    "zh": "你的手机已经是你自身的延伸。你已经是半机械人了。你甚至——好吧，大多数人没意识到自己已经是半机械人了。"
+   },
+   {
+    "g": 6437,
+    "t": -1,
+    "en": "So if you assume any rate of improvement at all, then games will be indistinguishable from reality or civilization will end. One of those two things will occur. Therefore, we are most likely in a simulation.",
+    "zh": "所以，只要你假设存在任何程度的进步，那么游戏终将与现实无法区分，或者文明会终结。这两件事必有一件会发生。因此，我们很可能生活在一场模拟之中。"
+   },
+   {
+    "g": 6447,
+    "t": -1,
+    "en": "I’d rather be optimistic and wrong than pessimistic and right.",
+    "zh": "我宁愿乐观而犯错，也不愿悲观而正确。"
+   },
+   {
+    "g": 6538,
+    "t": -1,
+    "en": "This is one of the fundamental things people don’t appreciate about tunnels, is that it’s not like roads. The fundamental issue with roads is that you have a 2D transport system and a 3D living and workspace environment.",
+    "zh": "这是人们没有充分认识到的一个关于隧道的基本点：隧道不像道路。道路的根本问题在于，你有二维的交通系统和三维的生活与工作环境。"
+   },
+   {
+    "g": 6593,
+    "t": -1,
+    "en": "We’re taking vast amounts of carbon from deep underground and putting this in the atmosphere. This is crazy. We should not do this.",
+    "zh": "我们正在从地下深处开采大量碳，并把它们排放到大气中。这太疯狂了。我们不该这么做。"
+   },
+   {
+    "g": 6702,
+    "t": -1,
+    "en": "You know, there’s only two car companies in the history of American car companies that haven’t gone bankrupt. And that’s Ford and Tesla. That’s it.",
+    "zh": "你知道，在美国汽车公司的历史上，只有两家公司没有破产。那就是 Ford 和 Tesla。就这两家。"
+   },
+   {
+    "g": 6844,
+    "t": -1,
+    "en": "We have these starships and we’re going to see what other planets are like. We’re a multi planet species and the scope and scale of consciousness is expanded across many civilizations and many planets and many star systems. This is a great future.",
+    "zh": "我们会拥有这些星舰，去看看其他行星是什么样子。我们会成为多行星物种，意识的尺度和范围会扩展到许多文明、许多行星和许多恒星系统。这是一个伟大的未来。"
+   }
+  ],
+  "tesla-semi-roadster-unveil": [
+   {
+    "g": 6899,
+    "t": 277,
+    "en": "And at the end of the day, we have not wavered from our mission to build the most compelling, greatest class A truck in history.",
+    "zh": "归根结底，我们从未偏离自己的使命：打造历史上最有吸引力、最出色的 Class A 卡车。"
+   },
+   {
+    "g": 6901,
+    "t": 343,
+    "en": "So when you factor in the number of hours driven and the weight that it's carrying, it's actually, although it's only 1% of vehicle production, it's 20% of vehicle emissions. And it's over a third of all the particulate emissions.",
+    "zh": "所以，当你把行驶小时数和载重算进去，虽然它只占汽车产量的 1%，却占汽车排放的 20%。而且它占所有颗粒物排放的三分之一以上。"
+   },
+   {
+    "g": 6902,
+    "t": 371,
+    "en": "Every truck that we put on the road that replaces a diesel truck is a huge amount of leverage.",
+    "zh": "我们每把一辆替代柴油卡车的卡车投入道路，都会产生巨大的杠杆效应。"
+   },
+   {
+    "g": 6905,
+    "t": 459,
+    "en": "So that's why we're making this wide range of cars that don't really make sense from a brand standpoint, I guess, traditionally, but they make total sense when you consider what's the mission of the company. Mission of the company is to accelerate sustainable energy.",
+    "zh": "所以这就是为什么我们在造这一系列车——从品牌角度、按传统来看，它们并不太说得通，但当你考虑公司的使命时，它们就完全说得通。公司的使命就是加速可持续能源。"
+   },
+   {
+    "g": 6909,
+    "t": 587,
+    "en": "But the other reason that it's a beast is because it's also efficient. And you can go 500 miles on a single charge on one of these things.",
+    "zh": "但它之所以是猛兽，另一个原因是它也很高效。而且这玩意儿单次充电能跑 500 英里。"
+   },
+   {
+    "g": 6922,
+    "t": 935,
+    "en": "But you can basically pull 82,000 pounds at crews, and the only thing that's doing that is a tiny little motor on one axle.",
+    "zh": "但你基本上可以在巡航时拉动 82,000 磅，而做到这一点的只是单个车轴上的一个小电机。"
+   },
+   {
+    "g": 6929,
+    "t": 1132,
+    "en": "That's a significant safety improvement for the truck driver and for other people on the road. And we also have excellent traction control because the precision of an electric motor is vastly better than a diesel engine.",
+    "zh": "这对卡车司机和其他道路使用者来说是一项重大的安全提升。而且我们还有出色的牵引力控制，因为电机的精度远胜柴油发动机。"
+   },
+   {
+    "g": 6938,
+    "t": 1427,
+    "en": "This is a combination. This is not just the truck. If you optimize one you actually might disrupt the whole combination.",
+    "zh": "这是一个组合。这不仅仅是卡车。如果你只优化其中一个，实际上可能会破坏整个组合。"
+   },
+   {
+    "g": 6944,
+    "t": 1573,
+    "en": "So we developed a megawatt class charger. It's capable of charging at a megawatt DC.",
+    "zh": "所以我们开发了一款兆瓦级充电器。它能够以 1 兆瓦直流功率充电。"
+   },
+   {
+    "g": 6948,
+    "t": 1698,
+    "en": "So the three pillars of a sustainable energy future are sustainable power generation with solar and wind. I'm actually a fan of nuclear, which we should support.",
+    "zh": "所以可持续能源未来的三大支柱是依靠太阳能和风能的可持续发电。我个人其实是核能的拥趸，我们应该支持核能。"
+   }
+  ],
+  "tesla-unveils-model-3": [
+   {
+    "g": 7073,
+    "t": 87,
+    "en": "We have record high CO2 levels. We recently passed over 403 parts per million of CO2 in the atmosphere.",
+    "zh": "我们现在的二氧化碳水平创下历史新高。我们最近超过大气中二氧化碳浓度百万分之403。"
+   },
+   {
+    "g": 7076,
+    "t": 185,
+    "en": "So it stands to reason that if a vehicle is spewing toxic gas, that's obviously bad for your health.",
+    "zh": "所以按理说，如果一辆车在排放有毒气体，那显然对你的健康有害。"
+   },
+   {
+    "g": 7087,
+    "t": 572,
+    "en": "The Model 3 will not just be five-star on average, it will be five-star in every category.",
+    "zh": "Model 3 不仅平均达到五星，它将在每个类别都达到五星。"
+   },
+   {
+    "g": 7088,
+    "t": 611,
+    "en": "At Tesla we don't make slow cars.",
+    "zh": "在 Tesla，我们不造慢车。"
+   },
+   {
+    "g": 7089,
+    "t": 649,
+    "en": "And all autopilot safety features will be present in every car. You won't need to buy an option.",
+    "zh": "而且所有 Autopilot 安全功能都会出现在每辆车上。你不需要购买选装。"
+   },
+   {
+    "g": 7093,
+    "t": 782,
+    "en": "So the reason supercharging is very important as many of you know, is that it gives you freedom of travel.",
+    "zh": "所以正如你们许多人知道的，超级充电非常重要的原因在于，它给你出行的自由。"
+   },
+   {
+    "g": 7094,
+    "t": 816,
+    "en": "By the end of next year, we will double the number of superchargers and quadruple the number of destination charges.",
+    "zh": "到明年年底，我们将把超级充电桩数量翻倍，把目的地充电点数量翻两番。"
+   },
+   {
+    "g": 7097,
+    "t": 921,
+    "en": "We basically need to absorb the entire world's lithium ion production. That's why we are building the Gigafactory.",
+    "zh": "我们基本上需要吸收全世界所有的锂离子电池产量。这就是我们正在建设 Gigafactory 的原因。"
+   },
+   {
+    "g": 7098,
+    "t": 953,
+    "en": "So to give you a sense of scale, the Gigafactory will actually have the largest footprint of any building, of any kind.",
+    "zh": "所以为了让你们感受一下规模，Gigafactory 实际上将拥有所有建筑中最大的占地面积，无论哪种建筑。"
+   },
+   {
+    "g": 7100,
+    "t": 1034,
+    "en": "You will not be able to buy a better car for $35,000 or even close, even if you get no options.",
+    "zh": "即便你不选任何配置，你也不可能用 35,000 美元买到更好的车，连接近的都没有。"
+   }
+  ],
+  "tesla-unveils-powerwall-2-solar-roof": [
+   {
+    "g": 7105,
+    "t": 54,
+    "en": "Global warming is becoming a serious crisis, and we need to do something about that.",
+    "zh": "全球变暖正在成为一场严重危机，我们必须对此采取行动。"
+   },
+   {
+    "g": 7106,
+    "t": 86,
+    "en": "We really need to make solar panels as appealing as electric cars have become.",
+    "zh": "我们真的需要让太阳能板像电动汽车一样有吸引力。"
+   },
+   {
+    "g": 7108,
+    "t": 160,
+    "en": "So the goal of Tesla, people sometimes think of Tesla as an electric car company, but really the whole purpose of Tesla was to accelerate the advent of sustainable energy.",
+    "zh": "所以，特斯拉的目标——人们有时把特斯拉看作一家电动汽车公司，但特斯拉的真正目的是加速可持续能源的到来。"
+   },
+   {
+    "g": 7109,
+    "t": 193,
+    "en": "Now, you need battery packs because the sun does not shine at night.",
+    "zh": "现在，你需要电池组，因为太阳在夜里不会发光。"
+   },
+   {
+    "g": 7111,
+    "t": 263,
+    "en": "So we'd like to introduce the power wall too. This is a big step above the power wall one. It has twice as much energy, more than twice as much power.",
+    "zh": "所以我们要介绍 Powerwall 2。这是比 Powerwall 1 迈进的一大步。它的能量是两倍，功率是两倍多。"
+   },
+   {
+    "g": 7115,
+    "t": 411,
+    "en": "So you need about a third for transport, about a third for heating, and about a third for what we currently use as electricity.",
+    "zh": "所以你需要大约三分之一用于交通，大约三分之一用于供暖，大约三分之一用于我们目前当作电力使用的部分。"
+   },
+   {
+    "g": 7124,
+    "t": 759,
+    "en": "So one of the other advantages of glass is that we can actually make it a lot tougher and last lot longer than a conventional roof.",
+    "zh": "所以玻璃的另一个优势是，我们实际上可以让它坚固得多，并且比传统屋顶耐用得多。"
+   },
+   {
+    "g": 7126,
+    "t": 828,
+    "en": "And there's about four to five million new roofs in the US every year. And I think 20 times that number are worldwide.",
+    "zh": "而且美国每年大约有四五百万个新屋顶。我认为全球的数量是这个数字的 20 倍。"
+   },
+   {
+    "g": 7127,
+    "t": 861,
+    "en": "Over time, every house would become a solar house.",
+    "zh": "随着时间推移，每座房子都会变成太阳能房子。"
+   },
+   {
+    "g": 7128,
+    "t": 895,
+    "en": "You want to call your neighbors over and say check out the sweet roof.",
+    "zh": "你会想把邻居叫过来，说看看这漂亮的屋顶。"
+   }
+  ],
+  "elon-musk-s-farewell-press-conference-with-president-trump": [
+   {
+    "g": 7138,
+    "t": 921,
+    "en": "The calculations of the DOGE team thus far, in terms of an FY25 to FY26 delta, are over 160 billion, and that's climbing. We expect that number will probably go over 200 billion soon.",
+    "zh": "DOGE团队迄今的计算，按2025财年到2026财年的差额算，超过1600亿美元，而且还在攀升。我们预计这个数字很快可能超过2000亿美元。"
+   },
+   {
+    "g": 7140,
+    "t": 1029,
+    "en": "And we are relentlessly pursuing $8 trillion in waste and fraud reductions which will benefit the American taxpayer.",
+    "zh": "我们正在不懈追求削减8万亿美元的浪费和欺诈，这将惠及美国纳税人。"
+   },
+   {
+    "g": 7151,
+    "t": 1426,
+    "en": "I mean, we find situations where there are millions of software licenses with zero people using them.",
+    "zh": "我的意思是，我们发现有些情况下，有数百万份软件许可证，使用人数为零。"
+   },
+   {
+    "g": 7155,
+    "t": 1574,
+    "en": "So, there are many things that occur in the government because it's the banal evil of bureaucracy. It's the, frankly, largely uncaring nature of bureaucracy.",
+    "zh": "所以，政府里发生的很多事情，是因为官僚制那种平庸的恶。坦率地说，那是官僚制基本上漠不关心的本性。"
+   },
+   {
+    "g": 7165,
+    "t": 2947,
+    "en": "I think the fundamental moral flaw of the left is empathy for the criminals and not empathy for the victims. Empathy for the criminals, but not empathy for the victims.",
+    "zh": "我认为左派根本的道德缺陷，是对罪犯有同理心，而对受害者没有。对罪犯有同理心，对受害者却没有。"
+   }
+  ],
+  "elon-musk-s-full-interview-with-code-conference": [
+   {
+    "g": 7207,
+    "t": 198,
+    "en": "There's no such thing as an escape altitude. There's only an escape velocity.",
+    "zh": "不存在所谓的逃逸高度。只有逃逸速度。"
+   },
+   {
+    "g": 7221,
+    "t": 641,
+    "en": "If you consider that really every mode of transport has a design that is appropriate to its medium.",
+    "zh": "如果你认真想想，每一种交通方式都有适合其介质的形态。"
+   },
+   {
+    "g": 7226,
+    "t": 790,
+    "en": "life can't be just about solving problems.",
+    "zh": "生活不能只是解决问题。"
+   },
+   {
+    "g": 7235,
+    "t": 1068,
+    "en": "if you're going to choose a place to die, then Mars is probably not a bad choice.",
+    "zh": "如果你要选一个地方死去，火星大概不算坏选择。"
+   },
+   {
+    "g": 7261,
+    "t": 1914,
+    "en": "The lithium is actually 2% of the cell mass. So it's like the salt in the salad.",
+    "zh": "锂其实只占电芯质量的2%。所以它就像沙拉里的盐。"
+   },
+   {
+    "g": 7281,
+    "t": 2502,
+    "en": "I think it would be fair to say that not all AI futures are benign.",
+    "zh": "我认为可以公平地说，并非所有人工智能的未来都是良性的。"
+   },
+   {
+    "g": 7286,
+    "t": 2680,
+    "en": "It's not about competing. It's really just about trying to increase the probability that the future will be good.",
+    "zh": "这不是竞争。这真的只是努力提高未来变好的概率。"
+   },
+   {
+    "g": 7312,
+    "t": 3526,
+    "en": "we're already a cyborg.",
+    "zh": "我们已经是半机械人了。"
+   },
+   {
+    "g": 7329,
+    "t": 4060,
+    "en": "we can certainly see a way to get to Mars in under three months. And I think ultimately you'll be able to get to Mars in under a month.",
+    "zh": "我们当然能看到一条在三个月内抵达火星的路径。我认为最终人们能在一个月内抵达火星。"
+   },
+   {
+    "g": 7335,
+    "t": 4249,
+    "en": "things move as fast as the least lucky and least competent supplier.",
+    "zh": "事情推进的速度，取决于最倒霉、最不称职的那家供应商。"
+   }
+  ],
+  "tesla-cybertruck-unveil": [
+   {
+    "g": 7166,
+    "t": 16,
+    "en": "So we didn't cheat in either width, height, or length, and we're able to achieve much greater capability in the same dimensions, same weight.",
+    "zh": "所以我们在宽度、高度和长度上都没有作弊，并且能在相同的尺寸、相同的重量下实现强得多的能力。"
+   },
+   {
+    "g": 7167,
+    "t": 72,
+    "en": "The key to creating an effective monoplane was a stressed skin design. You move the stress to the outside skin. Allows you to do things that you can't do with a body on frame.",
+    "zh": "造出高效单翼机的关键，是应力蒙皮设计。你把应力转移到外蒙皮上。这样就能做到非承载式车身做不到的事。"
+   },
+   {
+    "g": 7173,
+    "t": 219,
+    "en": "You want a truck that's really tough, not fake tough. You want a truck you can take a sledgehammer to. A truck that won't scratch.",
+    "zh": "你要的是一辆真正结实的卡车，而不是假结实。你要的是一辆能拿大锤砸的卡车。一辆不会刮花的卡车。"
+   },
+   {
+    "g": 7175,
+    "t": 279,
+    "en": "So it's ultra hard, cold rolled stainless steel alloy that we've developed. We're going to be using the same alloy in the Starship rocket and in the Cybertruck.",
+    "zh": "所以这是我们开发的一种超硬、冷轧不锈钢合金。我们将在 Starship 火箭和 Cybertruck 上使用同一种合金。"
+   },
+   {
+    "g": 7186,
+    "t": 541,
+    "en": "If every truck has the ability to adjust the ride height so you can go very low or very high, so you can be efficient on the highway and you can also go off-roading. It's going to have the highest clearance of any production truck. So it would have about a 16 inch clearance.",
+    "zh": "如果每辆卡车都能调节行驶高度，让你可以降得很低或升得很高，从而在高速上高效、也能去越野。它将会拥有所有量产卡车中最高的离地间隙。所以它大约会有 16 英寸的离地间隙。"
+   },
+   {
+    "g": 7190,
+    "t": 754,
+    "en": "So you don't need a generator. The truck literally is your generator.",
+    "zh": "所以你不需要发电机。这辆卡车本身就是你的发电机。"
+   },
+   {
+    "g": 7191,
+    "t": 818,
+    "en": "You're paying much less for electricity than you are for the gasoline. You're paying much less for maintenance. There's no oil changes, no smog checks, no nothing, none of that stuff.",
+    "zh": "你在电费上的支出远低于汽油费。你在维护上的支出也少得多。没有换机油，没有尾气检测，什么都没有，这些统统没有。"
+   }
+  ],
+  "elon-musk-demos-a-tesla-model-x-prototype-to-the-press-2012": [
+   {
+    "g": 7425,
+    "t": 0,
+    "en": "The Model 3 stands as an all-electric marvel, boasting an impressive estimated range of 333 miles, liberating you from the need to frequent gas stations.",
+    "zh": "Model 3 是一款全电动杰作，预估续航里程达 333 英里，让你无需频繁光顾加油站。"
+   },
+   {
+    "g": 7426,
+    "t": 27,
+    "en": "With only a solitary moving part in each engine, maintenance is minimized, and durability is maximized.",
+    "zh": "每个电机只有一个运动部件，因此维护被降到最低，耐用性被最大化。"
+   },
+   {
+    "g": 7430,
+    "t": 137,
+    "en": "The Model 3 lacks an instrument displayed directly in front of the driver. Instead, essential information such as the speedometer, driving direction selector, and safety assist visuals are located on the central touchscreen, requiring the driver to shift their focus to the left.",
+    "zh": "Model 3 没有直接位于驾驶员前方的仪表盘。相反，车速表、行驶方向选择器和安全辅助可视化等关键信息都位于中央触摸屏上，要求驾驶员将视线向左移。"
+   },
+   {
+    "g": 7432,
+    "t": 197,
+    "en": "Tesla's software boasts a modern and intuitive user interface, featuring sleek animations. Powered by a rapid AMD Ryzen processor, it stands unparalleled in the automotive industry.",
+    "zh": "Tesla 的软件拥有现代且直观的用户界面，配有流畅的动画。在快速 AMD Ryzen 处理器的驱动下，它在汽车行业中无与伦比。"
+   },
+   {
+    "g": 7433,
+    "t": 227,
+    "en": "Remarkably, the Model 3's interface holds greater significance than in most other vehicles, as it governs approximately 95% of the car's controls and functionalities. This encompasses tasks such as adjusting the steering wheel and wing mirrors, as well as regulating the airflow through the air vents.",
+    "zh": "值得注意的是，Model 3 的界面的重要性高于大多数其他车辆，因为它控制着汽车约 95% 的操控和功能。这包括调节方向盘和侧后视镜，以及调节通过空调出风口的气流。"
+   },
+   {
+    "g": 7438,
+    "t": 363,
+    "en": "Particularly noteworthy is the Model 3, a four-door sedan initially launched with a wide array of options, which has been refined to currently offer three distinct configurations.",
+    "zh": "尤其值得注意的是 Model 3，这款四门轿车最初推出时提供大量选项，经过改进后目前提供三种不同配置。"
+   },
+   {
+    "g": 7439,
+    "t": 391,
+    "en": "For those desiring a complete self-driving experience, a comprehensive upgrade is available at a cost of $15,000, 6,800 pounds, 7,500 euros.",
+    "zh": "对于想要完整自动驾驶体验的人，可选装全面升级，价格为 15,000 美元、6,800 英镑、7,500 欧元。"
+   },
+   {
+    "g": 7442,
+    "t": 476,
+    "en": "In the past, only the Model 3 performance qualified for the full tax credit. Now, both the long range all-wheel drive and rear-wheel drive variants of the Model 3 will also qualify.",
+    "zh": "过去，只有 Model 3 Performance 有资格获得全额税收抵免。现在，Model 3 的长续航全轮驱动版和后轮驱动版也将有资格获得。"
+   }
+  ],
+  "tesla-model-x-reveal": [
+   {
+    "g": 7393,
+    "t": 275,
+    "en": "We created Tesla to make a difference in the world. The world desperately needs sustainable transport. If we don't solve this problem this century, we are fracked.",
+    "zh": "我们创立 Tesla 是为了给世界带来改变。世界迫切需要可持续交通。如果我们这个世纪解决不了这个问题，我们就完蛋了。"
+   },
+   {
+    "g": 7394,
+    "t": 314,
+    "en": "So that's really the mission of Tesla, is to apply creativity and innovation to create the most compelling cars in the world, bar none. We want to show that electric cars are in fact better than gasoline.",
+    "zh": "所以 Tesla 的真正使命，就是运用创造力和创新，打造世界上最吸引人的汽车，无可匹敌。我们要证明，电动汽车实际上比汽油车更好。"
+   },
+   {
+    "g": 7395,
+    "t": 351,
+    "en": "So even if you're just taking your electricity directly from the meter in California, you're only creating about a quarter as much CO2 as you would with a gasoline car.",
+    "zh": "所以，即使你只是直接从加州的电表取电，你产生的二氧化碳也只有汽油车的大约四分之一。"
+   },
+   {
+    "g": 7397,
+    "t": 424,
+    "en": "And if you install solar power, you can easily produce more electricity at your house than you consume in your car. So that's an incredibly sustainable solution.",
+    "zh": "而且如果你安装太阳能发电，你家很容易就能发出比你的车消耗的更多的电。所以那是一个非常可持续的解决方案。"
+   },
+   {
+    "g": 7398,
+    "t": 464,
+    "en": "So for the longest time, people said a car like the roadster was impossible. It was like some fictional creature. So we had to show that you could create an electric car, an electric sports car that totally changed the paradigm of what people thought about an electric car.",
+    "zh": "所以很长一段时间里，人们都说像 Roadster 这样的车是不可能的。它就像某种虚构的生物。所以我们必须证明，你可以造出一辆电动汽车，一辆彻底改变人们对电动汽车看法的电动跑车。"
+   },
+   {
+    "g": 7404,
+    "t": 679,
+    "en": "So let's have a screen that's actually better than your MacBook Pro. So we tapped the Apple supply chain and said, well, let's take away the constraints that make a laptop screen worse, because the laptops have to conserve energy.",
+    "zh": "所以，让我们做一块实际上比你的 MacBook Pro 更好的屏幕。于是我们找到了 Apple 供应链，说，好吧，让我们去掉那些让笔记本屏幕变差的限制，因为笔记本必须省电。"
+   },
+   {
+    "g": 7408,
+    "t": 811,
+    "en": "So what if you could have a car that has more functionality than a minivan, more style than an SUV, and more performance than a sports car? That's the Model X.",
+    "zh": "那么，如果你能拥有一辆车，功能比小型厢式车更强，风格比 SUV 更足，性能比跑车更好，会怎样？那就是 Model X。"
+   },
+   {
+    "g": 7419,
+    "t": 1293,
+    "en": "And what dual motor all-wheel drive gives you is the best all-wheel drive experience of any car period, because you can dynamically shift power from front to rear, depending upon what is got the most traction.",
+    "zh": "双电机全轮驱动带给你的，是任何车都无法比拟的最佳全轮驱动体验，因为你可以根据哪里抓地力最大，在前轮和后轮之间动态分配动力。"
+   },
+   {
+    "g": 7421,
+    "t": 1361,
+    "en": "So you've got something that's the size of an SUV it's faster than a Porsche. Model X gives you functionality, style and performance.",
+    "zh": "所以你得到的是一辆 SUV 尺寸、却比 Porsche 更快的车。Model X 给你功能、风格和性能。"
+   }
+  ],
+  "elon-musk-commits-to-develop-fully-reusable-rockets-2011": [
+   {
+    "g": 7454,
+    "t": 393,
+    "en": "And life has to be more than about solving problems. If all that life is about is solving problems, why are they getting up in the morning? There have to be things that inspire you that make you proud to be a member of humanity.",
+    "zh": "生活不能只是解决问题。如果生活只是为了解决问题，人们为什么还要每天早上起床？总得有些东西能激励你，让你为自己是人类的一员而自豪。"
+   },
+   {
+    "g": 7457,
+    "t": 489,
+    "en": "So the pivotal breakthrough that's necessary, that some company has come up with to make life multi-planetary is a fully and rapidly reusable orbit-class rocket.",
+    "zh": "因此，实现生命多行星化所必需的关键突破，也就是某家公司已经想出的方案，是完全且快速可重复使用的轨道级火箭。"
+   },
+   {
+    "g": 7458,
+    "t": 524,
+    "en": "you get maybe 2% to 3% of your liftoff weight to orbit. That's not a lot of room for error.",
+    "zh": "你大概能把起飞重量的2%到3%送入轨道。这个容错空间可不大。"
+   },
+   {
+    "g": 7467,
+    "t": 817,
+    "en": "You can imagine that if planes were not reusable, very few people would fly.",
+    "zh": "你可以想象，如果飞机不可重复使用，很少有人会坐飞机。"
+   },
+   {
+    "g": 7468,
+    "t": 850,
+    "en": "we could probably afford a quarter of a percent of our GDP for making life multi-planetary.",
+    "zh": "我们大概能承担把GDP的0.25%用于实现生命多行星化。"
+   },
+   {
+    "g": 7482,
+    "t": 1292,
+    "en": "And the enforceability of patents against Chinese government is zero.",
+    "zh": "而且，专利对中国政府的执行力为零。"
+   },
+   {
+    "g": 7509,
+    "t": 2131,
+    "en": "if one set a standard that you couldn't have loss of life and there would be no transport, you wouldn't even be allowed to walk. So you have to allow for some amount of risk.",
+    "zh": "如果定一个标准说不能有人员伤亡，那就不会有交通，你甚至都不被允许走路。所以你必须允许一定量的风险。"
+   },
+   {
+    "g": 7519,
+    "t": 2455,
+    "en": "We have to have sustainable production of energy and consumption of energy because tautologically if it's unsustainable you will run out of it.",
+    "zh": "我们必须有可持续的能源生产和能源消费，因为说白了，如果它不可持续，你迟早会把它用完。"
+   },
+   {
+    "g": 7521,
+    "t": 2515,
+    "en": "We should lean in the direction of supporting technologies that are sustainable and lean slightly against technologies that are unsustainable. That just seems pretty sensible, even if the environment isn't a factor.",
+    "zh": "我们应该倾向于支持可持续的技术，并稍微反对不可持续的技术。这看起来相当合理，即使环境不是考虑因素。"
+   },
+   {
+    "g": 7538,
+    "t": 3065,
+    "en": "when companies are little, they're like tadpoles. I mean, they just die very easily. And so you need to have an environment which tries to protect little companies and help them get bigger.",
+    "zh": "公司小的时候就像蝌蚪。我的意思是，它们很容易死掉。所以你需要一个努力保护小公司并帮助它们成长的环境。"
+   }
+  ]
+ },
+ "sayings": {
+  "s40": "我想死在火星上；只是别是撞上去那一刻。",
+  "s41": "由于我们在航天发射领域的主要竞争对手是国家政府，专利的可执行性存疑。",
+  "s42": "就算发生丧尸末日，你仍然能靠 Tesla 超级充电系统出行。",
+  "s43": "我打算去火星，把那儿当成家……人们应该去火星，而且要在我们这代人有生之年做成这件事。",
+  "s44": "在 PowerPoint 里什么都能行得通；但如果你有实物，或者有演示软件，那比一份 PowerPoint 演示或商业计划有说服力得多。",
+  "s45": "首先，你得住在透明穹顶里，但最终，你可以把火星改造成类似地球的行星。你可以把它暖起来。",
+  "s46": "（快速给这颗行星升温的办法）往两极扔热核武器。",
+  "s47": "我在努力做有用的事。",
+  "s48": "AI 比人们意识到的要先进得多。……人类在这个星球上的地位取决于我们的智能，所以如果我们的智能被超越，我们不太可能继续掌管这个星球。",
+  "s49": "人们可能会因为开车太危险而把它定为非法。你不能让一个人去开一台两吨重的死亡机器。",
+  "s50": "说清楚一点，Tesla 强烈支持允许人们自己开车，而且永远都会如此。希望这一点显而易见。不过，当自动驾驶汽车变得比人类驾驶汽车更安全时，公众可能会禁止后者。希望不会。",
+  "s51": "SpaceX 有 5000 人。我得到很多关注，但真正干活的是他们。",
+  "s52": "我认为我们有责任守护意识之光，确保它延续到未来。",
+  "s53": "第一次（载人）火星任务中，死亡概率相当高。",
+  "s54": "那会是一场不可思议的冒险。生活不能只是解决每天的问题。你需要早上醒来时对未来感到兴奋。",
+  "s55": "我本可以在自己的私人岛上，和裸体超模一起喝迈泰，但我没有。我在工厂里拼命干活，所以我不想听别人说工厂里其他人有多辛苦。",
+  "s56": "我认为，为了让生命成为多行星生命，有一个强有力的人道主义理由：万一发生灾难性事件，可以保住人类的存在。",
+  "s57": "公司里的每个人都是一个向量。你的进展由所有向量的总和决定。",
+  "s58": "把火箭技术用到汽车上，会开启革命性的可能性。",
+  "s59": "我爱 Twitter。它卖多少钱？",
+  "s60": "我靠，那玩意儿真飞起来了！",
+  "s61": "我不理解那种小飞船的思路。你不能坐着一条划艇大小的东西出现在火星。万一有火星人呢？那也太丢人了。",
+  "s62": "《卫报》是地球上最让人受不了的报纸。",
+  "s63": "我其实是猫娘，这是现在的自拍",
+  "s64": "我们必须通过大过滤器！",
+  "s65": "我们（美国）想对谁搞政变就搞谁！受着吧。",
+  "s66": "新技术规模化生产的极端难度没有被充分理解。它比造几个原型要难 1000% 到 10000%。造机器的机器，比机器本身难得多。",
+  "s67": "所有设计都是错的，只是错多少的问题。",
+  "s68": "聪明工程师最常见的错误，可能就是去优化一个本不该存在的东西。",
+  "s69": "如果 WFP 能在这个 Twitter 帖子里准确说明 60 亿美元将如何解决全球饥饿问题，我现在就卖掉 Tesla 股票并去做。但必须是开源账目，让公众清楚看到钱到底花在哪儿。",
+  "s70": "伯尼是个索取者，不是创造者。",
+  "s71": "给那些好奇的人：我今年将缴纳超过 110 亿美元的税。",
+  "s72": "我觉得历史很迷人。人们做过很多不可思议的事，有好的也有坏的，它们能帮你理解文明和个体的本质。",
+  "s73": "我们需要扩展意识的范围和规模，这样我们才能更好地理解宇宙的本质，理解生命的意义。",
+  "s74": "如果你把人吓得够呛，他们就会要求剥夺自由。这是通往暴政的路。",
+  "s75": "我说的是从一开始就不生孩子。问题就在这儿。",
+  "s76": "判断有没有言论自由的一个好标志是：“你讨厌的人是否被允许说你讨厌的话？”",
+  "s77": "这不是赚钱的路子……我根本不在乎经济账。",
+  "s78": "这只是我强烈的直觉……拥有一个受到最大程度信任、具有广泛包容性的公共平台，对文明的未来极其重要。",
+  "s79": "你还持有对 Tesla 的 5 亿美元空头头寸吗？抱歉，当你大规模做空 Tesla 时，我无法认真对待你在气候变化方面的慈善事业。Tesla 可是为解决气候变化做得最多的公司。",
+  "s80": "NBC 基本上是在说共和党人是纳粹……就是同一个机构，压下了亨特·拜登笔记本电脑的报道，早年拿到哈维·温斯坦的报道却把它压掉，还给马特·劳尔打造了他的强奸办公室。真是好人哪。",
+  "s81": "Apple 的商店就像对互联网征收 30% 的税。绝对不行。这比应有的水平高了整整 10 倍。",
+  "s82": "出生率崩塌是文明迄今面临的最大危险。我正在尽我所能帮助应对人口不足危机。",
+  "s83": "火星人口仍然是零！",
+  "s84": "我不恨这个人，但特朗普是时候挂靴退役、扬帆驶向夕阳了。民主党人也该停止攻击——别把特朗普逼到只有重新赢回总统职位才能活下去。",
+  "s85": "那不如试试这个：住在顿巴斯和克里米亚的人民的意愿，应该决定他们属于俄罗斯还是乌克兰",
+  "s86": "我仍然非常支持乌克兰，但我确信，战争大规模升级会给乌克兰、甚至可能给全世界带来巨大伤害。",
+  "s87": "我在 Twitter 上装傻充愣，经常搬起石头砸自己的脚，给自己惹各种麻烦……我不知道，我觉得在 Twitter 上表达自己多少有点疗愈作用。这是把信息传递给公众的一种方式。",
+  "s88": "我确实受上百万条法律法规约束，其中我遵守了差不多 99.99%。只有当我认為法律违背人民利益时，我才有意见。",
+  "s89": "我只和普京谈过一次，大约是在 18 个月前。谈的是太空。",
+  "s90": "坦率地说，我们不管风雨都全力踩油门。无论有没有衰退，我们都没有以任何有意义的方式减产。",
+  "s91": "我看到一条路，让 Tesla 的市值超过 Apple 和沙特阿美之和。",
+  "s92": "这事可能另有隐情，虽然可能性很小。",
+  "s93": "关于 Twitter 的裁员，不幸的是，公司每天亏损超过 400 万美元时，别无选择。",
+  "s94": "致有独立思想的选民：分权能遏制两党最糟糕的过度行为，因此，既然总统职位由民主党掌握，我建议投票给共和党国会。",
+  "s95": "不叫我们遇见试探……",
+  "s96": "我想知道 8800 万年后的地球会是什么样",
+  "s97": "所以旧金山市不去确保孩子们免受 的伤害，反而攻击那些给疲惫员工提供床位的公司。你们的优先事项到底在哪？",
+  "s98": "关于言论自由压制的 Twitter Files 即将在 Twitter 本身发布。公众有权知道到底发生了什么。",
+  "s99": "在别人没问的情况下把你的代词强加于人，并暗中排斥不这么做的人，这对谁都不好也不友善。至于福奇，他对国会撒谎，还资助了导致数百万人死亡的功能获得性研究。恕我直言，这可不怎么样。",
+  "s100": "关于 Twitter 的阴谋论，有哪个最后没被证实是真的吗？到目前为止，它们全都被证实是真的——甚至比人们想的还要真。",
+  "s101": "媒体搞种族主义。在*非常*长的时间里，美国媒体对非白人搞种族主义，现在又对白人和亚裔搞种族主义。美国的精英大学和高中也是一样。也许他们可以试试不搞种族主义。",
+  "s102": "跟人当面谈，比用推文交流更好。",
+  "s103": "打击错误信息的最好方式，是用准确信息回应，而不是审查",
+  "s104": "花絮合集一定很精彩。",
+  "s105": "任何父母或医生，在孩子尚未成年、能够自主同意之前就对其做绝育，都应该终身监禁。",
+  "s106": "现在你仍然可以满足边缘系统的本能，却不繁衍后代。所以我们还没进化到能处理这一点，因为这一切都相当新近，也就是过去五十年左右、在避孕出现之前的事。",
+  "s107": "我有点担心，嘿，文明，如果我们不造出足够的人，至少维持人口数量，或许还稍微增加一点，那么文明就会崩塌。",
+  "s108": "你假设他们是好意。并不是。他想侵蚀文明的根本结构。索罗斯仇恨人类。",
+  "s109": "我想说什么就说什么，如果后果是亏钱，那就亏吧。",
+  "s110": "如果你因为在平台上发帖或点赞而受到雇主的不公平对待，我们会资助你的律师费。没有上限。",
+  "s111": "我支持拉塞尔·布兰德。那个人并不邪恶。",
+  "s112": "[媒体]不喜欢竞争。",
+  "s113": "历史是由胜利者书写的。嗯，对，但如果你敌人还活着，而且有大把时间编辑维基百科，那就不一定了。",
+  "s114": "你有没有想过，为什么维基媒体基金会要这么多钱？运营维基百科肯定不需要这么多。你 literally 可以把整个文本的副本装进手机里！那么，这些钱是干什么用的？好奇的人想知道……",
+  "s115": "学校不是把知识，而是把毒药灌进我们孩子的耳朵里",
+  "s116": "目前不清楚谁负责加沙的地面连接，但我们是否知道，该地区没有任何终端请求连接？",
+  "s117": "如果你想要一份工作只是为了个人乐趣，那你可以有。但 AI 可以把一切都做了。",
+  "s118": "这场广告抵制会造成什么结果？它会杀死这家公司[...] 而全世界都会知道，是那些广告商杀死了这家公司",
+  "s119": "别做广告。如果有人想用广告来勒索我？用钱来勒索我？去你妈的[...] 去你妈的，清楚了吗？嘿，Bob，如果你就在观众席里。这就是我的感受，别做广告。",
+  "s0": "我认为互联网是所有媒体的超集。它是一切媒体的终极归宿。人们会看到印刷、广播，可以说还有电台，基本上所有媒体都融入互联网之中。",
+  "s1": "如果事情没有失败，说明你创新得还不够。",
+  "s2": "我其实没指望赚什么钱。只要能赚够付房租、买点吃的就行了。结果到最后，它变得相当有价值。",
+  "s3": "我本身并不反对服兵役，但在南非军队里服役、去镇压黑人，这看起来实在不是个度过时间的好办法。",
+  "s4": "我认为南非是个伟大的国家。",
+  "s5": "如果你想靠近最前沿，尤其是在技术领域，你就得来北美。",
+  "s6": "学费高得离谱。幸运的是，他们给了我奖学金……所以我只需要靠打工来支付生活费、书本费等。",
+  "s7": "一个是互联网，一个是清洁能源，一个是太空。",
+  "s8": "我可以选择旁观它发生，也可以选择成为它的一部分。",
+  "s9": "我们可以想办法和小型航空航天公司一起做低成本的航天器和着陆器。但我们找不到做低成本运载火箭的办法，除非去找俄罗斯人。",
+  "s10": "答案是：我们认为这件事能做到。",
+  "s11": "火箭本身并没有什么必然昂贵的地方。只是过去那些建造和运营火箭的人，效率低得可怕。",
+  "s12": "Falcon One 将成为所有量产火箭中每次入轨飞行成本最低的。",
+  "s13": "这意味着我们的成本比中国低，比俄罗斯或任何其他地方都低——而且我们是在美国、用美国的劳动力成本做到这一点。",
+  "s14": "嗯，我一直尽量从以前的尝试中学到尽可能多的东西。",
+  "s15": "别的先不说，我们至少下定决心要以一种新的方式失败。",
+  "s16": "以前的尝试有一片墓地，很大一片。可能还有些刚挖好的墓穴正等着被填上。我们的愿望就是避开那个归宿。",
+  "s17": "我认为我们已经相当清楚地界定了风险。我认为我们至少在避免过去犯过的错误。",
+  "s18": "我认为火箭生意周期性很强，有很多高峰和低谷。",
+  "s19": "考虑创业时，我觉得其实更好的做法是在低谷时起步、在高峰时进入市场，而不是反过来。坦白说，如果说有什么东西——这几乎都成了老生常谈——拥有长期未来，那就是太空。",
+  "s20": "我希望能够确保我们有足够资本撑过至少连续三次失败。如果你想在运载火箭行业赚到一笔小财，那就从一大笔钱开始。",
+  "s21": "长期的终极目标——圣杯——是我们想帮助让生命遍布多个行星。",
+  "s22": "我们上过月球，但此后从未做过比这更了不起的事。阿波罗之后我们没有取得更多进展，这让我失望。我甚至看不到一个计划说我们要做得比阿波罗更好、超越那个目标。",
+  "s23": "我喜欢参与改变世界的事情。互联网做到了，而太空可能比任何其他东西都更能改变世界。如果人类能够扩展到地球之外，显然未来就在那里。",
+  "s24": "亨利·福特造出便宜又可靠的汽车时，人们说：“算了吧，马有什么不好？”那是他下的一场豪赌，而且奏效了。",
+  "s25": "这对推进人类的目标没多大帮助。我愿意花2000万美元，就为了不用在俄罗斯待六个月。除此之外，我感兴趣的是如何让许多其他人也能去太空，而不一定是我本人。",
+  "s26": "创办并发展一家企业，既取决于人们卖的产品，也同样取决于做事的人的创新、干劲和决心。",
+  "s27": "所以即使起火，火也无法真正侵袭那些特别脆弱的位置，比如气动系统、航电系统或发动机舱。我们希望做到：即使起火，火箭也照样继续飞。",
+  "s28": "面对供应商有很大的议价能力。我们从不被任何一家供应商绑死。",
+  "s29": "我的方法很简单：找出非常有才华的人，确保 SpaceX 的环境尽可能能激励人、让人愉快，并设定清晰且可衡量的目标。",
+  "s30": "我认为那是个错误，会导致在重要技术问题上判断模糊。他们分不清某个东西到底是不是真的好，所以就照着别人做的做，以为那样才稳妥。",
+  "s31": "这是实现梦想的机会。",
+  "s32": "我亲美亲到令人作呕。伟大的事情正是在那里才有可能。",
+  "s33": "作为生命的代理人，这责任落在我们肩上。",
+  "s34": "迟早，我们必须把生命扩展到我们这颗小小的蓝色泥球之外——否则就会灭绝。",
+  "s35": "我读过的书里的英雄——《指环王》和《基地》系列——总觉得自己有责任拯救世界。",
+  "s36": "当一件事足够重要时，即使胜算不大，你也要去做。",
+  "s37": "我们需要弄清楚，如何既拥有我们热爱的东西，又不毁掉世界。",
+  "s38": "我宁愿乐观而错，也不愿悲观而对……我们有飞机、火车、汽车和船……如果还有第五种交通方式呢？",
+  "s39": "有一点很重要：如果你可以选择和一个你真正喜欢的人以较低估值合作，或者和一个你心里没底的人以较高估值合作，那就选较低估值。",
+  "s120": "给我钱，给我力量，我不在乎。",
+  "s121": "就是别入侵俄罗斯。这从来都不是个好主意。",
+  "s122": "大多数人类的防火墙非常有限，所以很容易被编程。",
+  "s123": "围绕 AI 的人才争夺战，是我见过最疯狂的抢人大战。",
+  "s124": "SpaceX 大约有 6000 颗卫星，我们还从来没有一次需要为了避开 UFO 而变轨。",
+  "s125": "文明很稀有。我们应该尽一切可能拯救它。",
+  "s126": "我会劝家长限制孩子能看到的社交媒体内容，因为他们正被一个以多巴胺最大化为目标的 AI 编程。",
+  "s127": "今天，公众对美国法律体系的信任受到了巨大损害。",
+  "s128": "如果一位前总统能因为这么微不足道的事被刑事定罪——出于政治而非正义——那么任何人都可能面临同样的命运。",
+  "s129": "一家飞机公司的 CEO 应该懂得如何设计飞机，而不是摆弄电子表格。",
+  "s130": "我完全支持特朗普总统，并希望他早日康复。",
+  "s131": "支持英国的言论自由！",
+  "s132": "行吧，泰勒……你赢了……我会给你一个孩子，并用生命守护你的猫。",
+  "s133": "民主党人想夺走你的孩子",
+  "s134": "而且甚至没人试图暗杀拜登/卡玛拉 🤔",
+  "s135": "我和特朗普讨论过成立政府效率委员会的想法。我愿意加入这个委员会。",
+  "s136": "电子游戏本来就是让你沉浸在一个刺激又有创意的另类现实里，和朋友一起开心。把当下的政治破事加进去，太扫兴了。",
+  "s137": "西方文明的根本弱点就是共情——共情漏洞。他们利用的正是西方文明的一个 bug，也就是共情反应。",
+  "s138": "闭嘴，小人物。你只付了成本的一小部分。而且 Starlink 无可替代。",
+  "s139": "抱歉，但我实在受够了。这份臃肿、离谱、塞满猪肉桶项目的国会支出法案，是个令人作呕的怪物。投票支持它的人真可耻：你们知道自己做错了。你们心里清楚。",
+  "s140": "这种程度的过度支出会把美国推向债务奴役！",
+  "s141": "进步以在火星上建立自给自足文明的时间线来衡量。",
+  "s142": "是时候扔下真正的大炸弹了：@realDonaldTrump 在爱泼斯坦文件里。这才是它们没被公开的真正原因。祝你今天愉快，DJT！",
+  "s143": "参议院最新草案法案将摧毁美国数百万个工作岗位，并对我们国家造成巨大的战略损害。完全疯狂且具有破坏性。它补贴过去的产业，却严重损害未来的产业。",
+  "s144": "这项法案把债务上限提高了 5 万亿美元，是历史上最大的一次增幅。",
+  "s145": "白人在全球人口中是一个迅速减少的少数群体。",
+  "s146": "不管你是否选择暴力，暴力都会找上你。你要么反击，要么死去。",
+  "s147": "引自马斯克在伦敦汤米·罗宾逊集会上讲话，BBC新闻（2025年9月15日）《内政大臣称马斯克言论令人憎恶》",
+  "s148": "AI 和机器人将取代所有工作。",
+  "s149": "工作将变成可选项，就像自己种菜，而不是从商店买菜一样。",
+  "s150": "英国内战不可避免。只是时间问题。",
+  "s151": "（关于亚马逊计划将 75% 的运营自动化）觉得十年后还会由人来打包和发运箱子，简直疯了——各位，游戏结束了。",
+  "s152": "不只是少数宇航员，我是说字面意义上的你。无论你是谁，正在看这个视频，SpaceX 希望能把你送上月球、送上火星，最终送向更远的地方。",
+  "s153": "看来未来真的有飞行汽车。",
+  "s154": "我们解决国债的唯一办法就是靠 AI 和机器人。靠省钱是解决不了的。",
+  "s155": "（关于 DOGE）我本该做的是更多地待在幕后……而且大概只让它持续一两个月。我应该早点回去专注于 AI，比我实际做的要早一点。",
+  "s156": "接下来我要买下可口可乐，把可卡因重新加回去",
+  "s157": "我希望即使是我最糟糕的批评者也留在 Twitter 上，因为这才是言论自由的意义",
+  "s158": "让 Twitter 变得超级好玩！",
+  "s159": "喜剧现在在 Twitter 上合法了",
+  "s160": "如果我死得不明不白，认识你们挺高兴的。",
+  "s161": "那些害怕言论自由的人产生的极端抗体反应说明了一切。",
+  "s162": "如果你能看到这条帖子，那是因为我们的服务器在正常工作。",
+  "s163": "Twitter要想配得上公众信任，就必须政治中立，这实际上意味着要同等冒犯极右翼和极左翼。",
+  "s164": "非常感谢所有支持这个平台、支持我们共同捍卫言论自由的人！",
+  "s165": "Twitter私信应该像Signal一样有端到端加密，这样没人能监视或黑掉你的消息。",
+  "s166": "整天骂我都行，但要花8美元。",
+  "s167": "我就爱看人们在Twitter上抱怨Twitter……🤣🤣",
+  "s168": "我的代词是 起诉/福奇。",
+  "s169": "极左翼恨所有人，包括他们自己！",
+  "s170": "委内瑞拉人民受够这个小丑了🤡",
+  "s171": "巧克力奶好喝得离谱。刚喝了一点。",
+  "s172": "所有抱怨的人，请继续抱怨，但得花8美元。",
+  "s173": "拜登的错误在于，他以为自己当选是为了改造这个国家，但实际上大家只是想要少点闹剧。",
+  "s174": "特勤局局长和这个安保小组的负责人应该辞职。",
+  "s175": "美国上一次有这么强硬的候选人还是西奥多·罗斯福。",
+  "s176": "很难相信事情会变成这样。",
+  "s177": "我看着自己看这个😂",
+  "s178": "传统媒体纯属宣传。现在你们才是媒体。",
+  "s179": "最想要权力的人最不配拥有权力。",
+  "s180": "那……你说你在这儿是干什么的？😂",
+  "s181": "Twitter不是应该早就完蛋了吗……？",
+  "s182": "人民已经发声。特朗普将恢复账号。Vox Populi, Vox Dei。",
+  "s183": "这是一场关乎文明未来的战斗。如果连美国都失去了言论自由，那前方就只有暴政。",
+  "s184": "如果每次有人问我特朗普会不会回到这个平台我都能拿一美元，Twitter都要印钱了！",
+  "s185": "救兵到了。男人们正以创纪录的数量投票。他们现在意识到一切都悬于一线。",
+  "s186": "美国是一个建设者的国家。很快，你们将可以自由建设。",
+  "s187": "如果你因为在这个平台上发帖或点赞而受到雇主的不公平对待，我们将为你支付律师费。没有上限。请告诉我们。",
+  "s188": "我提出了报价 sec.gov/Archives/edgar…",
+  "s189": "音乐和娱乐界有多少人知道这件事？",
+  "s190": "我14岁的儿子萨克森说，他觉得2021年会是好年头。我同意。让我们大家一起把它变成现实。",
+  "s191": "如果我们的Twitter收购要约成功，我们将击败垃圾机器人，不成功便成仁！",
+  "s192": "现在可以用比特币买Tesla了。",
+  "s193": "关于言论自由压制的《Twitter文件》即将在Twitter本身发布。公众有权知道到底发生了什么……",
+  "s194": "只想说谢谢大家在面对无休止攻击时支持Tesla。❤️❤️ 超级感谢！！❤️❤️",
+  "s195": "有时候还是在家做披萨更好。",
+  "s196": "恢复前总统特朗普的账号。",
+  "s197": "政府越权正在上演。",
+  "s198": "机器人被算进去了，正生气呢🤣",
+  "s199": "取消文化已经被取消了。",
+  "s200": "预言已经应验！",
+  "s201": "把人民从政府压迫中解放出来",
+  "s202": "80%，但观点仍然成立",
+  "s203": "是时候查清楚送给乌克兰的那数千亿美元到底发生了什么……",
+  "s204": "但后来我开始思考火星",
+  "s205": "特朗普/万斯必须赢。我受不了再经历4年看见和听见卡玛拉/沃尔兹。那会是残酷且不寻常的惩罚！",
+  "s206": "Twitter 必须成为世界上遥遥领先的最准确信息来源。这就是我们的使命。",
+  "s207": "性别这件事，真到骨子里都是真的",
+  "s208": "如果哪天真爆出我的丑闻，*请* 把它叫作 Elongate",
+  "s209": "同时被右翼和左翼攻击是个好兆头",
+  "s210": "马杜罗，我来了！🚀💣 我会用一头驴把你驮到关塔那摩 🫏",
+  "s211": "针对我的攻击应该透过政治视角来看——这是他们标准的（可鄙的）套路——但什么都阻止不了我为美好未来和你们的言论自由而战",
+  "s212": "人民以压倒性多数投票支持冈萨雷斯",
+  "s213": "支持英国的言论自由！",
+  "s214": "胜利还不够，必须是绝对决定性的胜利",
+  "s215": "除非有更多勇气站出来捍卫公平正义，否则基督教将会消亡",
+  "s216": "当妈妈和任何职业一样重要",
+  "s217": "12个月前，我还是年度人物",
+  "s218": "扎克伯格对马斯克之战将在𝕏直播。所有收益将捐给退伍军人慈善机构。",
+  "s219": "推特压制亨特·拜登报道一事的真相，将于美东时间下午5点在推特上公布！",
+  "s220": "我老是忘记拜登从技术上说还在掌管这个国家 😂",
+  "s221": "🇯🇵🇯🇵 恭喜日本！🇯🇵🇯🇵 twitter.com/i/events/15818…",
+  "s222": "别担心，只是我的几个👽🛸朋友顺路过来……",
+  "s223": "谁掌控了梗，谁就掌控了宇宙",
+  "s224": "69.420%的统计数据都是假的",
+  "s225": "而且……我们刚刚又创下 Twitter 使用量的历史新高，笑死",
+  "s226": "Twitter 使用量正处在历史最高水平，哈哈",
+  "s227": "你不能卖不属于你的房子，不能卖不属于你的车，但你*可以*卖不属于你的股票！？这太扯了——做空就是个骗局，只因历史遗留原因才合法",
+  "s228": "如果人生是一款电子游戏，画面很棒，但剧情令人迷惑，而且新手教程实在太长了",
+  "s229": "政府效率部。周边商品会🔥🔥🔥",
+  "s230": "正义之锤已降临",
+  "s231": "Twitter 现在正清理大量垃圾/诈骗账号，所以你可能会看到粉丝数下降",
+  "s232": "特朗普的第二个总统任期将是美国很久以来最欢乐的一段时光。肯定会超棒！😎",
+  "s233": "Twitter 既是一家社交媒体公司，也是一个犯罪现场",
+  "s234": "也很乐意请卡玛拉来𝕏 Spaces 做节目",
+  "s235": "终于可以在这个平台上说出这个真相了：碳水真是太棒了！#FreeSpeech",
+  "s236": "只差2.42%，预言就会应验 😂",
+  "s237": "等等，我发推算工作吗？",
+  "s238": "觉醒思想病毒要么被击败，要么其他一切都不重要",
+  "s239": "卡玛拉从字面上说就是个共产主义者。她要的不只是机会均等，而是结果均等。",
+  "s240": "要是我再在信息流里看到一次该死的纳粹礼，我就要疯了🤪 这算法太烂了！！",
+  "s241": "你从深度恍惚中醒来，放下手机去看看你的朋友和家人",
+  "s242": "儿童无法作出同意。这就是为什么有保护未成年人的法律。犯下这种恶行的人应该被判终身监禁。",
+  "s243": "传统媒体纯粹是宣传机器。𝕏 是人民的声音。",
+  "s244": "欧盟委员会向 𝕏 提出了一项非法的秘密交易：如果我们不告诉任何人、悄悄审查言论，他们就不罚我们。其他平台接受了这笔交易。𝕏 没有。",
+  "s245": "苹果还威胁要把 Twitter 从 App Store 下架，却不肯告诉我们原因",
+  "s246": "🇺🇸🇺🇸 独立日快乐！🇺🇸🇺🇸",
+  "s247": "请注意，这是卡玛拉的实际声明",
+  "s248": "Instagram 让人抑郁，Twitter 让人愤怒。哪个更好？",
+  "s249": "哇，21 年里发生了好多事！",
+  "s250": "是时候让犯罪再次违法了",
+  "s251": "正义之锤即将到来",
+  "s252": "明天敬请收看《Twitter 文件》第二集！",
+  "s253": "Twitter 最烂了！但也是最棒的。",
+  "s254": "今后，任何在未明确标注“恶搞”的情况下进行冒充的 Twitter 账号，都将被永久封禁",
+  "s255": "随你怎么说我，但我花 440 亿美元收购了世界上最大的非营利组织，哈哈",
+  "s256": "任何声称自己的政党从不犯错、对方政党从不做对的人，不是骗子就是傻瓜，或者两者兼有。",
+  "s257": "未来几个月，针对我的政治攻击将大幅升级",
+  "s258": "––––––– 特朗普 万斯 ––––––– 胜利回响",
+  "s259": "YouTube 似乎全是没完没了的诈骗广告",
+  "s260": "苹果基本已停止在 Twitter 上投放广告。他们是讨厌美国的言论自由吗？",
+  "s261": "感恩节快乐！🇺🇸♥️🇺🇸",
+  "s262": "如果任何地方的任何一名法官都能阻止任何地方的一切总统行动，我们就不是生活在民主国家。",
+  "s263": "欧洲人民：加入 MEGA 运动！让欧洲再次伟大！！",
+  "s264": "周日首场世界杯比赛！在 Twitter 观看最佳报道和实时评论。",
+  "s265": "Twitter 简直是互联网上最有趣的地方。这就是你现在正在读这条推文的原因。",
+  "s266": "Twitter 的新政策是遵循科学，而这必然包括对科学进行有理有据的质疑",
+  "s267": "我正在考虑创办一所新大学：Texas Institute of Technology & Science",
+  "s268": "🇺🇸希望你度过了一个美好的感恩节！🇺🇸",
+  "s269": "希望你 2023 年第一天过得愉快！有一点可以肯定，它不会无聊。",
+  "s270": "今晚是一场明确的胜利……对梗图而言",
+  "s271": "看到以色列发生的事，我很难过。我希望有一天能实现和平。",
+  "s272": "特朗普的投票每小时约 100 万票！",
+  "s273": "我遇到很多每天读 Twitter 但几乎从不发推的人。恕我冒昧，请把你的声音加入公共对话吧！",
+  "s274": "我已成为梗，空头的毁灭者",
+  "s275": "听起来像是违反第一修正案",
+  "s276": "Twitter 将成立一个观点广泛多元的内容审核委员会。在该委员会召开会议之前，不会做出任何重大内容决定，也不会恢复任何账号。",
+  "s277": "我应该辞去 Twitter 负责人一职吗？我将遵守这次投票的结果。",
+  "s278": "Twitter 目前这种谁有蓝标、谁没蓝标的领主与农民制度就是扯淡。权力归于人民！蓝标每月 8 美元。",
+  "s279": "一边从纳税人那里拿钱、一边假装工作，再也不可接受了",
+  "s280": "Twitter 很快将增加为推文附上长文本的功能，终结记事本截图这种荒唐做法",
+  "s281": "领导者的职责是服务人民，而不是让人民服务他们",
+  "s282": "为什么美国两党这么多政客对乌克兰边境的关心，比对美国边境的关心多100倍？",
+  "s283": "冲啊！！！光明的未来是可能的！！！",
+  "s284": "超级激动能在巴西，参加为农村地区1.9万所未联网学校推出 Starlink、以及亚马逊环境监测的发布活动！🇧🇷 🌳 🛰 ♥️",
+  "s285": "让人类成为多行星物种！",
+  "s286": "如果你不喜欢现实，那就无视它",
+  "s287": "给好奇的人说一声，我今年将缴纳超过110亿美元的税款",
+  "s288": "如果 Apple 在操作系统层面集成 OpenAI，那么我的公司将禁用 Apple 设备。这是不可接受的安全违规。",
+  "s289": "头12小时内的行动令人难以置信！",
+  "s290": "马杜罗的重大选举舞弊",
+  "s291": "我建议投资阿根廷",
+  "s292": "那些机器人明天要大吃一惊了",
+  "s293": "恢复美国在健康事务上的主权！",
+  "s294": "只是提醒一下，感谢广告商回到 Twitter",
+  "s295": "尽管我认为2024年有个不那么分裂的候选人会更好，我仍认为特朗普的 Twitter 账号应该被恢复",
+  "s296": "那些邪恶的蠢货为恐怖袭击选错了车。Cybertruck 实际上控制住了爆炸，并把冲击波向上引导。连大堂的玻璃门都没碎。",
+  "s297": "又一个傀儡，不喂词连话都说不了。卡玛拉竞选团队毫无真实性，也没有真正的共情。",
+  "s298": "人类将在你有生之年抵达火星",
+  "s299": "相信你看到的，而不是别人告诉你的",
+  "s300": "无论发生什么……别让它毁了你的一天",
+  "s301": "请买我的香水，这样我就能买下 Twitter",
+  "s302": "巴西人民对现任政权不满",
+  "s303": "空头辩护者来了 别给他们任何尊重 干掉空头",
+  "s304": "睁开眼，仰望天空",
+  "s305": "事后看来，这是不可避免的",
+  "s306": "我将捐赠1亿美元，用于奖励最佳碳捕集技术",
+  "s307": "按时间顺序的推文似乎比“算法”推荐的好得多",
+  "s308": "我对自己在这个我拥有的平台上遭受的无穷无尽的小羞辱，感到无比好笑",
+  "s309": "如果你把人们吓得够呛，他们就会要求剥夺自由。这是通往暴政之路。",
+  "s310": "严格来说，酒精也是一种解决方案",
+  "s311": "推文的阅读量大约是点赞量的100倍",
+  "s312": "俗话说，小心许愿，因为你可能真的会得到",
+  "s313": "Twitter 感觉越来越有活力了",
+  "s314": "🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸 美国和我们宪法万岁！ 🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸🇺🇸",
+  "s315": "一些政府（不是乌克兰）已要求 Starlink 屏蔽俄罗斯新闻来源。除非用枪指着我们，否则我们不会这么做。抱歉，我就是个言论自由绝对主义者。",
+  "s316": "在这里，你可以自由做真实的自己",
+  "s317": "加州州长刚刚让这段恶搞视频违法，违反了美国宪法。要是它疯传起来，那就太遗憾了。",
+  "s318": "她违法了。字面意义上的。彻头彻尾。",
+  "s319": "我很确定我在《小丑》里见过这一幕",
+  "s320": "为PNut投票！为自由！为自由！",
+  "s321": "我爱音乐。它让我的心歌唱。",
+  "s322": "请注意，Twitter在未来几个月会做很多蠢事。我们会保留行之有效的，改掉行不通的。",
+  "s323": "这个人怎么可能是美国总统候选人？🤣🤣",
+  "s324": "激进左派真的气坏了，他们不得不从忙着赞美哈马斯的一天里抽时间骂我纳粹",
+  "s325": "与Doge开发者合作提升系统交易效率。可能很有前景。",
+  "s326": "每位家长都该看看这个",
+  "s327": "Dogecoin是人民的加密货币",
+  "s328": "新鲜出炉的面包和糕点人生一大乐事",
+  "s329": "SpaceX明年将把卫星Doge-1发射到月球——任务用Doge支付——首个进入太空的加密货币——首个进入太空的meme 冲向月uuuu球！！ m.youtube.com/watch?v=s3NWyh…",
+  "s330": "Twitter正在开发软件更新，将显示你真实的账号状态，让你清楚知道自己是否被影子封禁、原因是什么以及如何申诉",
+  "s331": "如今Twitter上好多有趣的帖子！",
+  "s332": "SpaceX要把一枚实打实的Dogecoin送上实打实的月球",
+  "s333": "法国进球时每秒24,400条推文，创世界杯历史最高！",
+  "s334": "给小X买了些Dogecoin，让他当个幼儿hodler",
+  "s335": "等不及了。政府里有很多浪费和不必要的监管需要清除。",
+  "s336": "政治是悲伤制造机",
+  "s337": "这种程度的暴力太疯狂，也大错特错。Tesla只是造电动车，没做任何事该遭这些邪恶攻击。",
+  "s338": "很高兴看到𝕏上有更多账号单纯发布美好的内容",
+  "s339": "关于Twitter裁员，不幸的是公司每天亏损超过400万美元时别无选择。所有离职人员都获得了3个月遣散费，比法定要求高50%。",
+  "s340": "生孩子就是在拯救世界",
+  "s341": "Starship团队干得漂亮！",
+  "s342": "卡伦参议员从哪弄来的6700万美元？",
+  "s343": "座无虚席——全场每个座位都满了——还有7万多人站在MSG周围街道上表示支持。这场运动规模巨大！！",
+  "s344": "𝕏是唯一可以信任提供诚实信息的平台。其他平台都被收买和付费了。",
+  "s345": "如果军方支持人民意志，马杜罗就完了",
+  "s346": "当极右和极左的极端分子同时不爽时，你就知道Twitter是公平的！Twitter旨在服务中间80%的人，他们希望学习、欢笑并进行理性辩论。❤️",
+  "s347": "那些推动外国干预骗局的人会有后果。正义之锤即将落下。",
+  "s348": "Cybertruck拖着Porsche 911还能跑赢Porsche 911！",
+  "s349": "管他呢……尽管Starlink还在亏钱，其他公司却拿着数十亿纳税人的钱，我们就继续免费资助乌克兰政府吧",
+  "s350": "他叫我“同性恋”，现在又想摸我屁股 🤣🤣🥲🥲",
+  "s351": "新冠教徒分支不高兴了 lol",
+  "s352": "重要变化：你的点赞现在私密了",
+  "s353": "看到媒体对新发现的言论自由之爱，真令人鼓舞 🥰",
+  "s354": "希望你周日过得愉快！😀",
+  "s355": "请在这个平台上多发一点积极、美好或有信息量的内容",
+  "s356": "代词那套破事终于要结束了。那太蠢了。",
+  "s357": "没错，我在宾夕法尼亚州住过3年",
+  "s358": "如果任何地方的任何法官都能阻止任何地方的所有总统命令，我们就不是民主，而是司法暴政。",
+  "s359": "如果左右两边最极端的10%都同样不爽，社交媒体的政策就是好的",
+  "s360": "新闻应该来自人民。来自真正在现场的人，以及真正是领域专家的人！",
+  "s361": "我的公司制造人们喜爱的伟大产品，我从未在身体上伤害过任何人。那为什么对我有仇恨和暴力？因为我对 woke 思想寄生虫及其控制的人类是致命威胁。",
+  "s362": "欧盟领导人和泽连斯基享用精致晚宴，而男人们死在战壕里。多少父母再也见不到自己的儿子？多少孩子再也见不到自己的父亲？",
+  "s363": "世界杯快开始了！在 Twitter 上关注，获取遥遥领先的最佳报道。",
+  "s364": "不想这么说，但我们需要立即提高石油和天然气产量。非常时期需要非常措施。",
+  "s365": "巴西的压迫性政权如此害怕人民了解真相，以至于会让任何试图这么做的人破产。",
+  "s366": "任何人说的任何话都会在法庭上被用来针对我。",
+  "s367": "政府应该别管人民和他们的动物。",
+  "s368": "对民主的威胁？不，是对官僚体系的威胁！！！",
+  "s369": "比尔·盖茨和我是恋人的传闻完全不是真的。",
+  "s370": "我认识的一些最聪明的人竟然真心相信媒体……真是不可思议。",
+  "s371": "从 MAGA 到 MEGA：让欧洲再次伟大！",
+  "s372": "“空白的浏览历史比满满的浏览历史更能说明问题”——亚伯拉罕·林肯",
+  "s373": "满屏负面头条真是太可预测了。他们就是一群 NPC 🤣🤣 这一切只会让更多人亲自去听那场对话，并意识到传统媒体对他们撒了多大的谎！",
+  "s374": "支持持枪权！",
+  "s375": "行吧，泰勒……你赢了……我会给你一个孩子，并用生命守护你的猫。",
+  "s376": "在美国，投票不需要政府签发的身份证，还可以邮寄选票。这太疯狂了。",
+  "s377": "感谢过去和现在的老兵，感谢你们拯救了世界。",
+  "s378": "寒暄为什么居然是合法的！？",
+  "s379": "钱是从哪儿来的？",
+  "s380": "让一个小个子给大个子当人肉掩护，就像在海滩上穿一条小号 Speedo——根本遮不住重点。",
+  "s381": "必须达到 69%，正如预言所说。",
+  "s382": "Coachella 应该推迟，直到它不再烂为止。",
+  "s383": "幽默是人生最大的乐趣之一！",
+  "s384": "这里是 2030 年的英国，你因为发了一张梗图正在被处决……",
+  "s385": "我说不好……看起来还挺可替代的。",
+  "s386": "确实，看到这个挺鼓舞人心的 💫",
+  "s387": "既然很多人问了，那就来一个超级不科学的民调……你会投票给谁？",
+  "s388": "政府越权绑架了一只孤儿松鼠，还把它处决了……",
+  "s389": "明知是显而易见也要说：任何鼓吹对*任何*群体进行种族灭绝的人，都会被本平台封禁。",
+  "s390": "地球上几乎每个国家都要求投票出示身份证。为什么美国不要求？",
+  "s391": "看 Twitter 上的特朗普民调真是有趣！",
+  "s392": "不要杀死你所恨的，去拯救你所爱的。",
+  "s393": "是时候让委内瑞拉人民有机会拥有更好的未来了。支持玛丽亚·科里纳！",
+  "s394": "还记得以前没用对代词就会被封杀吗？那太蠢了。",
+  "s395": "让我们把蓝州也变成红州！",
+  "s396": "怎么在社交媒体上赚到一小笔钱？先带着一大笔钱入场。",
+  "s397": "“cis”这个词是对异性恋者的侮辱。任何使用它的人都该感到羞耻。",
+  "s398": "我没办法，我就是忍不住 🤣🤣",
+  "s399": "就算音乐和娱乐界所有人都给卡玛拉这个傀儡背书，也无所谓。公众看得穿。",
+  "s400": "‘cis’这个词是宣传用的侮辱词",
+  "s401": "爱尔兰人民将投票选择自由 🇮🇪",
+  "s402": "只有𝕏抵制了对你们声音的审查",
+  "s403": "这难道不显得疯狂又离谱吗？",
+  "s404": "我不是说存在外星人，但是……",
+  "s405": "SpaceX明天早上将向洛杉矶受影响地区提供免费Starlink终端",
+  "s406": "很难不把这视为为了政治目的而滥用法律",
+  "s407": "Tesla今天将违反阿拉米达县的规定重启生产。我会和其他所有人一起站在生产线上。如果一定要逮捕人，我请求只逮捕我。",
+  "s408": "完全正确！我非常尊重美国人民，他们看穿了无休止的宣传，投票选择了改变。",
+  "s409": "有些人仍然相信传统媒体",
+  "s410": "过去一周，有数百篇虚假媒体报道声称我反犹。这与事实再不符不过了。我只希望人类一切都好，希望所有人都拥有一个繁荣而令人兴奋的未来。",
+  "s411": "除非特朗普当选，否则美国将陷入暴政。特朗普必须赢。",
+  "s412": "Twitter的使用量持续上升。有一点可以肯定：它不无聊！",
+  "s413": "他们竟然会投票反对这个，真诡异",
+  "s414": "上周的BBC采访极好地说明了为什么你不能靠媒体获得真相",
+  "s415": "这是最后一根稻草。由于这项法律以及此前许多同类法律——它们既打击家庭也打击公司——SpaceX现在将把总部从加州霍桑迁往得克萨斯州Starbase。",
+  "s416": "让我们努力追求更高的高度！",
+  "s417": "尽管世界上有一些糟糕的事情，但请记住，也有很多美好的事情",
+  "s418": "传统媒体极其偏左",
+  "s419": "TikTok正在摧毁文明吗？有些人这么认为。",
+  "s420": "几乎整个媒体都用一模一样的措辞重复同一个谎言，这令人不安。传统新闻不仅是假的，而且假得毫无新意！如果你想知道真相，就在𝕏上。",
+  "s421": "这关乎公平：大多数人必须来上班制造产品或提供服务，而联邦政府雇员却能待在家里，这不公平",
+  "s422": "祝你好运，我全力支持你！",
+  "s423": "今后，Twitter将广泛接纳不同的价值观，而不是试图把自己的特定价值观强加给世界",
+  "s424": "就我个人而言，我把票投给了Big Balls",
+  "s425": "我将退出总统委员会。气候变化是真的。退出巴黎协定对美国或世界都不利。",
+  "s426": "今后，重大政策变更将进行投票。我很抱歉。不会再发生这种情况了。",
+  "s427": "明天将是你余生的第一个日出——把它变成你想要的样子吧",
+  "s428": "Google被极左活动人士控制",
+  "s429": "行动胜于言辞",
+  "s430": "收购Twitter是创建X——那个万能应用——的加速剂",
+  "s431": "安息吧，斯坦·李。你为人类创造的众多充满想象力和欢乐的世界将永远长存。",
+  "s432": "宣传话术非常有效",
+  "s433": "我只想在你心中点燃一团火焰",
+  "s434": "好问题……为什么给其他国家的资金会优先于急需帮助的美国人？",
+  "s435": "阿根廷的进展令人印象深刻！",
+  "s436": "极其不合适。我在这平台上发布的内容与加州的“海岸委员会”毫无关系！周一起诉他们违反第一修正案。",
+  "s437": "我以前从未在政治上实质性活跃过，但这一次我认为我们所知的文明岌岌可危。如果我们想在美国保住自由和唯才是举的制度，那么特朗普必须赢。",
+  "s438": "如果有机会，我期待为美国服务。不需要报酬，不需要头衔，也不需要认可。",
+  "s439": "我们应该取消电子投票机。被人或AI黑客攻击的风险虽然很小，但仍然太高。",
+  "s440": "这不可接受。意大利人民生活在民主制度中，还是由未经选举的专制政权来做决定？",
+  "s441": "归根结底，共济会的衰败就在于他们白白提供石匠服务",
+  "s442": "这件事就明明白白拍在网上的视频里 🤷‍♂️",
+  "s443": "鉴于言论自由遭到持续不断的攻击，我将资助一场支持第一修正案的全国签名运动",
+  "s444": "对阻止选举舞弊至关重要",
+  "s445": "他们居然真的想把发梗图定为违法。用选票把他们赶下台。",
+  "s446": "言论自由是民主的基石",
+  "s447": "是的，她在这件事上撒了谎。而且还是那么明显的谎言。",
+  "s448": "没有粉丝，我们什么都不是",
+  "s449": "祝大家在2020年下半年一切顺遂、好运满满",
+  "s450": "英国一位老人因在社交媒体发帖“引发焦虑”而被捕。这太疯狂了。谢天谢地，美国有宪法保障的言论自由权利！",
+  "s451": "这正是正在发生的事！",
+  "s452": "真正的斗争不在左与右之间，而是在人道主义者与灭绝主义者之间",
+  "s453": "在考虑辞掉我的几份工作，全职当网红，你们觉得呢",
+  "s454": "“Cis”是个恐异词。谁用它谁可耻。",
+  "s455": "不完美那难以捉摸的美 侘寂",
+  "s456": "我很高兴谷歌在AI图像生成上玩脱了，因为这让他们那套疯狂的种族主义、反文明编程让所有人都看清了",
+  "s457": "致有独立思想的选民：分权能遏制两党最恶劣的过度行为，因此，鉴于总统职位由民主党人担任，我建议投票支持共和党控制的国会。",
+  "s458": "你们选出的代表已经听到了你们的声音，现在那项糟糕的法案已经死了。人民的声音胜利了！人民之声即上帝之声",
+  "s459": "我们正在清理多年完全没有任何活动的账号，所以你很可能会看到粉丝数下降",
+  "s460": "我不会让你们失望，无论付出什么代价",
+  "s461": "现在就投票去！世界的未来危在旦夕！！",
+  "s462": "近80%的“难民”会去他们声称自己逃离的国家度假……",
+  "s463": "刚抵达令人惊叹的🇯🇵日本🇯🇵",
+  "s464": "在我看来，TikTok不应该在美国被禁，尽管这样的禁令可能对𝕏平台有利。这么做会违背言论和表达自由。这不是美国所代表的价值。",
+  "s465": "摆脱“woke”的伟大觉醒已经发生。这对文明有好处。",
+  "s466": "圣诞快乐，祝你们新年精彩！🎁🎄🎅 x.com/i/grok/share/N…",
+  "s467": "人民给出了明确的变革授权",
+  "s468": "近1000万人在看！x.com/i/broadcasts/1…",
+  "s469": "今晚之后，我越来越确信我们能拿到60个参议员席位",
+  "s470": "有极其蹊跷的事情正在发生。今天做了四次新冠检测。两次结果阴性，两次阳性。同一台机器，同一种检测，同一个护士。BD的快速抗原检测。",
+  "s471": "一个无辜的人骑自行车时被冷血谋杀。凶手还在社交媒体上拿这事开玩笑。可是，媒体的愤怒在哪里？现在你开始明白那个谎言了。",
+  "s472": "我认为这种风险非常现实",
+  "s473": "这应该成为一项要求。如果阿根廷能做到，美国也能做到！",
+  "s474": "我希望巴西人民能够和平解决问题",
+  "s475": "从首次飞行到1969年登月只用了66年。如今76年过去了，我们却还不能重返月球。到现在我们本应该已经在火星上了。",
+  "s476": "一台传送式时间机器会非常有用",
+  "s477": "新任参议院多数党领袖必须回应人民的意愿",
+  "s478": "X即将推出音视频通话：- 可在iOS、Android、Mac和PC上使用；- 无需电话号码；- X实际上就是全球通讯录。这些因素组合在一起是独一无二的。",
+  "s479": "以色列所有Tesla超级充电桩都免费",
+  "s480": "为了在反犹主义问题上澄清我们平台的名声，看来我们别无选择，只能对反诽谤联盟提起诽谤诉讼……哦，真是讽刺！",
+  "s481": "有些人仇恨人类，但我太爱人类了",
+  "s482": "他们都是照着剧本念台词的演员",
+  "s483": "他清楚自己在说什么",
+  "s484": "说得非常清楚：我支持言论自由，但反对任何形式的反犹主义",
+  "s485": "Twitter 很快将开始释放 15 亿个账号的用户名空间",
+  "s486": "Twitter 就像把新闻开源了",
+  "s487": "未来会看起来像未来",
+  "s488": "真神奇，有些人居然还觉得新闻是真的 😂",
+  "s489": "SpaceX Dragon 飞船抵达空间站",
+  "s490": "美国投票选择了改变，但国会充耳不闻。不可接受！！",
+  "s491": "我对言论自由的承诺，甚至包括不封禁那个追踪我飞机的账号，尽管这直接构成人身安全风险",
+  "s492": "委内瑞拉人民想要改变！",
+  "s493": "你是想让当前趋势继续下去，还是想要改变？归根结底就是这个。",
+  "s494": "我想祝贺 CNN 有了新名字 🤣🤣",
+  "s495": "真正的战斗发生在灭绝主义者和人类主义者之间。一旦你看清了，就再也无法当作没看见。",
+  "s496": "是时候讲述 Tesla 和 SpaceX 的故事了",
+  "s497": "全国范围内都应要求出示选民身份证",
+  "s498": "谁觉得“搞定自由派”很便宜，那肯定没试过收购一家社交媒体公司！",
+  "s499": "我在此向弗拉基米尔·普京发起单挑挑战，赌注是乌克兰",
+  "s500": "谢谢，乔·罗根，这话从你嘴里说出来分量很重！",
+  "s501": "这个平台的推荐算法太烂了！我现在就要找经理投诉！！",
+  "s502": "缅怀那些为守护自由之光而倒下的人",
+  "s503": "何曾有过如此程度的、针对一家和平公司的协同暴力？我理解不想买某个产品，但这是极端的纵火和破坏！",
+  "s504": "哦顺便说一句，我在造一条赛博格龙",
+  "s505": "哦，因为抱怨浏览量限制而撞上浏览量限制，真是讽刺",
+  "s506": "你想让 Tesla 接受 Doge 吗？",
+  "s507": "那些要求你出行必须出示疫苗身份证件的人，现在又要求投票不需要任何身份证件",
+  "s508": "政府效率部",
+  "s509": "我们最大的梦想是送一艘飞船去天王星",
+  "s510": "我会继续支持 Dogecoin",
+  "s511": "不会立刻，但会坚定地走在那条路上",
+  "s512": "如果格陵兰人民想成为美国的一部分——我希望他们想——他们将非常受欢迎！ 🇺🇸 🇬🇱",
+  "s513": "钱斯利因一场非暴力、由警察护送的参观被判 4 年监禁！？戴夫·查普尔在舞台上被一个持刀的家伙暴力袭击。那家伙只被罚了 3000 美元，还没坐牢。",
+  "s514": "值得注意的是，支持哈里斯的“亿万富翁”远多于支持特朗普的，而且她筹到的钱几乎多了 50%。尽管如此，美国证明了选举不只是金钱的函数，并给了特朗普一场压倒性胜利！",
+  "s515": "是谁资助了这些想要控制你获取信息渠道的组织？我们来调查一下…… cnn.com/2022/05/03/tec…",
+  "s516": "Doge 倒过来拼是 Egod",
+  "s517": "无论怎么算，都是巨大的差别",
+  "s518": "如果 Twitter 收购完成，公司将超级专注于硬核软件工程、设计、信息安全和服务器硬件 fortune.com/2022/05/05/elo…",
+  "s519": "无论这个平台有什么罪过，无聊肯定不算其中之一",
+  "s520": "NPC 会照着程序设定行事",
+  "s521": "打击虚假信息的最好方式，是用准确的信息回应，而不是审查",
+  "s522": "这个平台非常欢迎所有总统候选人",
+  "s523": "有时候事情到头来还真能行得通",
+  "s524": "在最高法院推翻拜登的疫苗强制令之前，他曾试图要求我们解雇所有未接种疫苗的人员——其中有些是我们最优秀的人",
+  "s525": "泽连斯基想要一场永久战争，一台永无止境的贪腐绞肉机。这是邪恶的。",
+  "s526": "是啊，那会是一场长达 3 小时的车祸现场",
+  "s527": "如果保护孩子会让人成为法西斯，那就这样吧",
+  "s528": "咱们设个年龄上限吧，过了这个年龄就不能竞选公职，也许就定在略低于 70 岁……",
+  "s529": "随着 Twitter 追求提升公民新闻这一目标，媒体精英会想尽一切办法阻止这件事发生",
+  "s530": "如果把保安和维修人员排除在外，真正到岗、每周工作 40 小时的政府工作人员比例更接近 1%！几乎没人。",
+  "s531": "Twitter 的美妙之处在于它如何赋能公民新闻——人们能够传播没有建制派偏见的新闻",
+  "s532": "传统媒体想摧毁你的言论自由权。他们正大声、反复地说出来。",
+  "s533": "随着时间推移，我们越是贴近真相，Twitter 就越会赢得人们的信任",
+  "s534": "这一点如今无可否认",
+  "s535": "从今以后，Tesla 和 SpaceX 将把六月节视为美国假日",
+  "s536": "他正对着欢呼的体育场高喊“杀死白人农民”",
+  "s537": "未来的机器人会疯狂得不得了！",
+  "s538": "一个不错的经验法则：那些频繁使用“虚假信息”一词的人，最有可能正是在散布它",
+  "s539": "哇，现在在加州要求选民出示身份证竟然违法了！他们刚刚把阻止选民欺诈定为违法。小丑在掌权。",
+  "s540": "我们已加快在受飓风影响地区推出 Starlink 直连手机连接服务。SpaceX 和 TMobile 正免费提供这项服务，以帮助有需要的人。",
+  "s541": "美国南部边境的非法移民规模令人震惊",
+  "s542": "大多数传统媒体是怎么从言论自由的超级英雄变成言论压制的超级反派的？",
+  "s543": "乌克兰需要举行选举。泽连斯基会惨败。",
+  "s544": "一般来说，如果你对自己政党说的*每一句话*都深信不疑，那你就是个白痴",
+  "s545": "在拜登治下，FEMA 把资金从需要灾难救助的美国人手中拿走，却花在给非法移民住五星级酒店上。纯属邪恶。",
+  "s546": "拉黑那些抱怨拉黑功能要消失的人，还挺好玩的。这药味道怎么样？😂😂",
+  "s547": "这才是真正让他们难受的地方",
+  "s548": "这些政客又不是创办过公司，也不是 NBA 全明星，那他们哪来这么多钱？有人知道吗？",
+  "s549": "我工作一整天，然后回家玩工作模拟器",
+  "s550": "什么都别信，连“什么都没有”也别信",
+  "s551": "我最聪明的朋友们，包括那些住在旧金山湾区、一辈子都是民主党人的朋友，都对特朗普/万斯感到兴奋",
+  "s552": "只要把“民主”换成“官僚体制”，就完全说得通了 😂",
+  "s553": "感谢上帝，美国有言论自由！",
+  "s554": "美国纳税人的钱就是花在这些地方",
+  "s555": "想提高睡眠质量，就把床头抬高约 3 英寸或 5 厘米，并且睡前 3 小时不要吃东西"
+ }
+}

@@ -1,0 +1,43 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>下一步 · 向轨道迁移</Text>
+    </Box>
+    <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>当算力撞上电力天花板，太空成了选项</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 30, marginTop: 24, flex: 1 }}>
+      <Box style={{ flex: 1, flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
+        <Box style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#63A7D4' }}>01</Text>
+          <Box>
+            <Text style={{ fontSize: 21, fontWeight: 'bold', color: '#FFFFFF' }}>散热：靠辐射，不用水冷</Text>
+            <Text style={{ fontSize: 15, color: '#C9CCCE', marginTop: 4, lineHeight: 1.5 }}>太空里没有水，也没有对流，热量直接辐射出去。黄仁勋说，未来的机架在太空会变成"一个小东西"。</Text>
+          </Box>
+        </Box>
+        <Box style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#63A7D4' }}>02</Text>
+          <Box>
+            <Text style={{ fontSize: 21, fontWeight: 'bold', color: '#FFFFFF' }}>能源：太阳能有硬上限</Text>
+            <Text style={{ fontSize: 15, color: '#C9CCCE', marginTop: 4, lineHeight: 1.5 }}>地球上能拿到的太阳能总量有上限，超过这个上限的需求，只能到太空去满足。</Text>
+          </Box>
+        </Box>
+        <Box style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#63A7D4' }}>03</Text>
+          <Box>
+            <Text style={{ fontSize: 21, fontWeight: 'bold', color: '#FFFFFF' }}>判断：性价比会远超地面</Text>
+            <Text style={{ fontSize: 15, color: '#C9CCCE', marginTop: 4, lineHeight: 1.5 }}>马斯克："我的估计是，太空里做 AI 的性价比会远远超过地面上。"并笑称：这时候有一家太空公司就挺方便。</Text>
+          </Box>
+        </Box>
+      </Box>
+      <Box style={{ width: 530, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+        <Image src="assets/space_datacenter.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 15, marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#08131F' }}>结论：</Text>
+      <Text style={{ fontSize: 16, color: '#08131F' }}>这不是优雅不优雅的问题——地面已经装不下，算力必须去找新的物理空间。</Text>
+    </Box>
+  </Box>
+</Slide>
