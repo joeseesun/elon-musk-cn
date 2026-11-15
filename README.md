@@ -12,14 +12,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Site](https://img.shields.io/website?url=https%3A%2F%2Felon.qiaomu.ai&label=elon.qiaomu.ai)](https://elon.qiaomu.ai/)
 
-**已验证（2026-11-14）**：`python3 tools/build.py` → 651 个视频页 / sitemap 657 条 / RSS 最新 15 篇精读；本地构建 + 浏览器实测截图即本仓库产物。
+**已验证（2026-11-15）**：`python3 tools/build.py` → 651 个视频页 / 586 篇中文精读 / sitemap 660 条 / RSS 最新 20 篇精读；本地构建 + 浏览器实测截图即本仓库产物。
 
 ## 这是什么
 
 马斯克每年接受大量访谈、开几十场发布会，但这些内容散落在 YouTube 各处，英文听力门槛 + 找不到出处，让大部分有价值的现场被埋没。参考 [lex.qiaomu.ai](https://lex.qiaomu.ai/)（Lex Fridman 播客中文站）的做法，这个项目做了四件事：
 
 1. **每个视频一页**：大尺寸播放器（滚出视野自动变右下角小窗，边读边看）、X/存档视频直链播放、中英双语标题、英文文稿按语句合并成段落并**时间戳点击跳播**（YouTube IFrame API seek）；有 B 站搬运的视频可在 YouTube / B 站之间切换（国内时区默认 B 站，YouTube 加载失败自动切过去）；英文段落悬停出现「译」，点一下就地显示中文机翻；划线可复制（自动带出处链接）、翻译或生成带二维码的分享海报；
-2. **中文精读**：AI 基于完整文稿改写的长文导读（首发 15 篇标志性访谈，批产管线持续补齐），不是机器翻译，是「替你先看一遍」的深度转述；
+2. **中文精读**：AI 基于完整文稿改写的长文导读（**586 篇**，覆盖全部带文稿访谈：TED2022、JRE #1169/#1609、BBC、Code 2016、AI Day 2022、Tucker Carlson 等），不是机器翻译，是「替你先看一遍」的深度转述；
 3. **找得到**：[文稿搜索](https://elon.qiaomu.ai/search/)「马斯克说过什么」在全部英文文稿和中文精读里逐段检索，中文、英文都能搜（谷歌翻译补全词表），按年份分布、从早到晚排序看观点演变，结果直达视频那一秒；首页标题搜索（`/` 或 `⌘K` 唤起）、类型/标签筛选、明暗主题、阅读进度记忆与「继续阅读」；
 4. **马斯克特色专题**：22 条带日期的[预言与承诺追踪](https://elon.qiaomu.ai/predictions/)（已兑现/迟到/待验证/未兑现 + 核实结果）、556 条中英双语[语录](https://elon.qiaomu.ai/quotes/)、每期中英双语金句（点时间戳跳播、一键复制带出处链接）、8 大[主题](https://elon.qiaomu.ai/themes/)（AI、火星、出生率、言论自由……）；
 5. **数据洞察**：[话题趋势](https://elon.qiaomu.ai/trends/)（26 个话题逐年热力图 + 输入任意中英文词画折线对比、各家公司逐年注意力占比、他最常提到的人、他嘴里的未来年份）、[档案数据](https://elon.qiaomu.ai/stats/)（每年出镜次数、场合分布、最长的对话、「跟马斯克学英语」高频词与原话例句、他在访谈里提到的 27 本书）、预言页的「马斯克时间」承诺兑现时间线。
@@ -32,7 +32,7 @@
 
 | 能力 | 你得到什么 |
 |---|---|
-| 中文精读全文 | 15 篇 AI 深度改写导读首发（TED2022、JRE #1169/#1609、BBC、Code 2016、AI Day 2022 等），RSS 全文可订阅，每篇有 Markdown 版（`/ep/{slug}/index.md`） |
+| 中文精读全文 | **586 篇** AI 深度改写导读，覆盖全部带文稿访谈（仅 2 篇转录过短未收录），RSS 全文可订阅，每篇有 Markdown 版（`/ep/{slug}/index.md`） |
 | 视频一站看完 | 651 个视频全部可播：YouTube 官方嵌入（点击加载，不拖慢首屏）、X/Internet Archive/原始 MP4 直链 |
 | B 站源 | 有 B 站搬运的视频，播放器上方可切换 YouTube / B 站（记住选择；国内时区默认 B 站；YouTube 接口 10 秒加载不出自动切换），时间戳跳播对 B 站同样有效。匹配脚本 `tools/bili_match.py`：`--site` 模式用无头浏览器打开 B 站站内搜索页（英文标题去噪后作关键词）收集候选，再用视频详情接口按简介里的 YouTube 链接或「时长吻合 + 标题相近」核对，结果在 `tools/bili.json` |
 | 划线与海报 | 在精读、文稿、金句、语录里划线，弹出「复制 / 生成海报 / 翻译」：复制自动附标题、时间戳和深链；海报为 1080px PNG（中英原话、出处、指向该时刻的二维码），金句和语录卡片也有「生成海报」。实现在 `site/kit.js`，二维码用 `site/vendor/qrcode.js`（MIT） |
@@ -60,7 +60,7 @@ python3 tools/build.py                 # 全量构建到 site/
 python3 -m http.server 8124 -d site    # 打开 http://127.0.0.1:8124
 ```
 
-成功标志：首页出现「651 个公开视频 · 15 篇中文精读」统计与视频卡片，搜索、筛选、详情页、预言追踪（`/predictions/`）、RSS（`/feed.xml`）全部可用。元数据（`tools/elon-master.json`、`tools/translations.json`）与精读全文（`site/zh/`）已入库，clone 下来即是全量数据。
+成功标志：首页出现「651 个公开视频 · 586 篇中文精读」统计与视频卡片，搜索、筛选、详情页、预言追踪（`/predictions/`）、RSS（`/feed.xml`）全部可用。元数据（`tools/elon-master.json`、`tools/translations.json`）与精读全文（`site/zh/`）已入库，clone 下来即是全量数据。
 
 <details>
 <summary><strong>完整管线：追新 + 翻译 + 精读批产（macOS）</strong></summary>
@@ -144,7 +144,7 @@ python3 tools/build.py && tools/deploy.sh    # 构建 + rsync 到服务器
 ## What you get
 
 - **One page per video**: click-to-load YouTube embeds (plus direct playback for X/Internet Archive clips), bilingual titles, and English transcripts with **clickable timestamps** that seek the YouTube player; a YouTube / Bilibili source switch where a re-upload exists; hover-to-translate on transcript paragraphs; select text to copy with citation, translate, or render a share poster with a QR code.
-- **AI Chinese deep-reads**: long-form rewrite of each conversation (15 landmark interviews at launch, pipeline continues), with a Markdown version at `/ep/{slug}/index.md`.
+- **AI Chinese deep-reads**: long-form rewrite of each conversation (**586 of 588** transcript-bearing videos covered; 2 skipped for too-short captions), with a Markdown version at `/ep/{slug}/index.md`.
 - **Findability**: [transcript search](https://elon.qiaomu.ai/search/) across 588 English transcripts, paragraph by paragraph, with Chinese-to-English keyword mapping, a by-year histogram, oldest-first sorting to trace how a view evolved, and results that jump to the exact second; plus title search (`/` or `⌘K`), kind/tag filters, dark mode, reading progress with "continue reading".
 - **Data insights**: a [topic heatmap](https://elon.qiaomu.ai/trends/) (26 topics by year, plus a type-any-word trend chart), [archive stats](https://elon.qiaomu.ai/stats/) (videos per year, venues, longest talks, Musk's most-used English words with example sentences, the books he names on camera), company attention share, the people and future years he mentions most, and an "Elon time" promise timeline on the predictions page.
 - **Elon-specific archives**: a [dated promises tracker](https://elon.qiaomu.ai/predictions/) (kept / late / open / missed, with verified outcomes), 556 bilingual [quotes](https://elon.qiaomu.ai/quotes/), bilingual per-episode highlights, and 8 recurring [themes](https://elon.qiaomu.ai/themes/).
@@ -160,7 +160,7 @@ python3 tools/build.py                 # builds everything into site/
 python3 -m http.server 8124 -d site    # open http://127.0.0.1:8124
 ```
 
-Verified (2026-11-14): `python3 tools/build.py` produces 651 episode pages, a 657-URL sitemap, RSS with the latest 15 deep-reads, plus predictions/quotes/themes pages.
+Verified (2026-11-15): `python3 tools/build.py` produces 651 episode pages, 586 Chinese deep-reads, a 660-URL sitemap, RSS with the latest 20 deep-reads, plus search/trends/stats/predictions/quotes/themes pages.
 
 ## Data & content boundaries
 
