@@ -181,3 +181,81 @@ def build(out_dir, docs):
     (out_dir / 'meta.json').write_text(json.dumps({'v': date.today().isoformat(), 'n': gid, 'shards': SHARDS, 'eps': eps},
                                                   ensure_ascii=False, separators=(',', ':')))
     return {'docs': len(docs), 'paras': gid, 'terms': len(postings), 'shard_max': max(sizes), 'shard_total': sum(sizes)}
+
+
+# ---------------------------------------------------------------- 中文精读检索
+# 中文没有空格分词：按「相邻两字」建索引，英文词（产品名、人名）原样小写入索引；
+# 查询时取词的全部二字组求交集，再在段落原文里做子串校验。
+ZSHARDS = 256
+_ZBLK = re.compile(r'<(p|h[2-4]|li|blockquote)\b([^>]*)>(.*?)</\1>', re.S)
+_CJK = re.compile(r'[\u3400-\u9fff\uf900-\ufaff]+')
+_ASC = re.compile(r'[a-z0-9]+')
+
+
+def fnv1a_utf8(s):
+    h = 0x811c9dc5
+    for b in s.encode('utf-8'):
+        h ^= b
+        h = (h * 0x01000193) & 0xffffffff
+    return h
+
+
+def zh_blocks(html_src):
+    """精读 HTML → (每个段落块加上 data-z 序号的 HTML, [段落纯文本])。两者按同一次遍历编号，保证搜索结果能定位回页面。"""
+    texts = []
+
+    def mark(m):
+        tag, attrs, inner = m.group(1), m.group(2), m.group(3)
+        if tag == 'blockquote' and re.search(r'<(p|li)\b', inner):
+            inner = _ZBLK.sub(mark, inner)
+            return f'<{tag}{attrs}>{inner}</{tag}>'
+        t = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', '', inner))).strip()
+        if not t:
+            return m.group(0)
+        texts.append(t)
+        return f'<{tag}{attrs} data-z="{len(texts) - 1}">{inner}</{tag}>'
+
+    return _ZBLK.sub(mark, html_src or ''), texts
+
+
+def zh_terms(text):
+    t = norm(text)
+    out = set()
+    for run in _CJK.findall(t):
+        for i in range(len(run) - 1):
+            out.add(run[i:i + 2])
+    for w in _ASC.findall(t):
+        if len(w) > 1 or w.isdigit():
+            out.add(w)
+    return out
+
+
+def build_zh(out_dir, docs):
+    """docs: [(slug, date, zh, en, kind, ytId, texts)]，texts 为 zh_blocks() 的段落文本。写到 out_dir/z、zp、zmeta.json。"""
+    for sub in ('z', 'zp'):
+        if (out_dir / sub).exists():
+            shutil.rmtree(out_dir / sub)
+        (out_dir / sub).mkdir(parents=True)
+    postings, eps, gid = {}, [], 0
+    for k, (slug, d, zh, en, kind, yt, texts) in enumerate(docs):
+        eps.append([slug, gid, d or '', zh or '', en or '', kind or '', yt or ''])
+        (out_dir / 'zp' / f'{k}.json').write_text(json.dumps(texts, ensure_ascii=False, separators=(',', ':')))
+        for t in texts:
+            for w in zh_terms(t):
+                postings.setdefault(w, []).append(gid)
+            gid += 1
+    shards = [dict() for _ in range(ZSHARDS)]
+    for w, gids in postings.items():
+        prev, deltas = 0, []
+        for g in gids:
+            deltas.append(g - prev)
+            prev = g
+        shards[fnv1a_utf8(w) % ZSHARDS][w] = deltas
+    sizes = []
+    for i, sh in enumerate(shards):
+        body = json.dumps(sh, ensure_ascii=False, separators=(',', ':'))
+        (out_dir / 'z' / f'{i:03d}.json').write_text(body)
+        sizes.append(len(body.encode()))
+    (out_dir / 'zmeta.json').write_text(json.dumps({'n': gid, 'shards': ZSHARDS, 'eps': eps},
+                                                   ensure_ascii=False, separators=(',', ':')))
+    return {'docs': len(docs), 'paras': gid, 'terms': len(postings), 'shard_max': max(sizes), 'shard_total': sum(sizes)}
