@@ -162,19 +162,20 @@
     const label = { zh: '中文精读', tr: '有文稿', hist: '看过的' }[state.f];
     const tagBit = state.tag ? ` · ${esc(state.tag)}` : '';
     if (filtered) {
-      el.innerHTML = `<h2>${state.q.trim() ? '搜索结果' : (label || '筛选结果') + tagBit}<small>${LIST.length} 个${state.q.trim() ? `与「${esc(state.q.trim())}」相关` : ''}</small></h2>`;
+      el.innerHTML = `<h2>${state.q.trim() ? '标题搜索' : (label || '筛选结果') + tagBit}<small>${LIST.length} 个${state.q.trim() ? `与「${esc(state.q.trim())}」相关` : ''}</small></h2>${state.q.trim() ? trLink(state.q.trim()) : ''}`;
     } else {
       el.innerHTML = `<h2>全部视频<small>${state.sort === 'asc' ? '从 1998 年开始' : '最新在前'}</small></h2>`;
     }
   }
 
+  const trLink = (q) => `<a class="sr-jump" href="/search/?q=${encodeURIComponent(q)}">在 ${DATA.filter((e) => e.tr).length} 份文稿里搜「${esc(q)}」的原话 →</a>`;
   const SUGGEST = ['AI', '火星', 'Cybertruck', 'FSD', 'Model 3', 'Neuralink', 'X 收购', 'Optimus', 'Joe Rogan', 'TED'];
   function emptyHTML() {
     const q = state.q.trim();
     const chips = SUGGEST.map((s) => `<button type="button" class="chip" data-q="${esc(s)}">${esc(s)}</button>`).join('');
     const reset = state.f !== 'all' ? '<button type="button" class="chip" data-reset>在全部视频中搜索</button>' : '';
     return `<div class="empty"><h3>没有找到${q ? `「${esc(q)}」` : '符合条件的视频'}</h3>
-      <p>试试公司名、产品名或话题关键词，多个词用空格分开。</p>
+      <p>试试公司名、产品名或话题关键词，多个词用空格分开。</p>${q ? `<p>${trLink(q)}</p>` : ''}
       <div class="chips">${reset}${chips}</div></div>`;
   }
 
