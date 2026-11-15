@@ -700,7 +700,8 @@ button.colo-link { background: none; border: 0; cursor: pointer; padding: 0; }
 .mast-links a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 1px; }
 .mast-links a:hover { color: var(--text); border-color: var(--line-strong); }
 
-/* 标签筛选行 */
+/* 标签筛选行（在吸顶工具条内时，与底部分隔线拉开距离） */
+.toolbar .tag-row { padding-bottom: 14px; }
 .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .tag-row .chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 13px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .tag-row .chip:hover { color: var(--text); border-color: var(--line-strong); }

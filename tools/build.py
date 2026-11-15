@@ -38,7 +38,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V = 2, 2, 2
+CSS_V, APP_V, EP_V = 3, 3, 3
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -101,6 +101,7 @@ TR_NOTE = {
     'exact': '语音识别自动转录（Whisper），含全部发言人，可能有识别错误。',
     'approx': '语音识别自动转录，可能有识别错误，人名与数字请以视频为准。',
     'text': '第三方整理文稿，仅保留马斯克本人发言。',
+    'ytauto': 'YouTube 平台字幕（自动或人工），可能有识别错误，人名与数字请以视频为准。',
 }
 
 
