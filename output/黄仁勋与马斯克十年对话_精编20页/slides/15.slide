@@ -1,0 +1,46 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>玩笑里的默契</Text>
+    </Box>
+    <Text style={{ fontSize: 33, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>能互相拆台的人，才是真熟</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 28, marginTop: 24, flex: 1 }}>
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 16 }}>
+        <Text style={{ fontSize: 16, color: '#8ED1A8', letterSpacing: 2, fontWeight: 'bold' }}>黄仁勋 · 抛梗</Text>
+        {[
+          { q: '"我从没见过谁走路这么慢。"', s: 'GTC 2015 开场调侃马斯克上台' },
+          { q: '"就像火星一样。"', s: '马斯克说"几年就解决"，他顺势拆台' },
+          { q: '"你都在推特上说了，这算什么发布。"', s: '拆穿马斯克的"周四发布"悬念' },
+          { q: '"我可不会放开我的方向盘。"', s: '谈到自动驾驶时的玩笑' },
+        ].map((it, i) => (
+          <Box key={i} style={{ background: '#162534', borderRadius: 8, padding: 18, borderLeft: '3px solid #8ED1A8' }}>
+            <Text style={{ fontSize: 19, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.4 }}>{it.q}</Text>
+            <Text style={{ fontSize: 13, color: '#8FBCE4', marginTop: 6 }}>{it.s}</Text>
+          </Box>
+        ))}
+      </Box>
+      <Box style={{ width: 1, background: '#3A4653' }} />
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 16 }}>
+        <Text style={{ fontSize: 16, color: '#63A7D4', letterSpacing: 2, fontWeight: 'bold' }}>马斯克 · 接招 / 回敬</Text>
+        {[
+          { q: '"要不是周四早上有个发布，我会多说一点。"', s: '被拆穿后笑着承认' },
+          { q: '"我经常发短信，到时候提前告诉你。"', s: '回应黄仁勋"货币不重要了通知我"' },
+          { q: '"我的模式一直是 insane（疯狂模式）。"', s: '回答黄仁勋平时开哪个模式' },
+          { q: '"顺便说，英伟达财报电话会今天下午开。"', s: '黄仁勋在他说完"货币无意义"后的黑色幽默' },
+        ].map((it, i) => (
+          <Box key={i} style={{ background: '#162534', borderRadius: 8, padding: 18, borderLeft: '3px solid #63A7D4' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.4 }}>{it.q}</Text>
+            <Text style={{ fontSize: 13, color: '#8FBCE4', marginTop: 6 }}>{it.s}</Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 14, marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#08131F' }}>洞见：</Text>
+      <Text style={{ fontSize: 15, color: '#08131F' }}>只有足够熟悉、足够信任的关系，才敢在万众瞩目下这样互相拆台。</Text>
+    </Box>
+  </Box>
+</Slide>

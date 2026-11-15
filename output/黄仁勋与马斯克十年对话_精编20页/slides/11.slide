@@ -1,0 +1,38 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>马斯克夸黄仁勋 · 下</Text>
+    </Box>
+    <Text style={{ fontSize: 33, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>"地球上只有一个人能做到"——他把这句话转述了一遍</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 28, marginTop: 26, flex: 1 }}>
+      <Box style={{ flex: 1, flexDirection: 'column', gap: 18 }}>
+        <Box style={{ background: '#162534', borderRadius: 8, padding: 24, flexDirection: 'column' }}>
+          <Text style={{ fontSize: 15, color: '#8ED1A8', letterSpacing: 1 }}>转述黄仁勋对他的评价</Text>
+          <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#FFFFFF', marginTop: 12, lineHeight: 1.4 }}>"Jensen 说，<span style={{ color: '#8ED1A8' }}>地球上只有一个人能建成 Colossus</span>——那就是你。"</Text>
+          <Text style={{ fontSize: 15, color: '#8FBCE4', marginTop: 12 }}>马斯克在罗恩·巴伦访谈里亲口确认："是的，他确实这么说过。"</Text>
+        </Box>
+        <Box style={{ background: '#162534', borderRadius: 8, padding: 24, flexDirection: 'column' }}>
+          <Text style={{ fontSize: 15, color: '#63A7D4', letterSpacing: 1 }}>Terafab 演讲 · 引述</Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginTop: 12, lineHeight: 1.4 }}>"黄仁勋说，<span style={{ color: '#63A7D4' }}>他这辈子没见过有东西建得这么快</span>。"</Text>
+          <Text style={{ fontSize: 15, color: '#8FBCE4', marginTop: 12 }}>马斯克补了一句："这是来自英伟达的高度赞美。"</Text>
+        </Box>
+      </Box>
+      <Box style={{ width: 1, background: '#3A4653' }} />
+      <Box style={{ flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 15, color: '#8FBCE4', letterSpacing: 2 }}>一个有趣的细节</Text>
+        <Text style={{ fontSize: 25, fontWeight: 'bold', color: '#FFFFFF', marginTop: 12, lineHeight: 1.45 }}>马斯克转述别人夸自己的话时，<br /><span style={{ color: '#63A7D4' }}>从不掩饰那份得意。</span></Text>
+        <Text style={{ fontSize: 17, color: '#E7E8E9', marginTop: 22, lineHeight: 1.65 }}>但更值得注意的是：他选择转述的，全是黄仁勋说的话。能把对手的赞美记得这么清楚、复述得这么具体，本身就是一种在意。</Text>
+        <Box style={{ marginTop: 24, background: '#132B45', borderRadius: 8, padding: 18, borderLeft: '4px solid #8ED1A8' }}>
+          <Text style={{ fontSize: 17, color: '#FFFFFF', lineHeight: 1.55 }}>罗恩·巴伦顺势开玩笑："那你到底是不是人类？"<br />马斯克："我一直说我是外星人，只是没人信。"</Text>
+        </Box>
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 14, marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#08131F' }}>洞见：</Text>
+      <Text style={{ fontSize: 15, color: '#08131F' }}>最好的夸奖不是赞美本身，而是被夸的人愿意一遍遍讲给别人听。</Text>
+    </Box>
+  </Box>
+</Slide>
