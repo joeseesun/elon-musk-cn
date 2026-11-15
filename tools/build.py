@@ -6,7 +6,8 @@
   tools/translations.json    LLM 翻译的中文标题
   data/extra.json            预言追踪 / 精选 / 主题 / 语录（英文）
   data/extra-zh.json         上述内容的中文译文
-  data/transcripts/*.json    69 份英文文稿（带时间戳 segs）
+  data/transcripts/*.json    588 份英文文稿（带时间戳 segs）
+  data/quotes-zh.json        金句与语录的中文译文（tools/translate_quotes.py 生成）
   site/zh/{slug}.html        中文精读片段
   tools/site_config.json     站点配置（域名、Umami ID）
 
@@ -19,6 +20,8 @@
   site/themes/               主题
   site/archive/              按年份目录
   site/data/episodes.json    首页数据
+  site/data/search/          文稿全文检索索引（tools/search_index.py）
+  site/search/               文稿搜索页
   site/sitemap.xml / feed.xml / llms.txt / 404 / offline / disclaimer
 
 数据来源声明：视频档案与语料来自 silicon-valley.tech（Elon Musk Archive），
@@ -27,10 +30,13 @@
 import html as H
 import json
 import re
+import sys
 from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+import search_index  # noqa: E402
 SITE = ROOT.parent / 'site'
 TODAY = date.today().isoformat()
 
@@ -38,7 +44,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V = 3, 3, 3
+CSS_V, APP_V, EP_V, SEARCH_V = 4, 4, 4, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -46,6 +52,11 @@ master = json.load(open(ROOT / 'elon-master.json'))
 trans = json.load(open(ROOT / 'translations.json'))
 extra = json.load(open(ROOT.parent / 'data' / 'extra.json'))
 extra_zh = json.load(open(ROOT.parent / 'data' / 'extra-zh.json'))
+_qzh = ROOT.parent / 'data' / 'quotes-zh.json'
+quotes_zh = json.load(open(_qzh)) if _qzh.exists() else {}
+EP_QUOTES_ZH = quotes_zh.get('ep') or {}
+SAYINGS_ZH = quotes_zh.get('sayings') or {}
+PARAS = {}  # slug -> 文稿段落，视频页与全文检索共用
 tr_json = {x['srcId']: x for x in master if x['tr']}
 
 for m in master:
@@ -272,7 +283,7 @@ ICON_SEARCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="1
 SITE_HEADER = ('<header class="site-header slim">\n  <div class="wrap header-inner">\n'
                '    <a class="hdr-back" href="/">← 全部视频</a>\n'
                '    <a class="wordmark" href="/" aria-label="马斯克全访谈 · 首页">Elon Musk <span>全访谈</span></a>\n'
-               f'    <div class="header-actions"><a class="hdr-icon" href="/#search" aria-label="搜索全部视频" title="搜索">{ICON_SEARCH}</a>{THEME_BTN}</div>\n'
+               f'    <div class="header-actions"><a class="hdr-icon" href="/search/" aria-label="在文稿里搜索马斯克的原话" title="文稿搜索">{ICON_SEARCH}</a>{THEME_BTN}</div>\n'
                '  </div>\n</header>')
 
 ICON_PLAY = '<svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'
@@ -288,7 +299,7 @@ SITE_FOOTER = """<footer class="site-footer">
     </div>
     <div class="ft-cols">
       <nav class="ft-col" aria-label="浏览"><h2>浏览</h2>
-        <a href="/">全部视频</a><a href="/?f=zh">中文精读</a><a href="/archive/">视频目录</a><a href="/predictions/">预言追踪</a>
+        <a href="/">全部视频</a><a href="/search/">文稿搜索</a><a href="/?f=zh">中文精读</a><a href="/archive/">视频目录</a><a href="/predictions/">预言追踪</a>
         <a href="/quotes/">语录</a><a href="/themes/">主题</a><button type="button" data-install hidden>安装为应用</button></nav>
       <nav class="ft-col" aria-label="订阅"><h2>订阅</h2>
         <a href="/feed.xml">RSS 全文订阅</a><button type="button" data-copy-feed>复制 RSS 地址</button>
@@ -410,8 +421,8 @@ EP_SHELL = """<!DOCTYPE html>
 <a class="skip-link" href="#main">跳到主要内容</a>
 {site_header}
 
-<main class="wrap ep-main{main_cls}" id="main">
-  <article class="ep">
+<main class="wrap ep-main ep-page{main_cls}" id="main">
+  <div class="ep-stage">
     <header class="ep-head">
       <div class="ep-kicker">{kicker}</div>
       <h1 class="ep-title">{h1}</h1>
@@ -420,6 +431,8 @@ EP_SHELL = """<!DOCTYPE html>
       <div class="ep-byline">{byline}</div>
     </header>
     {media_html}
+  </div>
+  <article class="ep">
     <section class="content-tabs">
       {tab_buttons}
       {panel_zh}
@@ -477,6 +490,10 @@ def build_page(i, eps):
     zh_sections = [H.unescape(re.sub(r'<[^>]+>', '', x)).strip() for x in re.findall(r'<h2[^>]*>(.*?)</h2>', zh_raw)]
 
     tdata, segs = text_for(m)
+    paras = search_index.paragraphs(segs) if segs else []
+    if paras:
+        PARAS[slug] = paras
+    qzh = EP_QUOTES_ZH.get(slug) or []
     qs = quotes_by_slug.get(slug) or []
     qs = [q for q in qs if len(q[2]) >= 60][:40]
 
@@ -547,12 +564,12 @@ def build_page(i, eps):
     tab_buttons = ['<div class="tabs" role="tablist">']
     if has_zh:
         tab_buttons.append('<button class="tab-btn" type="button" data-tab="zh" role="tab" aria-controls="panel-zh">中文精读</button>')
-    if segs:
+    if paras:
         tab_buttons.append('<button class="tab-btn" type="button" data-tab="tr" role="tab" aria-controls="panel-tr">英文文稿</button>')
-    if qs:
+    if qzh or qs:
         tab_buttons.append('<button class="tab-btn" type="button" data-tab="q" role="tab" aria-controls="panel-q">金句</button>')
     tab_buttons.append('</div>')
-    tab_buttons = ''.join(tab_buttons) if (has_zh or segs or qs) else ''
+    tab_buttons = ''.join(tab_buttons) if (has_zh or paras or qzh or qs) else ''
 
     panel_zh = ''
     if has_zh:
@@ -561,24 +578,33 @@ def build_page(i, eps):
                     f'<div class="zh-article">{zh_raw}</div>{COLOPHON}</div>')
 
     panel_tr = ''
-    if segs:
+    if paras:
         mode = (tdata or {}).get('mode', 'exact')
         lines = []
-        for sec, txt in segs:
-            if not txt:
-                continue
+        for k, (sec, txt) in enumerate(paras):
             ts = ts_mmss(sec)
             ts_html = f'<span class="ts-link" data-t="{ts}">{ts}</span>' if ts else ''
-            lines.append(f'<p>{ts_html}{esc(txt)}</p>')
+            lines.append(f'<p id="p{k}">{ts_html}{esc(txt)}</p>')
         src_line = ''
         if (tdata or {}).get('url'):
             src_line = f' 文稿来源：<a href="{esc(tdata["url"])}" target="_blank" rel="noopener">{esc(tdata.get("publisher") or tdata["url"])}</a>。'
         panel_tr = (f'<div class="tab-panel" id="panel-tr" data-panel="tr">'
-                    f'<div class="tr-note">{TR_NOTE.get(mode, TR_NOTE["exact"])}{src_line}</div>'
+                    f'<div class="tr-note">{TR_NOTE.get(mode, TR_NOTE["exact"])}已按语句合并成段落，并去掉 um、uh 等口头填充词。{src_line}</div>'
                     f'<div class="transcript-text">{"".join(lines)}</div></div>')
 
     panel_q = ''
-    if qs:
+    if qzh:
+        items = []
+        for q in qzh:
+            ts = ts_mmss(q['t']) if q.get('t') is not None and q['t'] >= 0 else None
+            ts_html = f'<a class="q-ts ts-link" data-t="{ts}" href="javascript:void(0)">▶ {ts}</a>' if ts else ''
+            items.append(f'<blockquote class="quote-item bi"><p class="q-zh">{esc(q["zh"])}</p>'
+                         f'<p class="q-en" lang="en">{esc(q["en"])}</p>'
+                         f'<div class="q-foot">{ts_html}<button type="button" class="q-copy" data-copy-q>复制</button></div></blockquote>')
+        panel_q = (f'<div class="tab-panel" id="panel-q" data-panel="q">'
+                   f'<div class="tr-note">从现场发言里挑出的 {len(qzh)} 句原话，附中文译文（AI 翻译，以英文原话为准）。点时间戳可跳到视频对应位置。</div>'
+                   f'<div class="quotes-list">{"".join(items)}</div></div>')
+    elif qs:
         items = []
         for q in qs:
             ts = ts_mmss(q[1])
@@ -589,7 +615,7 @@ def build_page(i, eps):
                    f'<div class="quotes-list">{"".join(items)}</div></div>')
 
     no_content_note = ''
-    if not has_zh and not segs and not qs:
+    if not has_zh and not paras and not qzh and not qs:
         no_content_note = '<div class="ep-notice">该视频的文稿与精读暂未收录，可直接观看视频。</div>'
 
     res = ['<section class="ep-resources"><h2>资源与出处</h2><ul>']
@@ -739,7 +765,7 @@ def build_index(eps):
   <div class="wrap">
     <div class="mast-top">
       <span class="mast-date" id="mastDate"></span>
-      <span class="mast-actions"><a class="mast-link" href="/predictions/">预言追踪</a><a class="mast-link" href="/quotes/">语录</a><a class="mast-link" href="/themes/">主题</a><a class="mast-link" href="/archive/">目录</a>{THEME_BTN}</span>
+      <span class="mast-actions"><a class="mast-link" href="/search/">文稿搜索</a><a class="mast-link" href="/predictions/">预言追踪</a><a class="mast-link" href="/quotes/">语录</a><a class="mast-link" href="/themes/">主题</a><a class="mast-link" href="/archive/">目录</a>{THEME_BTN}</span>
     </div>
     <h1 class="mast-title"><a href="/">Elon Musk <span>全访谈</span></a></h1>
     <p class="mast-sub" id="mastSub">{len(eps)} 个公开视频 · {n_zh} 篇中文精读 · {since} 年至今</p>
@@ -888,7 +914,10 @@ def build_quotes():
         for s in by_year[y]:
             u = f'<a class="qy-src" href="{esc(s.get("u") or "#")}" target="_blank" rel="noopener">来源</a>' if s.get('u') else ''
             kind = '<span class="qy-kind">X</span>' if s.get('k') == 'x' else ''
-            rows.append(f'<li><blockquote class="qy-quote" lang="en">{esc(s["t"])}</blockquote>'
+            zh = SAYINGS_ZH.get(s.get('id'))
+            body = (f'<blockquote class="qy-quote bi"><p class="q-zh">{esc(zh)}</p><p class="q-en" lang="en">{esc(s["t"])}</p></blockquote>'
+                    if zh else f'<blockquote class="qy-quote" lang="en">{esc(s["t"])}</blockquote>')
+            rows.append(f'<li>{body}'
                         f'<p class="qy-meta"><span>{esc(s.get("d") or "")}</span>{kind}<span class="qy-src-text">{esc((s.get("src") or "")[:120])}</span>{u}</p></li>')
         sec.append(f'<section class="qy-year" id="y{y}"><h2>{y}<small>{len(by_year[y])} 条</small></h2><ol>{"".join(rows)}</ol></section>')
     title = f'语录 · {SITE_NAME}'
@@ -921,7 +950,7 @@ def build_quotes():
 {SITE_HEADER}
 <main class="wrap ep-main" id="main">
   <header class="ep-head"><div class="ep-kicker">档案专题</div><h1 class="ep-title">语录</h1>
-    <p class="ep-dek">{len(sayings)} 条公开语录，按年份排列，每条注明出处；带 X 标记的来自他本人的帖子。</p></header>
+    <p class="ep-dek">{len(sayings)} 条公开语录，按年份排列，每条注明出处{'，附中文译文（AI 翻译，以英文原话为准）' if SAYINGS_ZH else ''}；带 X 标记的来自他本人的帖子。</p></header>
   <nav class="ar-nav" aria-label="按年份跳转">{nav}</nav>
   {''.join(sec)}
 </main>
@@ -1142,11 +1171,82 @@ def build_disclaimer():
     print('disclaimer page: ok')
 
 
+# ---------------------------------------------------------------- 文稿全文检索
+def build_search():
+    docs = []
+    for m in master:
+        paras = PARAS.get(m['slug'])
+        if paras:
+            docs.append((m['slug'], m.get('d'), m['zh'], m['title'], m.get('kZh'), m.get('ytId'), paras))
+    st = search_index.build(SITE / 'data' / 'search', docs)
+    print(f"search index: {st['docs']} videos, {st['paras']} paragraphs, {st['terms']} terms, "
+          f"shards {st['shard_total'] // 1024} KB (max {st['shard_max'] // 1024} KB)")
+    return st
+
+
+def build_search_page():
+    n_docs = len(PARAS)
+    hours = round(sum((by_slug[s].get('sec') or 0) for s in PARAS) / 3600)
+    title = f'文稿搜索 · 马斯克的原话 · {SITE_NAME}'
+    desc = f'在 {n_docs} 份马斯克英文文稿（约 {hours} 小时）里搜索他的原话，结果精确到段落，点时间戳直接跳到视频那一秒。支持常用中文关键词。'
+    url = f'{DOMAIN}/search'
+    ld = {"@context": "https://schema.org", "@type": "SearchResultsPage", "name": title, "url": f'{url}/',
+          "inLanguage": "zh-CN", "description": desc, "isPartOf": {"@id": f'{DOMAIN}/#website'}}
+    html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(desc)}">
+<link rel="canonical" href="{url}/">
+<meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{url}/">
+<meta property="og:image" content="{DOMAIN}/assets/og-default.jpg">
+<meta property="og:site_name" content="{SITE_NAME}">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>
+{THEME_SCRIPT}
+{HEAD_EXTRA}
+{FEED_LINK}
+<link rel="stylesheet" href="/style.css?v={CSS_V}">
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+{SITE_HEADER}
+<main class="wrap sr-main" id="main">
+  <header class="ep-head sr-head"><div class="ep-kicker">文稿搜索</div><h1 class="ep-title">马斯克说过什么</h1>
+    <p class="ep-dek">在 {n_docs} 份英文文稿（约 {hours} 小时）里找他的原话。每条结果都能跳到视频里的那一秒。</p></header>
+  <form class="sr-form" role="search" action="/search/" onsubmit="return false">
+    <svg class="i-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+    <input id="srq" name="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
+      placeholder="试试：第一性原理、火星、first principles" aria-label="搜索文稿">
+    <button type="button" class="sr-clear" aria-label="清除" hidden>清除</button>
+  </form>
+  <p class="sr-tip">英文词直接搜；常用中文词会自动换成英文。<code>"短语"</code> 精确匹配，<code>a|b</code> 表示任一。</p>
+  <div id="srBody" aria-live="polite"><noscript><p class="sr-empty">文稿搜索需要启用 JavaScript。</p></noscript></div>
+</main>
+{SITE_FOOTER}
+{umami_tag()}
+<script src="/search.js?v={SEARCH_V}"></script>
+</body>
+</html>
+"""
+    out = SITE / 'search' / 'index.html'
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(html)
+    print('search page: ok')
+
 # ---------------------------------------------------------------- sitemap / llms / feed / 404
 def build_sitemap(eps):
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
              f'<url><loc>{DOMAIN}/</loc><lastmod>{TODAY}</lastmod><priority>1.0</priority></url>',
+             f'<url><loc>{DOMAIN}/search/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
              f'<url><loc>{DOMAIN}/predictions/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
              f'<url><loc>{DOMAIN}/quotes/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
              f'<url><loc>{DOMAIN}/themes/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
@@ -1156,7 +1256,7 @@ def build_sitemap(eps):
         lines.append(f'<url><loc>{DOMAIN}/ep/{x["s"]}/</loc><lastmod>{x["d"] or TODAY}</lastmod><priority>0.7</priority></url>')
     lines.append('</urlset>')
     (SITE / 'sitemap.xml').write_text('\n'.join(lines))
-    print(f'sitemap.xml: {len(eps) + 6} urls')
+    print(f'sitemap.xml: {len(eps) + 7} urls')
 
 
 def build_llms(eps):
@@ -1167,6 +1267,7 @@ def build_llms(eps):
              '## 使用说明', '',
              '- 每篇中文精读都有纯 Markdown 版本：在视频页网址后加 `index.md`',
              f'- 全部视频按年份的目录：{DOMAIN}/archive/',
+             f'- 英文文稿全文搜索（结果带时间戳，可跳到视频对应位置）：{DOMAIN}/search/?q=first+principles',
              f'- 预言与承诺追踪：{DOMAIN}/predictions/ · 语录：{DOMAIN}/quotes/ · 主题：{DOMAIN}/themes/',
              f'- RSS 全文订阅（最新 20 篇精读）：{DOMAIN}/feed.xml',
              '- 引用时请注明「elon.qiaomu.ai 中文精读（AI 改写，非官方翻译）」并链接对应网页。', '',
@@ -1295,6 +1396,8 @@ def main():
     for i, x in enumerate(eps):
         build_page(i, eps)
     print(f'ep pages: {len(list((SITE / "ep").glob("*/index.html")))}')
+    build_search()
+    build_search_page()
     build_sitemap(eps)
     build_llms(eps)
     build_feed(eps)

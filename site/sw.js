@@ -2,7 +2,7 @@
    - 静态资源（样式 / 脚本 / 图标 / 字体）：先用缓存，后台更新
    - 页面与数据：网络优先，断网时回退到缓存；读过的文章因此可以离线阅读
    - 都没有时显示离线页 */
-const VERSION = 'em-v1';
+const VERSION = 'em-v2';
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
@@ -60,6 +60,8 @@ self.addEventListener('fetch', (e) => {
   // 音视频走浏览器自身的范围请求，不经 SW；统计脚本也不缓存
   if (/\.(mp4|m4a|mp3)$/i.test(url.pathname) || url.hostname.startsWith('umami.')) return;
   const sameOrigin = url.origin === self.location.origin;
+  // 检索分片与段落数据量大，交给浏览器 HTTP 缓存，避免挤掉离线页面缓存
+  if (sameOrigin && url.pathname.startsWith('/data/search/')) return;
   if (req.mode === 'navigate' || (sameOrigin && /\.(json|md|xml|txt)$/.test(url.pathname))) {
     e.respondWith(networkFirst(req));
     return;

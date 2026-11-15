@@ -282,11 +282,11 @@
   onScroll();
 
   /* 继续阅读：上次读到中段时，给一个可点的提示，不自动跳 */
-  if (article && !location.hash) {
+  if (article && !location.hash && !/[?&](p|t)=/.test(location.search)) {
     const rp = histGet().rp || 0;
     if (rp > 0.06 && rp < 0.95) {
       const toast = document.createElement('div');
-      toast.className = 'resume-toast';
+      toast.className = 'mini-player resume-toast';
       toast.innerHTML = `<div class="mp-body"><div class="mp-title">上次读到 ${Math.round(rp * 100)}%</div></div>
         <button type="button" class="chip" data-go>继续阅读</button><button type="button" class="mp-close" aria-label="关闭">×</button>`;
       document.body.appendChild(toast);
@@ -319,8 +319,8 @@
   function openVideo() {
     if (!facade || !facade.isConnected) return Promise.resolve(null);
     if (ytPlayer) return Promise.resolve(ytPlayer);
-    const media = facade.closest('.media') || facade.parentNode;
-    media.classList.add('video-open');
+    const box = facade.closest('.media') || facade.parentNode;
+    box.classList.add('video-open', 'is-live');
     const holder = document.createElement('div');
     holder.className = 'yt-holder';
     facade.replaceWith(holder);
@@ -364,6 +364,8 @@
     if (ytPlayer && ytPlayer.seekTo) {
       ytPlayer.seekTo(sec, true);
       if (ytPlayer.playVideo) ytPlayer.playVideo();
+      pinOff = false;
+      checkPin();
       return;
     }
     if (mp4) {
@@ -372,8 +374,9 @@
       return;
     }
     pendingSeek = sec;
-    if (facade) openVideo();
+    if (facade) openVideo().then(() => { pinOff = false; checkPin(); });
   }
+  const tsLabel = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
 
   /* ---------- 文稿与金句：时间戳可点击跳播 + 文稿内搜索高亮 ---------- */
   const trText = $('.transcript-text');
@@ -385,8 +388,8 @@
   if (trText) {
     const tools2 = document.createElement('div');
     tools2.className = 'tr-tools';
-    tools2.innerHTML = `<input class="tr-search" type="search" placeholder="在文稿中搜索…" autocomplete="off" aria-label="在文稿中搜索">
-      <span class="tr-count" aria-live="polite"></span>${hasVideo ? '<span class="tr-hint">点击时间戳可跳到视频对应位置</span>' : ''}`;
+    tools2.innerHTML = `<input class="tr-search" type="search" placeholder="在本篇文稿中搜索…" autocomplete="off" aria-label="在本篇文稿中搜索">
+      <span class="tr-count" aria-live="polite"></span>${hasVideo ? '<span class="tr-hint">点击时间戳可跳到视频对应位置</span>' : ''}<a class="tr-all" href="/search/">搜全部文稿 →</a>`;
     trText.parentNode.insertBefore(tools2, trText);
     const inp = $('.tr-search', tools2);
     const cnt = $('.tr-count', tools2);
@@ -454,5 +457,98 @@
     if (!isFinite(s)) return;
     seekTo(s);
     if (window.umami) window.umami.track('ts-seek', { slug });
+  });
+
+  /* ---------- 小窗：视频滚出视口后固定在右下角，继续边看边读 ---------- */
+  const media = $('.media');
+  let pinOff = false;
+  const pinClose = document.createElement('button');
+  pinClose.type = 'button';
+  pinClose.className = 'pin-close';
+  pinClose.setAttribute('aria-label', '关闭小窗');
+  pinClose.textContent = '×';
+  if (media) media.appendChild(pinClose);
+  function unpin() {
+    if (!media || !media.classList.contains('pinned')) return;
+    media.classList.remove('pinned');
+    media.style.height = '';
+    document.body.classList.remove('has-pin');
+  }
+  function checkPin() {
+    if (!media || !media.classList.contains('is-live')) return;
+    const r = media.getBoundingClientRect();
+    if (r.bottom > 0) { pinOff = false; unpin(); return; }
+    if (pinOff || media.classList.contains('pinned')) return;
+    media.style.height = r.height + 'px';
+    media.classList.add('pinned');
+    document.body.classList.add('has-pin');
+  }
+  if (media && 'IntersectionObserver' in window) new IntersectionObserver(() => checkPin()).observe(media);
+  pinClose.addEventListener('click', () => {
+    pinOff = true;
+    unpin();
+    if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+    if (mp4) mp4.pause();
+  });
+  if (mp4) mp4.addEventListener('play', () => { media.classList.add('is-live'); checkPin(); });
+
+  /* ---------- 深链：?p=段落&t=秒&hl=高亮词（来自文稿搜索）/ ?t=秒 ---------- */
+  const params = new URLSearchParams(location.search);
+  const pParam = params.get('p'), tParam = params.get('t');
+  const tSec = tParam != null && /^\d+(\.\d+)?$/.test(tParam) ? Number(tParam) : null;
+  const deepPara = pParam != null && /^\d+$/.test(pParam) ? document.getElementById('p' + pParam) : null;
+  if (deepPara && trText && tabBtns.some((b) => b.dataset.tab === 'tr')) {
+    activate('tr');
+    deepPara.classList.add('hit');
+    const words = (params.get('hl') || '').split(/\s+/).filter(Boolean).slice(0, 8);
+    if (words.length) {
+      const re = new RegExp('(' + words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+      const walker = document.createTreeWalker(deepPara, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) if (!walker.currentNode.parentNode.classList.contains('ts-link')) nodes.push(walker.currentNode);
+      nodes.forEach((node) => {
+        const parts = node.nodeValue.split(re);
+        if (parts.length < 2) return;
+        const frag = document.createDocumentFragment();
+        parts.forEach((s, i) => {
+          if (!s) return;
+          if (i % 2) { const m = document.createElement('mark'); m.textContent = s; frag.appendChild(m); }
+          else frag.appendChild(document.createTextNode(s));
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+    requestAnimationFrame(() => {
+      const top = tabsRow.parentNode.getBoundingClientRect().top + window.scrollY - 1;
+      window.scrollTo({ top });
+      trText.scrollTop += deepPara.getBoundingClientRect().top - trText.getBoundingClientRect().top - 24;
+    });
+  }
+  if (tSec != null && hasVideo) {
+    const toast = document.createElement('div');
+    toast.className = 'mini-player resume-toast';
+    toast.innerHTML = `<div class="mp-body"><div class="mp-title">从 ${esc(tsLabel(tSec))} 开始播放</div></div>
+      <button type="button" class="chip" data-go>▶ 播放</button><button type="button" class="mp-close" aria-label="关闭">×</button>`;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    const hide = () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); };
+    $('[data-go]', toast).addEventListener('click', () => { seekTo(tSec); hide(); if (window.umami) window.umami.track('deeplink-play', { slug }); });
+    $('.mp-close', toast).addEventListener('click', hide);
+  }
+
+  /* ---------- 金句：复制（带出处与时间戳链接） ---------- */
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-copy-q]');
+    if (!b) return;
+    const item = b.closest('.quote-item');
+    const zh = ($('.q-zh', item) || {}).textContent || '';
+    const en = ($('.q-en', item) || {}).textContent || '';
+    const tsEl = $('.ts-link', item);
+    const sec = tsEl ? toSec(tsEl.dataset.t) : null;
+    const title = (($('.ep-title') || {}).textContent || '').trim();
+    const url = location.origin + location.pathname + (sec != null && isFinite(sec) ? '?t=' + sec : '');
+    const txt = `“${zh}”\n${en}\n—— 马斯克，${title}${tsEl ? ' ' + tsEl.dataset.t : ''}\n${url}`;
+    const done = () => { b.textContent = '已复制'; setTimeout(() => { b.textContent = '复制'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => {});
   });
 })();
