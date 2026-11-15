@@ -521,8 +521,11 @@ def _ep_href(e, hl):
     return f'/ep/{e["slug"]}/?{urlencode(q)}'
 
 
+_HL_STOP = {'the', 'and', 'for', 'from', 'like', 'who', 'where', 'was', 'with', 'movie', 'book', 'called', 'that', 'this', 'into'}
+
+
 def _hl(s, q):
-    words = sorted({w for w in re.findall(r'[a-z0-9.]+', q.lower()) if len(w) > 2}, key=len, reverse=True)
+    words = sorted({w for w in re.findall(r'[a-z0-9.]+', q.lower()) if len(w) > 2 and w not in _HL_STOP}, key=len, reverse=True)
     out = esc(s)
     if words:
         out = re.sub(r'(?i)\b(' + '|'.join(re.escape(w) for w in words) + r')\w*', lambda m: f'<mark>{m.group(0)}</mark>', out)
@@ -627,9 +630,7 @@ def books_html(docs, quality, cover_dir=None):
         exs = _book_examples(docs, q, quality, pin=BOOK_PIN.get(zh))
         if not exs:
             continue
-        key = q.split('|')[0].strip('"').lower()
-        e = exs[0] if exs[0]['q'] >= 99 else next(
-            (x for x in exs if key in x['s'].lower() and not x['s'].rstrip('…').endswith('?')), exs[0])
+        e = _pick_example(exs, q)
         hl = ' '.join(w for w in re.findall(r'[a-z]+', q.split('|')[0].lower()) if len(w) > 2)
         ts = e['sec'] is not None
         has_cover = hb and cover_dir and (cover_dir / f'{hb}.webp').exists()
@@ -649,6 +650,105 @@ def books_html(docs, quality, cover_dir=None):
     head, rest = items[:12], items[12:]
     more = (f'<details class="bk-more-list"><summary>再看 {len(rest)} 本</summary><ol class="bk-list">{"".join(rest)}</ol></details>' if rest else '')
     return len(items), f'<ol class="bk-list">{"".join(head)}</ol>{more}'
+
+
+# (中文片名, 英文片名, 年份, 类型, 查询, 一句话, IMDb id)；海报在 site/assets/movies/{IMDb id}.webp（tools/movie_posters.py 用 OMDb 下载），点海报去豆瓣搜索
+MOVIES = [
+    ('星球大战', 'Star Wars', '1977', '电影', '"star wars"|"millennium falcon"',
+     '他在电影院看的第一部电影；「猎鹰」火箭就是以片中的千年隼号命名', 'tt0076759'),
+    ('星际迷航', 'Star Trek', '1966', '剧集', '"star trek"',
+     '「我最喜欢的剧之一」，SpaceX 要做的就是「把星际迷航变成现实」；2013 年还当众推荐了刚上映的新电影版', 'tt0060028'),
+    ('终结者', 'The Terminator', '1984', '电影', 'terminator|"james cameron"|skynet',
+     '谈 AI 风险必提：「卡梅隆的电影我都爱，但我们可不想活在《终结者》里」；他还陪儿子重看了《终结者 2》', 'tt0088247'),
+    ('黑客帝国', 'The Matrix', '1999', '电影', '"like the matrix"|"in the matrix"|"from the matrix"',
+     '聊「我们是不是活在模拟世界里」时常提；也想象脑机接口能像片中那样直接「上传」技能', 'tt0133093'),
+    ('巨蟒与圣杯', 'Monty Python and the Holy Grail', '1975', '电影', '"monty python"',
+     '「我一直爱 Monty Python，《巨蟒与圣杯》和《万世魔星》都太棒了」；龙飞船首飞的秘密载荷是一块奶酪，致敬他们的「奶酪店」小品', 'tt0071853'),
+    ('钢铁侠', 'Iron Man', '2008', '电影', '"iron man"|"tony stark"',
+     '托尼·斯塔克的现实原型之一，导演来 SpaceX 取过经，他还在《钢铁侠 2》里客串', 'tt0371746'),
+    ('007：海底城', 'The Spy Who Loved Me', '1977', '电影', '"spy who loved me"|"spy love me"|"lotus esprit"|"james bond"',
+     '他买下了片中能变潜艇的莲花 Esprit 道具车；新 Roadster 要「比所有邦德车加起来还疯狂」', 'tt0076752'),
+    ('蝙蝠侠：黑暗骑士', 'The Dark Knight', '2008', '电影', '"chris nolan"|"nolan brothers"|"dark knight"|batman',
+     '夸诺兰的蝙蝠侠「特效、剧本、演员全是顶级」，说教育也该做得这么好看；批评治安时说「这是小丑在管哥谭」', 'tt0468569'),
+    ('谁杀死了电动车', 'Who Killed the Electric Car?', '2006', '纪录片', '"who killed the electric car"',
+     '「拍得不错，值得一看」：通用汽车收回 EV1 拿去压碎，车主们拼命想把车留下', 'tt0489037'),
+    ('疯狂的麦克斯', 'Mad Max', '1979', '电影', '"mad max"',
+     '特斯拉辅助驾驶最激进的跟车档就叫「Mad Max」；他形容火人节是「疯狂的麦克斯遇上拉斯维加斯」', 'tt0079501'),
+    ('银翼杀手', 'Blade Runner', '1982', '电影', '"blade runner"',
+     '「我爱《银翼杀手》，但不想要那样阴暗的未来」；做 Cybertruck 时想的是「银翼杀手会开什么皮卡」', 'tt0083658'),
+    ('公主新娘', 'The Princess Bride', '1987', '电影', '"princess bride"',
+     '「伟大的电影」：被问怕不怕得罪广告主，他想起片中复仇那一幕：「给我钱、给我权，我都不在乎」', 'tt0093779'),
+    ('感谢你抽烟', 'Thank You for Smoking', '2005', '电影', '"thank you for smoking"',
+     '他参与出品的电影，讲烟草说客怎样左右政府；他借它说明监管怎样被利益集团绑架', 'tt0427944'),
+    ('蠢蛋进化论', 'Idiocracy', '2006', '电影', 'idiocracy',
+     '被问「看过《蠢蛋进化论》吗」他说看过；后来又自嘲发布会的画面「有点像这部片的开头」', 'tt0387808'),
+    ('黑镜', 'Black Mirror', '2011', '剧集', '"black mirror"',
+     '讲到脑机接口将来能存储、回放记忆，他自己也说「听起来越来越像《黑镜》了」', 'tt2085059'),
+    ('上班一条虫', 'Office Space', '1999', '电影', '"office base"|"movie like office space"',
+     '「我最喜欢的电影之一」：导演迈克·贾奇把硅谷上班族拍得太准了', 'tt0151804'),
+    ('太空堡垒卡拉狄加', 'Battlestar Galactica', '2004', '剧集', 'battlestar',
+     '「好剧」：他想象中的火星殖民船队，就像片中那样上千艘飞船在轨道集结、一起出发', 'tt0407362'),
+    ('火星救援', 'The Martian', '2015', '电影', '"the martian" andy',
+     '原著是他读过的「最写实的火星小说之一」；听说拍成了电影，他担心观众看完不敢去火星了', 'tt3659388'),
+    ('孤国春秋', 'The Last Kingdom', '2015', '剧集', '"last kingdom"',
+     '「很棒的历史剧，大体符合史实」：2021 年在 Clubhouse 上说刚追完', 'tt4179452'),
+    ('眼镜蛇', 'Cobra Kai', '2018', '剧集', '"cobra kai"',
+     '「太好看了」：看《龙威小子》长大的人会懂', 'tt7221388'),
+    ('信条', 'Tenet', '2020', '电影', 'tenet|tennant nolan',
+     '「挺好看的」，不过「别想太多，想太多就讲不通了」', 'tt6723592'),
+    ('瑞克和莫蒂', 'Rick and Morty', '2013', '剧集', '"rick and morty"',
+     'Neuralink 发布会上致敬了片中「给狗做智力增强」那一集，主创就坐在台下', 'tt2861424'),
+    ('羊毛战记', 'Silo', '2023', '剧集', 'silo series',
+     '「挺好的剧，我看了」：聊 X 怎样给热门内容配上讨论时顺口推荐', 'tt14688458'),
+    ('飞行家', 'The Aviator', '2004', '电影', '"the aviator"',
+     '读霍华德·休斯传记时提起：看过这部讲休斯的电影，觉得「也许是个警示故事」', 'tt0338751'),
+]
+
+MOVIE_PIN = {
+    '星球大战': 'profound effect', '星际迷航': 'one of my favorite shows', '终结者': 'love his movies',
+    '黑客帝国': 'upload any subject', '巨蟒与圣杯': 'always love monty python', '钢铁侠': 'kind of like iron man',
+    '007：海底城': 'all the james bond cars', '蝙蝠侠：黑暗骑士': 'chris nolan movie', '疯狂的麦克斯': 'mad max meets',
+    '银翼杀手': 'i love blade runner', '黑镜': 'black mirror episode', '飞行家': 'saw the movie the aviator',
+    '火星救援': 'most realistic', '谁杀死了电动车': 'good movie', '感谢你抽烟': 'helped make',
+    '公主新娘': 'princess bride great movie', '信条': 'think too hard', '太空堡垒卡拉狄加': 'good good show', '眼镜蛇': 'sick burn',
+}
+
+
+def _pick_example(exs, q):
+    key = q.split('|')[0].strip('"').lower()
+    return exs[0] if exs[0]['q'] >= 99 else next(
+        (x for x in exs if key in x['s'].lower() and not x['s'].rstrip('…').endswith('?')), exs[0])
+
+
+def movies_html(docs, quality, poster_dir=None):
+    from urllib.parse import quote
+    st = mention_stats(docs, [(m[0], m[4]) for m in MOVIES])
+    items = []
+    for m, r in sorted(zip(MOVIES, st['rows']), key=lambda x: -x[1]['docs']):
+        if not r['n']:
+            continue
+        zh, en, yr, kind, q, note, imdb = m
+        exs = _book_examples(docs, q, quality, pin=MOVIE_PIN.get(zh))
+        if not exs:
+            continue
+        e = _pick_example(exs, q)
+        hl = ' '.join(w for w in re.findall(r'[a-z]+', q.split('|')[0].lower()) if len(w) > 2)
+        db = f'https://search.douban.com/movie/subject_search?search_text={quote(zh)}&cat=1002'
+        has_poster = poster_dir and (poster_dir / f'{imdb}.webp').exists()
+        cover = (f'<img class="bk-img" src="/assets/movies/{imdb}.webp" alt="" loading="lazy" decoding="async" width="76" height="114">' if has_poster
+                 else f'<div class="bk-cover" aria-hidden="true"><b>{esc(zh)}</b><small>{esc(yr)}</small></div>')
+        n = r['docs']
+        items.append(f'''<li class="bk">
+  <a class="bk-cv" href="{esc(db)}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">{cover}</a>
+  <div class="bk-body"><div class="bk-h"><b>《{esc(zh)}》</b><span lang="en">{esc(en)}</span><small class="mv-meta">{esc(yr)} · {esc(kind)}</small></div>
+    <p class="bk-note">{esc(note)}</p>
+    <a class="bk-ex" href="{esc(_ep_href(e, hl))}"><span class="ph-s" lang="en">{_hl(e["s"], q)}</span><span class="ph-src">{"▶ " if e["sec"] is not None else ""}{esc((e["d"] or "")[:4])} · {esc(e["zh"])}</span></a>
+    <div class="bk-links"><a class="bk-more" href="/search/?q={esc(_q(q))}">{f"{n} 场视频里提到过" if n > 1 else "在文稿里搜索"} →</a><a class="bk-hb" href="{esc(db)}" target="_blank" rel="noopener">豆瓣 ↗</a></div></div>
+</li>''')
+    head, rest = items[:12], items[12:]
+    more = (f'<details class="bk-more-list"><summary>再看 {len(rest)} 部</summary><ol class="bk-list">{"".join(rest)}</ol></details>' if rest else '')
+    return len(items), f'<ol class="bk-list mv-list">{"".join(head)}</ol>{more}'
+
 
 _YR = re.compile(r'(?<![\d$,.])(20[1-9]\d|2100)(?![\d,])')
 
