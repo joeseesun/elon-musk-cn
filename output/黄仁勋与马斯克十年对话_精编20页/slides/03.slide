@@ -1,0 +1,55 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'row', gap: 40 }}>
+    <Box style={{ width: 340, height: '100%', background: '#132B45', borderRadius: 8, padding: 34, flexDirection: 'column', justifyContent: 'space-between' }}>
+      <Box>
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+          <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>资料来源</Text>
+        </Box>
+        <Text style={{ fontSize: 108, fontWeight: 'bold', color: '#63A7D4', lineHeight: 1, marginTop: 40 }}>651</Text>
+        <Text style={{ fontSize: 21, color: '#FFFFFF', fontWeight: 'bold', marginTop: 6 }}>段公开视频文稿</Text>
+      </Box>
+      <Text style={{ fontSize: 17, color: '#A9CFE7', lineHeight: 1.6 }}>访谈 · 发布会 · 股东大会<br />1998 — 2026，可检索的中文库</Text>
+    </Box>
+    <Box style={{ flex: 1, flexDirection: 'column' }}>
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+        <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>数据概览</Text>
+      </Box>
+      <Text style={{ fontSize: 33, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14, lineHeight: 1.2 }}>一个名字，贯穿十年技术转向</Text>
+      <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+      <Box style={{ flexDirection: 'row', gap: 18, marginTop: 24 }}>
+        {[
+          { k: '588', u: '份', d: '英文逐字文稿', c: '#63A7D4' },
+          { k: '82', u: '篇', d: '提及英伟达的精读', c: '#8FBCE4' },
+          { k: '21', u: '篇', d: '点名黄仁勋', c: '#8ED1A8' },
+          { k: '11', u: '年', d: '2015→2026', c: '#A9CFE7' },
+        ].map((it, i) => (
+          <Box key={i} style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 18, border: '1px solid #26384C' }}>
+            <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
+              <Text style={{ fontSize: 46, fontWeight: 'bold', color: it.c, lineHeight: 1 }}>{it.k}</Text>
+              <Text style={{ fontSize: 16, color: '#A9CFE7', paddingBottom: 5 }}>{it.u}</Text>
+            </Box>
+            <Text style={{ fontSize: 14, color: '#E7E8E9', marginTop: 12 }}>{it.d}</Text>
+          </Box>
+        ))}
+      </Box>
+      <Box style={{ marginTop: 24, flexDirection: 'column', gap: 13 }}>
+        {[
+          '2015 GTC：黄仁勋把马斯克请上台，两个人对赌自动驾驶与算力',
+          '2019：特斯拉自研芯片，从英伟达的客户变成潜在对手',
+          '2025：美沙论坛同台，把问题推向电力、散热与 AI 泡沫',
+        ].map((t, i) => (
+          <Box key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+            <Text style={{ fontSize: 17, color: '#63A7D4', fontWeight: 'bold' }}>—</Text>
+            <Text style={{ fontSize: 17, color: '#E7E8E9', lineHeight: 1.5, flex: 1 }}>{t}</Text>
+          </Box>
+        ))}
+      </Box>
+      <Box style={{ marginTop: 'auto', background: '#63A7D4', borderRadius: 6, padding: 15, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#08131F' }}>结论：</Text>
+        <Text style={{ fontSize: 15, color: '#08131F' }}>他出现在马斯克每一次关键的技术表态里——从客户、对手，到彼此的仰慕者。</Text>
+      </Box>
+    </Box>
+  </Box>
+</Slide>

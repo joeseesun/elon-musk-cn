@@ -1,0 +1,29 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>GTC 2015 · 开场交锋</Text>
+    </Box>
+    <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14, lineHeight: 1.2 }}>一个烫手的问题，两种语气</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+    <Box style={{ flexDirection: 'row', gap: 28, marginTop: 28, flex: 1 }}>
+      <Box style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 30, border: '1px solid #2A4055', flexDirection: 'column' }}>
+        <Text style={{ fontSize: 15, color: '#8ED1A8', letterSpacing: 2, fontWeight: 'bold' }}>黄仁勋 · 发问</Text>
+        <Text style={{ fontSize: 46, fontWeight: 'bold', color: '#FFFFFF', marginTop: 18, lineHeight: 1.28 }}>「你说过，AI 比核武器更危险。」</Text>
+        <Text style={{ fontSize: 18, color: '#C9CCCE', marginTop: 22, lineHeight: 1.6 }}>他把"AI 是恶魔"与"用 AI 做自动驾驶"这个矛盾，直接甩到台面上。台下坐满了做深度学习与 GPU 的工程师。</Text>
+        <Text style={{ fontSize: 15, color: '#8FBCE4', marginTop: 'auto', lineHeight: 1.5 }}>提问者的姿态：逼对方把逻辑讲清楚</Text>
+      </Box>
+      <Box style={{ width: 1, background: '#3A4653' }} />
+      <Box style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 30, border: '1px solid #2A4055', flexDirection: 'column' }}>
+        <Text style={{ fontSize: 15, color: '#63A7D4', letterSpacing: 2, fontWeight: 'bold' }}>马斯克 · 修正</Text>
+        <Text style={{ fontSize: 46, fontWeight: 'bold', color: '#FFFFFF', marginTop: 18, lineHeight: 1.28 }}>「自动驾驶是窄 AI，不是那个问题。」</Text>
+        <Text style={{ fontSize: 18, color: '#C9CCCE', marginTop: 22, lineHeight: 1.6 }}>他把自动驾驶比作电梯：一个明确、可定义、能救命的窄任务。真正该担心的是通用人工智能，而非把车开好。</Text>
+        <Text style={{ fontSize: 15, color: '#8FBCE4', marginTop: 'auto', lineHeight: 1.5 }}>回答者的策略：先把问题重新定义</Text>
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 15, marginTop: 22, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#08131F' }}>结论：</Text>
+      <Text style={{ fontSize: 16, color: '#08131F' }}>同一个小时，同一个话题——一个在推销算力，一个在定义边界，却踩在同一块地基上。</Text>
+    </Box>
+  </Box>
+</Slide>

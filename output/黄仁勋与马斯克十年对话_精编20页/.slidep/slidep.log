@@ -1,0 +1,62 @@
+=== boot pid=35834 ts=2026-11-15 02:13:44.451 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js create 黄仁勋与马斯克十年对话_精编20页.pptx ===
+[2026-11-15 02:13:44.450] [INFO ] [pid=35834] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+=== boot pid=36137 ts=2026-11-15 02:14:05.659 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/01.slide --project-dir . ===
+[2026-11-15 02:14:05.658] [INFO ] [pid=36137] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:14:05.703] [INFO ] [pid=36137] [slide-version] fileId=sid_mwho version=0 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=36395 ts=2026-11-15 02:14:24.586 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/02.slide --project-dir . ===
+[2026-11-15 02:14:24.584] [INFO ] [pid=36395] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:14:24.614] [INFO ] [pid=36395] [slide-version] fileId=sid_mwho version=1 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=36604 ts=2026-11-15 02:14:42.617 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/03.slide --project-dir . ===
+[2026-11-15 02:14:42.616] [INFO ] [pid=36604] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:14:42.649] [INFO ] [pid=36604] [slide-version] fileId=sid_mwho version=2 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=36797 ts=2026-11-15 02:14:59.180 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/04.slide --project-dir . ===
+[2026-11-15 02:14:59.179] [INFO ] [pid=36797] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:14:59.210] [INFO ] [pid=36797] [slide-version] fileId=sid_mwho version=3 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=36975 ts=2026-11-15 02:15:10.064 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/05.slide --project-dir . ===
+[2026-11-15 02:15:10.062] [INFO ] [pid=36975] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:15:10.096] [INFO ] [pid=36975] [slide-version] fileId=sid_mwho version=4 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=37032 ts=2026-11-15 02:15:14.546 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/06.slide --project-dir . ===
+[2026-11-15 02:15:14.545] [INFO ] [pid=37032] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:15:14.577] [INFO ] [pid=37032] [slide-version] fileId=sid_mwho version=5 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=40443 ts=2026-11-15 02:20:15.842 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/07.slide --project-dir . ===
+[2026-11-15 02:20:15.840] [INFO ] [pid=40443] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:20:15.880] [INFO ] [pid=40443] [slide-version] fileId=sid_mwho version=6 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=41148 ts=2026-11-15 02:21:09.281 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/08.slide --project-dir . ===
+[2026-11-15 02:21:09.279] [INFO ] [pid=41148] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:21:09.327] [INFO ] [pid=41148] [slide-version] fileId=sid_mwho version=7 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=41353 ts=2026-11-15 02:21:30.305 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/09.slide --project-dir . ===
+[2026-11-15 02:21:30.304] [INFO ] [pid=41353] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:21:30.334] [INFO ] [pid=41353] [slide-version] fileId=sid_mwho version=8 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=41572 ts=2026-11-15 02:21:55.518 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/10.slide --project-dir . ===
+[2026-11-15 02:21:55.516] [INFO ] [pid=41572] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:21:55.549] [INFO ] [pid=41572] [slide-version] fileId=sid_mwho version=9 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=42081 ts=2026-11-15 02:22:14.490 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/11.slide --project-dir . ===
+[2026-11-15 02:22:14.489] [INFO ] [pid=42081] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:22:14.514] [INFO ] [pid=42081] [slide-version] fileId=sid_mwho version=10 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=42864 ts=2026-11-15 02:22:32.365 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/12.slide --project-dir . ===
+[2026-11-15 02:22:32.362] [INFO ] [pid=42864] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:22:32.416] [INFO ] [pid=42864] [slide-version] fileId=sid_mwho version=11 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=43036 ts=2026-11-15 02:22:40.938 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/13.slide --project-dir . ===
+[2026-11-15 02:22:40.934] [INFO ] [pid=43036] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:22:40.979] [INFO ] [pid=43036] [slide-version] fileId=sid_mwho version=12 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=43640 ts=2026-11-15 02:23:31.371 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/14.slide --project-dir . ===
+[2026-11-15 02:23:31.370] [INFO ] [pid=43640] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:23:31.412] [INFO ] [pid=43640] [slide-version] fileId=sid_mwho version=0 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=43823 ts=2026-11-15 02:23:48.580 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/15.slide --project-dir . ===
+[2026-11-15 02:23:48.579] [INFO ] [pid=43823] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:23:48.610] [INFO ] [pid=43823] [slide-version] fileId=sid_mwho version=1 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=43921 ts=2026-11-15 02:23:59.712 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/16.slide --project-dir . ===
+[2026-11-15 02:23:59.711] [INFO ] [pid=43921] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:23:59.735] [INFO ] [pid=43921] [slide-version] fileId=sid_mwho version=0 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=43955 ts=2026-11-15 02:24:03.588 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/17.slide --project-dir . ===
+[2026-11-15 02:24:03.587] [INFO ] [pid=43955] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:24:03.615] [INFO ] [pid=43955] [slide-version] fileId=sid_mwho version=1 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=44091 ts=2026-11-15 02:24:14.502 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/18.slide --project-dir . ===
+[2026-11-15 02:24:14.501] [INFO ] [pid=44091] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:24:14.530] [INFO ] [pid=44091] [slide-version] fileId=sid_mwho version=2 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=44630 ts=2026-11-15 02:24:34.665 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/19.slide --project-dir . ===
+[2026-11-15 02:24:34.664] [INFO ] [pid=44630] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:24:34.704] [INFO ] [pid=44630] [slide-version] fileId=sid_mwho version=0 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx
+=== boot pid=44829 ts=2026-11-15 02:24:56.349 cwd=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页 argv=/Users/joe/.workbuddy/binaries/node/versions/22.22.2-6/lib/node_modules/@tencent/slidep/dist/index.js upsert-dsl 黄仁勋与马斯克十年对话_精编20页.pptx --dsl-file slides/20.slide --project-dir . ===
+[2026-11-15 02:24:56.347] [INFO ] [pid=44829] [server-url] baseUrl=http://127.0.0.1:39099 source=env
+[2026-11-15 02:24:56.413] [INFO ] [pid=44829] [slide-version] fileId=sid_mwho version=1 filePath=/Users/joe/Documents/ChatGPT/elon-website/output/黄仁勋与马斯克十年对话_精编20页/黄仁勋与马斯克十年对话_精编20页.pptx

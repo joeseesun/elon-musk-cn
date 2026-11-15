@@ -1,0 +1,19 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 0 }}>
+  <Box style={{ position: 'relative', width: 1280, height: 720 }}>
+    <Image src="assets/gtc_stage.png" style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, objectFit: 'cover' }} />
+    <Box style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, background: 'linear-gradient(90deg, rgba(6,14,26,0.94) 0%, rgba(6,14,26,0.62) 46%, rgba(6,14,26,0.15) 100%)' }} />
+    <Text style={{ position: 'absolute', left: 40, top: 40, fontSize: 280, fontWeight: 'bold', color: 'rgba(99,167,212,0.13)', lineHeight: 1 }}>01</Text>
+    <Box style={{ position: 'absolute', left: 82, top: 150, width: 640 }}>
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Box style={{ width: 5, height: 22, background: '#63A7D4' }} />
+        <Text style={{ fontSize: 16, color: '#8FBCE4', letterSpacing: 3 }}>CHAPTER ONE</Text>
+      </Box>
+      <Text style={{ fontSize: 66, fontWeight: 'bold', color: '#FFFFFF', marginTop: 26, lineHeight: 1.12 }}>缘起 · GTC 2015</Text>
+      <Text style={{ fontSize: 23, color: '#A9CFE7', marginTop: 22, lineHeight: 1.5 }}>圣何塞的开发者大会。黄仁勋把马斯克请上台，<br />说好没有排练——然后抛出最烫的问题。</Text>
+    </Box>
+    <Box style={{ position: 'absolute', left: 82, bottom: 70, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+      <Box style={{ width: 40, height: 1, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 15, color: '#A9CFE7' }}>故事从这里开始</Text>
+    </Box>
+  </Box>
+</Slide>

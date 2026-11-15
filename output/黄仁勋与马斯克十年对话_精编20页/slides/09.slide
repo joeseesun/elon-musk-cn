@@ -1,0 +1,44 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>2019 → 2025 · 从买到造</Text>
+    </Box>
+    <Text style={{ fontSize: 33, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>成了对手，却更懂对方的难处</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 24, marginTop: 22 }}>
+      <Box style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 22, border: '1px solid #26384C' }}>
+        <Text style={{ fontSize: 15, color: '#A9CFE7' }}>2019 · 特斯拉自研 FSD 芯片 vs 英伟达 Xavier</Text>
+        <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginTop: 14 }}>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#63A7D4', lineHeight: 1 }}>144</Text>
+          <Text style={{ fontSize: 18, color: '#A9CFE7', paddingBottom: 8 }}>TOPS</Text>
+          <Text style={{ fontSize: 24, color: '#8FBCE4', paddingBottom: 8, marginLeft: 8 }}>vs</Text>
+          <Text style={{ fontSize: 44, fontWeight: 'bold', color: '#C9CCCE', lineHeight: 1, paddingBottom: 6 }}>21</Text>
+        </Box>
+        <Text style={{ fontSize: 16, color: '#E7E8E9', marginTop: 12 }}>七倍差距——从客户，变成了潜在竞争者。</Text>
+      </Box>
+      <Box style={{ flex: 1, background: '#162534', borderRadius: 8, padding: 22, border: '1px solid #26384C' }}>
+        <Text style={{ fontSize: 15, color: '#A9CFE7' }}>2025 · 马斯克解释为什么还要自研</Text>
+        <Text style={{ fontSize: 18, color: '#FFFFFF', marginTop: 12, lineHeight: 1.5 }}>"英伟达要服务过去和未来所有客户的超集，所有软件都得能跑——这是个非常难的问题。我们只需服务自己。"</Text>
+        <Text style={{ fontSize: 14, color: '#8FBCE4', marginTop: 12 }}>不是贬低，而是理解对方的选择。</Text>
+      </Box>
+    </Box>
+
+    <Box style={{ marginTop: 22, flexDirection: 'column', gap: 14 }}>
+      <Box style={{ background: '#1B3D5C', borderRadius: 8, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+        <Text style={{ fontSize: 15, color: '#8FBCE4', letterSpacing: 1, width: 150 }}>CNBC 2025 · 被问还买吗</Text>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', flex: 1, lineHeight: 1.4 }}>"只要英伟达比我们做的更好，我们就会继续买英伟达。"</Text>
+        <Text style={{ fontSize: 16, color: '#8ED1A8' }}>是的。</Text>
+      </Box>
+      <Box style={{ background: '#1E3D5C', borderRadius: 8, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+        <Text style={{ fontSize: 15, color: '#8FBCE4', letterSpacing: 1, width: 150 }}>2024 股东大会</Text>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#FFFFFF', flex: 1, lineHeight: 1.4 }}>"我非常尊敬英伟达——如果有比我们更好的芯片，我们更愿意装进车里。"</Text>
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 14, marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#08131F' }}>洞见：</Text>
+      <Text style={{ fontSize: 15, color: '#08131F' }}>真正的竞争关系里，对手是最懂你价值的人——马斯克把"更好就买"挂在嘴边。</Text>
+    </Box>
+  </Box>
+</Slide>

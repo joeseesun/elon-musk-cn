@@ -1,0 +1,17 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 0 }}>
+  <Box style={{ position: 'relative', width: 1280, height: 720 }}>
+    <Image src="assets/handshake.png" style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, objectFit: 'cover', opacity: 0.32 }} />
+    <Box style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, background: 'linear-gradient(0deg, rgba(6,14,26,0.97) 0%, rgba(6,14,26,0.85) 45%, rgba(6,14,26,0.6) 100%)' }} />
+    <Box style={{ position: 'absolute', bottom: 0, left: 0, width: 1280, height: 8, background: 'linear-gradient(90deg, #63A7D4 0%, #4DA3FF 48%, #8ED1A8 100%)' }} />
+    <Box style={{ position: 'absolute', left: 90, top: 140, width: 1100 }}>
+      <Text style={{ fontSize: 16, color: '#8FBCE4', letterSpacing: 4 }}>跨越十年的对话 · 结语</Text>
+      <Text style={{ fontSize: 50, fontWeight: 'bold', color: '#FFFFFF', marginTop: 28, lineHeight: 1.45 }}>他们都看到了对方身上<br /><span style={{ color: '#63A7D4' }}>那种把未来提前造出来</span>的能力。</Text>
+      <Text style={{ fontSize: 19, color: '#A9CFE7', marginTop: 28, lineHeight: 1.6 }}>一个造出算力，一个造出用算力的方式。<br />所谓惺惺相惜，大概就是——我知道你也在赌同一个未来。</Text>
+    </Box>
+    <Box style={{ position: 'absolute', left: 90, bottom: 52, flexDirection: 'column', gap: 8 }}>
+      <Box style={{ width: 48, height: 2, background: '#63A7D4', marginBottom: 6 }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4' }}>资料来源：马斯克全访谈文稿库 elon.qiaomu.ai（588 份英文文稿 · 中文精读）</Text>
+      <Text style={{ fontSize: 14, color: '#737FA1' }}>非官方内容整理 · 引述据公开视频字幕与深度精读，仅作学习交流</Text>
+    </Box>
+  </Box>
+</Slide>

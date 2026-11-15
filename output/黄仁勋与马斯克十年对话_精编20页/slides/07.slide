@@ -1,0 +1,45 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>渊源 · 第一台 AI 计算机</Text>
+    </Box>
+    <Text style={{ fontSize: 33, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>"有一段我和 Jensen 拆开第一台 AI 计算机的视频"</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 28, marginTop: 22, flex: 1 }}>
+      <Box style={{ width: 560, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+        <Image src="assets/openai_origin.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <Box style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: 14, background: 'linear-gradient(0deg, rgba(6,14,26,0.9) 0%, rgba(6,14,26,0) 100%)' }}>
+          <Text style={{ fontSize: 14, color: '#A9CFE7' }}>一段被反复提起的旧事 · 出处：DealBook 2023 / NYT 2024</Text>
+        </Box>
+      </Box>
+      <Box style={{ flex: 1, flexDirection: 'column', justifyContent: 'center', gap: 16 }}>
+        <Box style={{ background: '#162534', borderRadius: 8, padding: 20, borderLeft: '4px solid #8ED1A8' }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.4 }}>"Jensen 是你的大粉丝。"</Text>
+          <Text style={{ fontSize: 14, color: '#8FBCE4', marginTop: 6 }}>索尔金转述 · 马斯克回答</Text>
+          <Text style={{ fontSize: 19, fontWeight: 'bold', color: '#8ED1A8', marginTop: 10 }}>"Jensen's awesome."（黄仁勋太棒了）</Text>
+        </Box>
+        <Box style={{ flexDirection: 'column', gap: 10 }}>
+          {[
+            '马斯克出早期全部资金（A、B、C 轮），招来 Ilya Sutskever',
+            '促成与微软的第一笔合作，把 OpenAI 亲手扶起来',
+            '那台"第一台 AI 计算机"，是两人交集的物理证据',
+          ].map((t, i) => (
+            <Box key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+              <Text style={{ fontSize: 17, color: '#63A7D4', fontWeight: 'bold' }}>0{i + 1}</Text>
+              <Text style={{ fontSize: 16, color: '#E7E8E9', lineHeight: 1.5, flex: 1 }}>{t}</Text>
+            </Box>
+          ))}
+        </Box>
+        <Box style={{ background: '#132B45', borderRadius: 6, padding: 14 }}>
+          <Text style={{ fontSize: 15, color: '#C9CCCE', lineHeight: 1.5 }}>他们的交情，早于这场对话十年——始于一起把一台 AI 机器从箱子里搬出来。</Text>
+        </Box>
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 14, marginTop: 18, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#08131F' }}>洞见：</Text>
+      <Text style={{ fontSize: 15, color: '#08131F' }}>这不是一场商业互吹——"awesome"二字，来自一段共同的起点。</Text>
+    </Box>
+  </Box>
+</Slide>

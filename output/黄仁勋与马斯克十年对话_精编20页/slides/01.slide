@@ -1,0 +1,20 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 0 }}>
+  <Box style={{ position: 'relative', width: 1280, height: 720 }}>
+    <Image src="assets/cover.png" style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, objectFit: 'cover' }} />
+    <Box style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, background: 'linear-gradient(0deg, rgba(6,14,26,0.97) 0%, rgba(6,14,26,0.82) 26%, rgba(6,14,26,0.25) 58%, rgba(6,14,26,0.05) 100%)' }} />
+    <Box style={{ position: 'absolute', bottom: 0, left: 0, width: 1280, height: 8, background: 'linear-gradient(90deg, #63A7D4 0%, #4DA3FF 48%, #8ED1A8 100%)' }} />
+    <Box style={{ position: 'absolute', left: 78, top: 78, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 22, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 15, color: '#A9CFE7', letterSpacing: 3, fontWeight: 600 }}>横跨 2015 — 2026 · 十一段公开对话 · 精编版</Text>
+    </Box>
+    <Box style={{ position: 'absolute', left: 78, bottom: 92, width: 1060 }}>
+      <Text style={{ fontSize: 80, fontWeight: 'bold', color: '#FFFFFF', lineHeight: 1.08, letterSpacing: 1 }}>黄仁勋 <span style={{ color: '#63A7D4' }}>×</span> 马斯克</Text>
+      <Text style={{ fontSize: 29, color: '#E7E8E9', marginTop: 16, lineHeight: 1.35 }}>跨越十年的对话：从 651 段文稿读出的<span style={{ color: '#8ED1A8' }}>惺惺相惜</span>与算力赌注</Text>
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginTop: 28 }}>
+        <Text style={{ fontSize: 16, color: '#A9CFE7' }}>"My hats off to them." — 马斯克谈英伟达</Text>
+        <Box style={{ width: 1, height: 18, background: '#60676F' }} />
+        <Text style={{ fontSize: 16, color: '#8ED1A8' }}>"工程师中的工程师。" — 黄仁勋谈马斯克</Text>
+      </Box>
+    </Box>
+  </Box>
+</Slide>

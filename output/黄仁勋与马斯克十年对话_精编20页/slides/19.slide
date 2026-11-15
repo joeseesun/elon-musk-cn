@@ -1,0 +1,42 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ position: 'absolute', top: -100, left: -80, width: 600, height: 600, background: 'radial-gradient(circle, rgba(58,92,188,0.18) 0%, rgba(11,21,33,0) 68%)' }} />
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>回响 · 共同的思维方式</Text>
+    </Box>
+    <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>两个赌注，十年后都没有输</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 28, marginTop: 28 }}>
+      <Box style={{ flex: 1 }}>
+        <Text style={{ fontSize: 16, color: '#8ED1A8', letterSpacing: 2, fontWeight: 'bold' }}>黄仁勋押算力</Text>
+        <Box style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+          {['GPU', 'CUDA', 'Tegra', 'Drive PX', 'AI 工厂'].map((s, i) => (
+            <Box key={i} style={{ flex: 1, background: i === 4 ? '#1E4038' : '#162534', borderRadius: 5, padding: 12, alignItems: 'center', border: `1px solid ${i === 4 ? '#3E7A63' : '#2A4055'}` }}>
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: i === 4 ? '#8ED1A8' : '#FFFFFF' }}>{s}</Text>
+            </Box>
+          ))}
+        </Box>
+        <Text style={{ fontSize: 16, color: '#C9CCCE', marginTop: 14, lineHeight: 1.55 }}>把深度学习变成一切的地基，一层层铺下去——直到全球市值第一。</Text>
+      </Box>
+      <Box style={{ flex: 1 }}>
+        <Text style={{ fontSize: 16, color: '#63A7D4', letterSpacing: 2, fontWeight: 'bold' }}>马斯克押软件与物理边界</Text>
+        <Box style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+          {['传感器', '影子模式', 'OTA', '自研芯片', '太空算力'].map((s, i) => (
+            <Box key={i} style={{ flex: 1, background: i === 4 ? '#1B3D5C' : '#162534', borderRadius: 5, padding: 12, alignItems: 'center', border: `1px solid ${i === 4 ? '#3A6D94' : '#2A4055'}` }}>
+              <Text style={{ fontSize: 13, fontWeight: 'bold', color: i === 4 ? '#63A7D4' : '#FFFFFF' }}>{s}</Text>
+            </Box>
+          ))}
+        </Box>
+        <Text style={{ fontSize: 16, color: '#C9CCCE', marginTop: 14, lineHeight: 1.55 }}>先把能力预埋进去，再解锁；撞到物理墙，就把战场搬到太空。</Text>
+      </Box>
+    </Box>
+
+    <Box style={{ marginTop: 40, background: 'linear-gradient(90deg, #132B45 0%, #1E3D5C 100%)', borderRadius: 10, padding: 34, flexDirection: 'column', alignItems: 'center' }}>
+      <Text style={{ fontSize: 15, color: '#8FBCE4', letterSpacing: 3 }}>他们做同一件事的方式</Text>
+      <Text style={{ fontSize: 40, fontWeight: 'bold', color: '#FFFFFF', marginTop: 18, lineHeight: 1.42, textAlign: 'center' }}>把不确定的问题，<br />拆成确定的步骤，<span style={{ color: '#63A7D4' }}>然后一步步走。</span></Text>
+      <Text style={{ fontSize: 16, color: '#C9CCCE', marginTop: 18, textAlign: 'center', lineHeight: 1.5 }}>黄仁勋说马斯克的时间表"就像火星一样"——<br />这大概是对一个创新者，最高的赞美。</Text>
+    </Box>
+  </Box>
+</Slide>
