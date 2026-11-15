@@ -398,7 +398,6 @@ PEOPLE = [
     ('拜登', 'Joe Biden', 'biden', '美国前总统'),
     ('奥巴马', 'Barack Obama', 'obama', '美国前总统'),
     ('普京', 'Vladimir Putin', 'putin', '俄罗斯总统'),
-    ('万斯', 'JD Vance', '"jd vance"|"j.d. vance"|"senator vance"|"vice president vance"', '美国副总统'),
     ('哈里斯', 'Kamala Harris', 'kamala', '美国前副总统'),
     ('肯尼迪', 'JFK / RFK Jr.', 'kennedy|rfk', '肯尼迪家族'),
     ('比尔·盖茨', 'Bill Gates', '"bill gates"', '微软创始人'),
@@ -415,7 +414,6 @@ PEOPLE = [
     ('爱迪生', 'Thomas Edison', 'edison', '发明家'),
     ('尼古拉·特斯拉', 'Nikola Tesla', '"nikola tesla"', '发明家，特斯拉公司名字的来源'),
     ('爱因斯坦', 'Albert Einstein', 'einstein', '物理学家'),
-    ('习近平', 'Xi Jinping', '"xi jinping"|"president xi"', '中国国家主席'),
 ]
 
 # (中文书名, 英文书名, 作者, 查询, 一句话, 黑客书架 OpenLibrary 作品 id)；封面在 site/assets/books/{id}.webp（tools/book_covers.py 从本地黑客书架拷贝）
