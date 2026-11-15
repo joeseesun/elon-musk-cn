@@ -44,7 +44,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V = 4, 4, 4, 1
+CSS_V, APP_V, EP_V, SEARCH_V = 4, 4, 4, 2
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
