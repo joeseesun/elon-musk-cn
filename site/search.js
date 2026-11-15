@@ -446,6 +446,9 @@ shouldn haven hasn hadn ll re ve d m o y let get got gonna gotta wanna going thi
   const mmss = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
   const fmtDate = (d) => !d ? '' : d.length === 4 ? d + ' 年' : `${d.slice(0, 4)} 年 ${+d.slice(5, 7)} 月`;
 
+  window.EMSearch = { parse, translateConcepts, runCorpus, EN, ZH };
+  if (!$('#srq')) return;
+
   /* ---------- 状态与渲染 ---------- */
   const input = $('#srq');
   const body = $('#srBody');

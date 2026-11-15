@@ -8,7 +8,7 @@
 >
 > A Chinese companion to 651 public Elon Musk videos (1998–today): AI deep-reads, embedded video, timestamp jump, full-text search — one URL per video, built by a single Python script.
 
-[**在线阅读 →**](https://elon.qiaomu.ai/) · [预言追踪](https://elon.qiaomu.ai/predictions/) · [语录](https://elon.qiaomu.ai/quotes/) · [免责声明](https://elon.qiaomu.ai/disclaimer/)
+[**在线阅读 →**](https://elon.qiaomu.ai/) · [话题趋势](https://elon.qiaomu.ai/trends/) · [档案数据](https://elon.qiaomu.ai/stats/) · [预言追踪](https://elon.qiaomu.ai/predictions/) · [语录](https://elon.qiaomu.ai/quotes/) · [免责声明](https://elon.qiaomu.ai/disclaimer/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Site](https://img.shields.io/website?url=https%3A%2F%2Felon.qiaomu.ai&label=elon.qiaomu.ai)](https://elon.qiaomu.ai/)
 
@@ -21,7 +21,8 @@
 1. **每个视频一页**：大尺寸播放器（滚出视野自动变右下角小窗，边读边看）、X/存档视频直链播放、中英双语标题、英文文稿按语句合并成段落并**时间戳点击跳播**（YouTube IFrame API seek）；
 2. **中文精读**：AI 基于完整文稿改写的长文导读（首发 15 篇标志性访谈，批产管线持续补齐），不是机器翻译，是「替你先看一遍」的深度转述；
 3. **找得到**：[文稿搜索](https://elon.qiaomu.ai/search/)「马斯克说过什么」在全部英文文稿和中文精读里逐段检索，中文、英文都能搜（谷歌翻译补全词表），按年份分布、从早到晚排序看观点演变，结果直达视频那一秒；首页标题搜索（`/` 或 `⌘K` 唤起）、类型/标签筛选、明暗主题、阅读进度记忆与「继续阅读」；
-4. **马斯克特色专题**：22 条带日期的[预言与承诺追踪](https://elon.qiaomu.ai/predictions/)（已兑现/迟到/待验证/未兑现 + 核实结果）、556 条中英双语[语录](https://elon.qiaomu.ai/quotes/)、每期中英双语金句（点时间戳跳播、一键复制带出处链接）、8 大[主题](https://elon.qiaomu.ai/themes/)（AI、火星、出生率、言论自由……）。
+4. **马斯克特色专题**：22 条带日期的[预言与承诺追踪](https://elon.qiaomu.ai/predictions/)（已兑现/迟到/待验证/未兑现 + 核实结果）、556 条中英双语[语录](https://elon.qiaomu.ai/quotes/)、每期中英双语金句（点时间戳跳播、一键复制带出处链接）、8 大[主题](https://elon.qiaomu.ai/themes/)（AI、火星、出生率、言论自由……）；
+5. **数据洞察**：[话题趋势](https://elon.qiaomu.ai/trends/)（26 个话题逐年热力图 + 输入任意中英文词画折线对比）、[档案数据](https://elon.qiaomu.ai/stats/)（每年出镜次数、场合分布、最长的对话、「跟马斯克学英语」高频词与原话例句）、预言页的「马斯克时间」承诺兑现时间线。
 
 非官方粉丝项目。本站不托管任何视频文件：YouTube 走官方嵌入，X/其他平台直链原始地址；数据来自 [silicon-valley.tech](https://silicon-valley.tech/)（Elon Musk Archive）公开语料，详见[免责声明](https://elon.qiaomu.ai/disclaimer/)。
 
@@ -37,6 +38,7 @@
 | 英文文稿 | 588 份带文稿：YouTube 字幕 / Whisper 全对话转录 / 第三方整理稿，按语句合并成段落并去掉 um、uh（每页标注来源与可靠性） |
 | 文稿搜索 | `/search/` 同时检索英文原话（588 份文稿逐段）与中文精读（逐段，定位回精读原文并高亮）：多词 AND、`a\|b` 任一、`"短语"` 精确匹配；中文词先查内置词表，查不到走免费谷歌翻译（`/api/tr` 经 Nginx 反代并缓存，配置见 `tools/nginx-api-tr.conf`），英文词也会翻成中文去查精读；年份分布筛选，按相关/从早到晚/从晚到早排序 |
 | 标题搜索 | 首页多词 AND、加权排序、关键词高亮、URL 同步可分享、标签筛选（Tesla/SpaceX/AI/政治…） |
+| 数据洞察 | `/trends/` 话题热力图（每格 = 当年提到该话题的段落占比，点格子搜那一年原话）与自选词折线对比（复用搜索索引和翻译，浏览器端计算）；`/stats/` 年度堆叠柱、场合与时长条形图、马斯克本人 50 万词里的口头禅排行；预言页「马斯克时间」：承诺期限 vs 实际兑现的时间线与迟到倍数。计算在 `tools/insights.py`，构建时生成静态 HTML |
 | 预言与语录 | 22 条预言追踪（含兑现结果）+ 556 条中英双语语录按年编排 + 每期中英双语金句 + 8 大主题导览 |
 | 阅读体验 | 精读目录侧栏（滚动高亮）、阅读设置（4 款字体 + 15–22px 字号）、明暗主题、阅读进度记忆 |
 | SEO / GEO | sitemap、RSS、JSON-LD（VideoObject + Article）、`llms.txt`、每页 canonical 与 OG 卡 |
@@ -83,7 +85,7 @@ python3 tools/translate_quotes.py
 python3 tools/build.py
 ```
 
-各脚本说明：`tools/sync_data.py`（抓取与主数据）、`tools/translate_titles.py`（标题与专题翻译）、`tools/gen_zh.py`（精读生成，含禁用句式校验与重试）、`tools/translate_quotes.py`（双语金句与语录）、`tools/search_index.py`（文稿分段与全文检索索引，构建时调用）、`tools/build.py`（全站构建）、`tools/brand.py`（图标与 OG 默认图）。
+各脚本说明：`tools/sync_data.py`（抓取与主数据）、`tools/translate_titles.py`（标题与专题翻译）、`tools/gen_zh.py`（精读生成，含禁用句式校验与重试）、`tools/translate_quotes.py`（双语金句与语录）、`tools/search_index.py`（文稿分段与全文检索索引，构建时调用）、`tools/insights.py`（话题趋势、口头禅、承诺时间线统计）、`tools/build.py`（全站构建）、`tools/brand.py`（图标与 OG 默认图）。
 
 </details>
 
@@ -141,6 +143,7 @@ python3 tools/build.py && tools/deploy.sh    # 构建 + rsync 到服务器
 - **One page per video**: click-to-load YouTube embeds (plus direct playback for X/Internet Archive clips), bilingual titles, and English transcripts with **clickable timestamps** that seek the YouTube player.
 - **AI Chinese deep-reads**: long-form rewrite of each conversation (15 landmark interviews at launch, pipeline continues), with a Markdown version at `/ep/{slug}/index.md`.
 - **Findability**: [transcript search](https://elon.qiaomu.ai/search/) across 588 English transcripts, paragraph by paragraph, with Chinese-to-English keyword mapping, a by-year histogram, oldest-first sorting to trace how a view evolved, and results that jump to the exact second; plus title search (`/` or `⌘K`), kind/tag filters, dark mode, reading progress with "continue reading".
+- **Data insights**: a [topic heatmap](https://elon.qiaomu.ai/trends/) (26 topics by year, plus a type-any-word trend chart), [archive stats](https://elon.qiaomu.ai/stats/) (videos per year, venues, longest talks, Musk's most-used English words with example sentences), and an "Elon time" promise timeline on the predictions page.
 - **Elon-specific archives**: a [dated promises tracker](https://elon.qiaomu.ai/predictions/) (kept / late / open / missed, with verified outcomes), 556 bilingual [quotes](https://elon.qiaomu.ai/quotes/), bilingual per-episode highlights, and 8 recurring [themes](https://elon.qiaomu.ai/themes/).
 
 ## Quick start
