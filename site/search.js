@@ -189,7 +189,7 @@ shouldn haven hasn hadn ll re ve d m o y let get got gonna gotta wanna going thi
   const shardCache = new Map(), postCache = new Map(), paraCache = new Map();
   const getJSON = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(r.status + ' ' + u); return r.json(); });
   function loadMeta() {
-    if (!META) META = getJSON(BASE + 'meta.json').then((m) => { m.off = m.eps.map((e) => e[1]); return m; });
+    if (!META) META = getJSON(BASE + 'meta.json').then((m) => { m.off = m.eps.map((e) => e[1]); return m; }, (e) => { META = null; throw e; });
     return META;
   }
   function shard(i) {
@@ -311,6 +311,10 @@ shouldn haven hasn hadn ll re ve d m o y let get got gonna gotta wanna going thi
     let meta;
     try {
       meta = await loadMeta();
+      const keys = new Set();
+      for (const g of parsed.groups) for (const a of g.alts) a.keys.forEach((w) => keys.add(w));
+      await Promise.all([...keys].map((w) => postings(w, meta.shards)));
+      if (my !== run) return;
       const sets = [];
       for (const g of parsed.groups) {
         let gs = [];
@@ -395,9 +399,13 @@ shouldn haven hasn hadn ll re ve d m o y let get got gonna gotta wanna going thi
     while (added < PAGE && RES.shown < RES.list.length) {
       const batch = RES.list.slice(RES.shown, RES.shown + PAGE - added);
       RES.shown += batch.length;
-      const htmls = await Promise.all(batch.map((k) => epHTML(k).catch(() => '')));
+      // 每个视频的段落文件单独到达：先占位保住顺序，到一个填一个
+      const slots = batch.map(() => list.appendChild(document.createElement('div')));
+      await Promise.all(batch.map((k, i) => epHTML(k).catch(() => '').then((h) => {
+        if (my !== run) return;
+        if (h) { slots[i].outerHTML = h; added++; } else slots[i].remove();
+      })));
       if (my !== run) return;
-      htmls.forEach((h) => { if (h) { list.insertAdjacentHTML('beforeend', h); added++; } });
     }
     const left = RES.list.length - RES.shown;
     foot.innerHTML = left > 0 ? `<button type="button" class="more-btn" data-more>再看 ${Math.min(PAGE, left)} 个视频</button><span class="more-sub">还有 ${left} 个</span>` : (RES.shown > PAGE ? '<span class="end">— 到底了 —</span>' : '');
@@ -465,6 +473,7 @@ shouldn haven hasn hadn ll re ve d m o y let get got gonna gotta wanna going thi
     if ((e.key === '/' && !typing) || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k')) { e.preventDefault(); input.focus(); input.select(); }
   });
 
+  loadMeta().catch(() => {});
   readURL();
   search();
   if (!state.q) input.focus({ preventScroll: true });
