@@ -36,6 +36,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+import insights  # noqa: E402
 import search_index  # noqa: E402
 SITE = ROOT.parent / 'site'
 TODAY = date.today().isoformat()
@@ -44,7 +45,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V = 5, 4, 5, 3
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V = 7, 4, 5, 4, 2
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -300,7 +301,7 @@ SITE_FOOTER = """<footer class="site-footer">
     </div>
     <div class="ft-cols">
       <nav class="ft-col" aria-label="浏览"><h2>浏览</h2>
-        <a href="/">全部视频</a><a href="/search/">文稿搜索</a><a href="/?f=zh">中文精读</a><a href="/archive/">视频目录</a><a href="/predictions/">预言追踪</a>
+        <a href="/">全部视频</a><a href="/search/">文稿搜索</a><a href="/?f=zh">中文精读</a><a href="/trends/">话题趋势</a><a href="/stats/">档案数据</a><a href="/archive/">视频目录</a><a href="/predictions/">预言追踪</a>
         <a href="/quotes/">语录</a><a href="/themes/">主题</a><button type="button" data-install hidden>安装为应用</button></nav>
       <nav class="ft-col" aria-label="订阅"><h2>订阅</h2>
         <a href="/feed.xml">RSS 全文订阅</a><button type="button" data-copy-feed>复制 RSS 地址</button>
@@ -704,6 +705,40 @@ def ssr_hero(x):
             f'<a class="hero-cta" href="/ep/{x["s"]}/">阅读全文<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>')
 
 
+def insight_cards():
+    """首页「数据洞察」入口：三张带小图的卡片，数据来自三个洞察页构建时留下的结果。"""
+    cards = []
+    t = INSIGHT.get('trends')
+    if t:
+        pick = {'火星': '火星', '特斯拉': '特斯拉', '人工智能': 'AI', '推特 / X': '推特', '政府效率 DOGE': 'DOGE'}
+        cols = [c for c in t['cols'] if not c.startswith('≤')]
+        rows = ''
+        for r in t['rows']:
+            if r['zh'] not in pick:
+                continue
+            mx = max(r['rate'][c] for c in cols) or 1
+            cells = ''.join(f'<i style="--v:{r["rate"][c] / mx:.2f}"></i>' for c in cols)
+            rows += f'<div class="ic-hm-r"><span>{esc(pick[r["zh"]])}</span><div>{cells}</div></div>'
+        cards.append(f'<a class="ic" href="/trends/"><div class="ic-k">话题趋势</div><div class="ic-t">马斯克在关心什么</div>'
+                     f'<div class="ic-hm" aria-hidden="true">{rows}<div class="ic-hm-x"><span>{cols[0]}</span><span>{cols[-1]}</span></div></div>'
+                     f'<div class="ic-d">26 个话题、{len(PARAS)} 份文稿，逐年看热度</div></a>')
+    mt = INSIGHT.get('mt')
+    if mt:
+        cards.append(f'<a class="ic" href="/predictions/"><div class="ic-k">预言追踪</div><div class="ic-t">马斯克时间</div>'
+                     f'<div class="ic-big">× {mt["ratio_med"]:.1f}</div>'
+                     f'<div class="ic-d">迟到兑现的承诺，实际用时是他所说的 {mt["ratio_med"]:.1f} 倍</div></a>')
+    ph = INSIGHT.get('ph')
+    if ph:
+        mx = ph[0]['per'] or 1
+        bars = ''.join(f'<div class="ic-w"><b lang="en">{esc(r["en"])}</b><span><i style="width:{r["per"] / mx * 100:.0f}%"></i></span><small>{r["per"]:.1f}</small></div>'
+                       for r in ph[:4])
+        cards.append(f'<a class="ic" href="/stats/#phrases"><div class="ic-k">档案数据</div><div class="ic-t">他最爱用的词</div>'
+                     f'<div class="ic-ws">{bars}</div><div class="ic-d">每万词出现次数，附原话例句</div></a>')
+    if not cards:
+        return ''
+    return ('<section class="ins-cards" aria-label="数据洞察"><div class="sec-h"><h2>数据洞察</h2><small>把 28 年的访谈变成图表</small></div>'
+            f'<div class="ic-row">{"".join(cards)}</div></section>')
+
 def build_index(eps):
     n_zh = sum(1 for x in eps if x.get('r'))
     since = min((x['d'] for x in eps if x['d']), default='')[:4]
@@ -769,7 +804,7 @@ def build_index(eps):
   <div class="wrap">
     <div class="mast-top">
       <span class="mast-date" id="mastDate"></span>
-      <span class="mast-actions"><a class="mast-link" href="/search/">文稿搜索</a><a class="mast-link" href="/predictions/">预言追踪</a><a class="mast-link" href="/quotes/">语录</a><a class="mast-link" href="/themes/">主题</a><a class="mast-link" href="/archive/">目录</a>{THEME_BTN}</span>
+      <span class="mast-actions"><a class="mast-link" href="/search/">文稿搜索</a><a class="mast-link" href="/trends/">话题趋势</a><a class="mast-link" href="/stats/">数据</a><a class="mast-link" href="/predictions/">预言追踪</a><a class="mast-link" href="/quotes/">语录</a><a class="mast-link" href="/themes/">主题</a><a class="mast-link" href="/archive/">目录</a>{THEME_BTN}</span>
     </div>
     <h1 class="mast-title"><a href="/">Elon Musk <span>全访谈</span></a></h1>
     <p class="mast-sub" id="mastSub">{len(eps)} 个公开视频 · {n_zh} 篇中文精读 · {since} 年至今</p>
@@ -799,6 +834,8 @@ def build_index(eps):
 
 <main class="wrap" id="main">
   <section class="hero" id="hero" hidden aria-label="最新精读">{hero_ssr}</section>
+
+  {insight_cards()}
 
   <section class="picks">
     <div class="sec-h"><h2>必看精选</h2><small>档案编辑选出的关键现场</small></div>
@@ -857,6 +894,16 @@ def build_predictions():
   <p class="pr-src">出处：<a href="{esc(p.get('url') or '#')}" target="_blank" rel="noopener">{esc(p.get('src') or '原始来源')}</a></p>
 </article>""")
     counts = {s: sum(1 for p in ps if p['status'] == s) for s in order}
+    claims = [zhc[i] if i < len(zhc) else p['claim'][0] for i, p in enumerate(ps)]
+    tl_html, tl = insights.promise_timeline(ps, claims, STATUS_ZH)
+    INSIGHT['mt'] = tl
+    elon_time = f"""<section class="mt">
+  <div class="mt-k">马斯克时间</div>
+  <div class="mt-big"><b>× {tl['ratio_med']:.1f}</b><p>{tl['late_n']} 条迟到兑现的承诺里，从开口到真正做到，实际用时的中位数是他承诺时间的 {tl['ratio_med']:.1f} 倍；
+    最夸张的一条是 {tl['ratio_max']:.1f} 倍。迟到时长的中位数约 {tl['late_med']}。</p></div>
+  <p class="mt-tip">下面每一行是一条承诺：圆点是他开口的那天，黑线是他给的期限，琥珀色是迟到的部分，红色虚线是过了期限还没做到。</p>
+  {tl_html}
+</section>"""
     title = f'预言与承诺追踪 · {SITE_NAME}'
     desc = f'马斯克 {len(ps)} 条带日期的公开承诺与预言，以及经过核实的兑现结果。'
     url = f'{DOMAIN}/predictions'
@@ -892,6 +939,8 @@ def build_predictions():
 <main class="wrap ep-main" id="main">
   <header class="ep-head"><div class="ep-kicker">档案专题</div><h1 class="ep-title">预言与承诺追踪</h1>
     <p class="ep-dek">{len(ps)} 条带日期的公开承诺与预言：已兑现 {counts['kept']} 条，迟到兑现 {counts['late']} 条，待验证 {counts['open']} 条，未兑现 {counts['missed']} 条。每条附原始出处与核实结果。</p></header>
+  {elon_time}
+  <h2 class="pr-list-h">逐条核实</h2>
   <div class="pr-list">{''.join(items)}</div>
 </main>
 {SITE_FOOTER}
@@ -1252,12 +1301,177 @@ def build_search_page():
     out.write_text(html)
     print('search page: ok')
 
+# ---------------------------------------------------------------- 数据洞察页（话题趋势 / 档案数据）
+INSIGHT = {}  # 洞察页构建时留下的结果，首页入口卡片要用，所以 main() 里首页最后构建
+
+def page_html(path, title, desc, kicker, h1, dek, body, scripts='', main_cls='ins-main'):
+    url = f'{DOMAIN}{path}'
+    ld = {"@context": "https://schema.org", "@type": "WebPage", "name": title, "url": url,
+          "inLanguage": "zh-CN", "description": desc, "isPartOf": {"@id": f'{DOMAIN}/#website'}}
+    return f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(desc)}">
+<link rel="canonical" href="{url}">
+<meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{DOMAIN}/assets/og-default.jpg">
+<meta property="og:site_name" content="{SITE_NAME}">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>
+{THEME_SCRIPT}
+{HEAD_EXTRA}
+{FEED_LINK}
+<link rel="stylesheet" href="/style.css?v={CSS_V}">
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+{SITE_HEADER}
+<main class="wrap {main_cls}" id="main">
+  <header class="ep-head"><div class="ep-kicker">{kicker}</div><h1 class="ep-title">{h1}</h1>
+    <p class="ep-dek">{dek}</p></header>
+{body}
+</main>
+{SITE_FOOTER}
+{umami_tag()}
+{scripts}
+</body>
+</html>
+"""
+
+
+def _en_docs():
+    return [(m['slug'], m.get('d') or '', m['zh'], PARAS[m['slug']]) for m in master if m['slug'] in PARAS]
+
+
+def build_trends_page():
+    t = insights.topic_trends(_en_docs())
+    INSIGHT['trends'] = t
+    n_docs = len(PARAS)
+    n_para = sum(t['totals'].values())
+    presets = [('火星 vs AI', '火星, 人工智能'), ('三家公司', '特斯拉, SpaceX, 推特'), ('自动驾驶 vs 机器人', 'FSD, Optimus'),
+               ('中国 vs 美国', '中国, 美国'), ('他说过多少次「明年」', '"next year"'), ('比特币 vs 狗狗币', '比特币, 狗狗币'),
+               ('出生率', '出生率'), ('特朗普', '特朗普')]
+    chips = ''.join(f'<button type="button" class="chip" data-ng="{esc(q)}">{esc(l)}</button>' for l, q in presets)
+    body = f"""
+  <section class="ins-sec">
+    <div class="ins-h"><h2>话题热力图</h2><p>每一格是那一年的文稿里，提到这个话题的段落占比。颜色按每一行自己的最高点来深浅，看的是这个话题在他嘴里什么时候最热。点格子能直接搜那一年的原话。</p></div>
+    {insights.heatmap_html(t)}
+    <p class="ins-note">统计范围：{n_docs} 份英文文稿、{n_para:,} 个段落（含主持人与提问者的话）。2007 年及以前的视频较少，合并成一列。视频日期来自档案数据，个别视频日期可能不准。</p>
+  </section>
+  <section class="ins-sec" id="ngram">
+    <div class="ins-h"><h2>自己比一比</h2><p>输入几个词，看它们在马斯克 {n_docs} 份文稿里逐年出现的频率。中文、英文都行，中文会自动翻成英文；用逗号隔开，最多 4 个。</p></div>
+    <form class="ng-form" onsubmit="return false"><input id="ngq" type="search" enterkeyhint="search" autocomplete="off" placeholder="例如：火星, 人工智能, 特斯拉" aria-label="要比较的词"><button type="submit" class="ng-go">比较</button></form>
+    <div class="chips ng-presets">{chips}</div>
+    <div id="ngOut" class="ng-out" aria-live="polite"><noscript><p class="ins-note">这个图需要启用 JavaScript。</p></noscript></div>
+  </section>"""
+    html = page_html('/trends/', f'马斯克在关心什么 · 话题趋势 · {SITE_NAME}',
+                     f'从 {n_docs} 份马斯克英文文稿里统计 26 个话题 1998 年至今的热度变化：火星、AI、特斯拉、推特、DOGE、出生率……也可以输入任意词自己比较。',
+                     '数据洞察', '马斯克在关心什么', f'把 {n_docs} 份文稿按年份摊开，看火星、AI、推特、政治这些话题在他嘴里什么时候升温、什么时候冷下来。',
+                     body, f'<script src="/search.js?v={SEARCH_V}"></script>\n<script src="/trends.js?v={TRENDS_V}"></script>')
+    out = SITE / 'trends' / 'index.html'
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(html)
+    print(f'trends page: {len(t["rows"])} topics × {len(t["cols"])} years')
+
+
+KIND_GROUP = {'访谈': ('对话', 'k1'), '播客': ('对话', 'k1'), 'X Spaces': ('对话', 'k1'), '发布会': ('发布会', 'k2'),
+              '大会演讲': ('演讲', 'k3'), '股东会': ('股东会', 'k4'), '政府活动': ('其他', 'k5'), '媒体': ('其他', 'k5')}
+
+
+def build_stats_page():
+    from collections import Counter, defaultdict
+    by_year = defaultdict(Counter)
+    hours = Counter()
+    for m in master:
+        y = (m.get('d') or '')[:4]
+        if not y.isdigit():
+            continue
+        by_year[y][KIND_GROUP.get(m.get('kZh'), ('其他', 'k5'))] += 1
+        hours[y] += (m.get('sec') or 0) / 3600
+    ys = [str(y) for y in range(int(min(by_year)), int(max(by_year)) + 1)]
+    mx = max(sum(c.values()) for c in by_year.values())
+    groups = [('对话', 'k1'), ('发布会', 'k2'), ('演讲', 'k3'), ('股东会', 'k4'), ('其他', 'k5')]
+    cols = []
+    for y in ys:
+        c = by_year.get(y, Counter())
+        n = sum(c.values())
+        segs = ''.join(f'<i class="{k}" style="height:{c[(g, k)] / mx * 100:.2f}%"></i>' for g, k in groups if c[(g, k)])
+        tip = f'{y} 年：{n} 个视频，约 {hours[y]:.0f} 小时' + (''.join(f'；{g} {c[(g, k)]}' for g, k in groups if c[(g, k)]))
+        cols.append(f'<div class="yb-col" title="{esc(tip)}" aria-label="{esc(tip)}"><span class="yb-n">{n or ""}</span>'
+                    f'<div class="yb-stack">{segs}</div><span class="yb-y{" odd" if int(y) % 2 else ""}">{y[2:]}</span></div>')
+    legend = ''.join(f'<span><i class="lg {k}"></i>{g}</span>' for g, k in groups)
+    tr_sec = sum((by_slug[s].get('sec') or 0) for s in PARAS)
+    words = sum(len(search_index._TOK.findall(search_index.norm(t))) for ps in PARAS.values() for _, t in ps)
+    n_zh = len(ZTEXTS)
+    n_tr = len(PARAS)
+    kinds = Counter(m.get('kZh') or '其他' for m in master)
+    kmax = max(kinds.values())
+    kind_rows = ''.join(f'<li><span class="hb-l">{esc(k)}</span><span class="hb-bar"><i style="width:{v / kmax * 100:.1f}%"></i></span><span class="hb-n">{v}</span></li>'
+                        for k, v in kinds.most_common())
+    longest = sorted((m for m in master if m.get('sec')), key=lambda m: -m['sec'])[:10]
+    lmax = longest[0]['sec']
+    long_rows = ''.join(
+        f'<li><a href="/ep/{esc(m["slug"])}/"><span class="hb-l">{esc(m["zh"] or m["title"])}<small>{esc((m.get("d") or "")[:4])} · {esc(m.get("kZh") or "")}</small></span>'
+        f'<span class="hb-bar"><i style="width:{m["sec"] / lmax * 100:.1f}%"></i></span><span class="hb-n">{fmt_sec(m["sec"])}</span></a></li>'
+        for m in longest)
+    # 口头禅：只统计马斯克本人的回答（档案里分好说话人的 69 场）
+    ans = defaultdict(list)
+    vids = extra['quotes']['v']
+    for vi, sec, text in extra['quotes']['q']:
+        vid = vids[vi].split('-', 1)[1] if '-' in vids[vi] else vids[vi]
+        m = next((x for x in master if x['srcId'] == vid), None)
+        if m:
+            ans[m['slug']].append((sec if sec is not None and sec >= 0 else None, text))
+    adocs = [(s, by_slug[s].get('d') or '', by_slug[s]['zh'], segs) for s, segs in ans.items()]
+    ps = insights.phrase_stats(adocs, lambda slug, sec: (2 if slug in ZTEXTS else 0) + (1 if sec is not None else 0))
+    INSIGHT['ph'] = ps['rows']
+    big = [(f'{len(master)}', '个公开视频', f'{ys[0]}–{ys[-1]}'), (f'{n_tr}', '份英文文稿', f'约 {tr_sec / 3600:.0f} 小时'),
+           (f'{words / 10000:.0f} 万', '个英文词', '文稿总字数'), (f'{n_zh}', '篇中文精读', f'覆盖 {n_zh * 100 / max(1, n_tr):.0f}% 的文稿')]
+    big_html = ''.join(f'<div class="bn"><b>{a}</b><span>{b}</span><small>{c}</small></div>' for a, b, c in big)
+    body = f"""
+  <div class="bn-row">{big_html}</div>
+  <section class="ins-sec">
+    <div class="ins-h"><h2>每年留下了多少公开视频</h2><p>档案里每一年的视频数，按场合分色。2022 年收购推特、2024–2025 年投身政治之后，他出现在镜头前的次数明显变多。</p></div>
+    <div class="yb-legend">{legend}</div>
+    <div class="yb" role="img" aria-label="每年公开视频数量柱状图">{''.join(cols)}</div>
+  </section>
+  <div class="ins-two">
+    <section class="ins-sec"><div class="ins-h"><h2>在什么场合说话</h2></div><ol class="hb">{kind_rows}</ol></section>
+    <section class="ins-sec"><div class="ins-h"><h2>最长的十场</h2></div><ol class="hb hb-long">{long_rows}</ol></section>
+  </div>
+  <section class="ins-sec" id="phrases">
+    <div class="ins-h"><h2>跟马斯克学英语：他最爱用的词</h2><p>只统计马斯克本人说的话：档案里 {len(adocs)} 场已经分好说话人的对话，共约 {ps['words'] / 10000:.0f} 万词，按每万词出现几次排序。每个词配一句他的原话，点一下跳到视频里那一秒。</p></div>
+    {insights.phrases_html(ps, ts_mmss)}
+  </section>
+  <section class="ins-sec">
+    <div class="ins-h"><h2>中文精读进度</h2><p>AI 基于完整文稿改写的中文长文，正在一篇篇补齐。</p></div>
+    <div class="zp"><div class="zp-bar"><i style="width:{n_zh * 100 / max(1, n_tr):.1f}%"></i></div><p><b>{n_zh}</b> / {n_tr} 篇 · <a href="/?f=zh">去读精读 →</a></p></div>
+  </section>"""
+    html = page_html('/stats/', f'档案数据 · 用数字看马斯克 · {SITE_NAME}',
+                     f'{len(master)} 个马斯克公开视频、{n_tr} 份文稿的统计：每年出镜次数、场合分布、最长的对话，以及他最爱用的英文词和原话例句。',
+                     '数据洞察', '用数字看马斯克', f'{len(master)} 个视频、{words / 10000:.0f} 万个英文词摊开来看：他哪年说得最多、在什么场合说、最爱用哪些词。',
+                     body)
+    out = SITE / 'stats' / 'index.html'
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(html)
+    print(f'stats page: {len(ys)} years, {len(ps["rows"])} phrases from {ps["words"]:,} words')
+
 # ---------------------------------------------------------------- sitemap / llms / feed / 404
 def build_sitemap(eps):
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
              f'<url><loc>{DOMAIN}/</loc><lastmod>{TODAY}</lastmod><priority>1.0</priority></url>',
              f'<url><loc>{DOMAIN}/search/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
+             f'<url><loc>{DOMAIN}/trends/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
+             f'<url><loc>{DOMAIN}/stats/</loc><lastmod>{TODAY}</lastmod><priority>0.7</priority></url>',
              f'<url><loc>{DOMAIN}/predictions/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
              f'<url><loc>{DOMAIN}/quotes/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
              f'<url><loc>{DOMAIN}/themes/</loc><lastmod>{TODAY}</lastmod><priority>0.8</priority></url>',
@@ -1267,7 +1481,7 @@ def build_sitemap(eps):
         lines.append(f'<url><loc>{DOMAIN}/ep/{x["s"]}/</loc><lastmod>{x["d"] or TODAY}</lastmod><priority>0.7</priority></url>')
     lines.append('</urlset>')
     (SITE / 'sitemap.xml').write_text('\n'.join(lines))
-    print(f'sitemap.xml: {len(eps) + 7} urls')
+    print(f'sitemap.xml: {len(eps) + 9} urls')
 
 
 def build_llms(eps):
@@ -1280,6 +1494,7 @@ def build_llms(eps):
              f'- 全部视频按年份的目录：{DOMAIN}/archive/',
              f'- 英文文稿全文搜索（结果带时间戳，可跳到视频对应位置）：{DOMAIN}/search/?q=first+principles',
              f'- 预言与承诺追踪：{DOMAIN}/predictions/ · 语录：{DOMAIN}/quotes/ · 主题：{DOMAIN}/themes/',
+             f'- 话题趋势（26 个话题逐年热度）：{DOMAIN}/trends/ · 档案数据与马斯克高频英文词：{DOMAIN}/stats/',
              f'- RSS 全文订阅（最新 20 篇精读）：{DOMAIN}/feed.xml',
              '- 引用时请注明「elon.qiaomu.ai 中文精读（AI 改写，非官方翻译）」并链接对应网页。', '',
              '## 中文精读（AI 深度改写）', '']
@@ -1398,7 +1613,6 @@ def clean_stale(eps):
 
 def main():
     eps = build_data()
-    build_index(eps)
     build_archive(eps)
     build_predictions()
     build_quotes()
@@ -1409,6 +1623,9 @@ def main():
     print(f'ep pages: {len(list((SITE / "ep").glob("*/index.html")))}')
     build_search()
     build_search_page()
+    build_trends_page()
+    build_stats_page()
+    build_index(eps)
     build_sitemap(eps)
     build_llms(eps)
     build_feed(eps)
