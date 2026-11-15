@@ -1,0 +1,49 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 60 }}>
+  <Box style={{ position: 'relative', width: '100%', height: '100%', flexDirection: 'column' }}>
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Box style={{ width: 5, height: 20, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4', letterSpacing: 2 }}>全场最尖锐的一问</Text>
+    </Box>
+    <Text style={{ fontSize: 34, fontWeight: 'bold', color: '#FFFFFF', marginTop: 14 }}>「我们会不会有 AI 泡沫？」——他摊开三层账本</Text>
+    <Box style={{ width: '100%', height: 1, background: '#3A4653', marginTop: 18 }} />
+
+    <Box style={{ flexDirection: 'row', gap: 32, marginTop: 22, flex: 1 }}>
+      <Box style={{ width: 620, flexDirection: 'column', gap: 12, justifyContent: 'center' }}>
+        <Box style={{ background: '#1E3D5C', borderRadius: 6, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18, marginLeft: 120 }}>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#63A7D4', width: 40 }}>③</Text>
+          <Box>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>生成式 AI 与智能体</Text>
+            <Text style={{ fontSize: 15, color: '#A9CFE7', marginTop: 4 }}>Grok、ChatGPT、Anthropic——露出水面的那一角</Text>
+          </Box>
+        </Box>
+        <Box style={{ background: '#1A3350', borderRadius: 6, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18, marginLeft: 60 }}>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#8FBCE4', width: 40 }}>②</Text>
+          <Box>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>数据处理换引擎</Text>
+            <Text style={{ fontSize: 15, color: '#A9CFE7', marginTop: 4 }}>SQL、dataframe——几百亿美元负载从 CPU 搬到 GPU</Text>
+          </Box>
+        </Box>
+        <Box style={{ background: '#162B45', borderRadius: 6, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 18 }}>
+          <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#A9CFE7', width: 40 }}>①</Text>
+          <Box>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' }}>摩尔定律走到头</Text>
+            <Text style={{ fontSize: 15, color: '#A9CFE7', marginTop: 4 }}>通用计算必须转向加速计算</Text>
+          </Box>
+        </Box>
+      </Box>
+      <Box style={{ width: 1, background: '#3A4653' }} />
+      <Box style={{ flex: 1, flexDirection: 'column', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 15, color: '#8FBCE4', letterSpacing: 2 }}>他的回答方式</Text>
+        <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#FFFFFF', marginTop: 12, lineHeight: 1.4 }}>不说"是"或"不是"，<br /><span style={{ color: '#63A7D4' }}>而是把账本摊开</span></Text>
+        <Text style={{ fontSize: 18, color: '#E7E8E9', marginTop: 20, lineHeight: 1.65 }}>"如果把底下从通用计算向加速计算的迁移算进去，留给这轮智能体革命的余量，比你以为的少得多，而且每一分钱都有依据。"</Text>
+        <Box style={{ marginTop: 24, padding: 16, background: '#132B45', borderRadius: 6, borderLeft: '3px solid #8ED1A8' }}>
+          <Text style={{ fontSize: 16, color: '#C9CCCE', lineHeight: 1.55 }}>他证明的是：需求侧有真实负载，迁移是既成事实，不是炒作。</Text>
+        </Box>
+      </Box>
+    </Box>
+    <Box style={{ background: '#63A7D4', borderRadius: 6, padding: 15, marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#08131F' }}>结论：</Text>
+      <Text style={{ fontSize: 16, color: '#08131F' }}>你看到的 AI 投入只是冰山一角——底下是已经跑了几十年的通用计算大迁移。</Text>
+    </Box>
+  </Box>
+</Slide>

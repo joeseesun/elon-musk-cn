@@ -1,0 +1,17 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 0 }}>
+  <Box style={{ position: 'relative', width: 1280, height: 720 }}>
+    <Image src="assets/cover.png" style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, objectFit: 'cover', opacity: 0.35 }} />
+    <Box style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, background: 'linear-gradient(0deg, rgba(6,14,26,0.97) 0%, rgba(6,14,26,0.85) 45%, rgba(6,14,26,0.6) 100%)' }} />
+    <Box style={{ position: 'absolute', bottom: 0, left: 0, width: 1280, height: 8, background: 'linear-gradient(90deg, #63A7D4 0%, #4DA3FF 48%, #8ED1A8 100%)' }} />
+    <Box style={{ position: 'absolute', left: 90, top: 150, width: 1100 }}>
+      <Text style={{ fontSize: 16, color: '#8FBCE4', letterSpacing: 4 }}>跨越十年的对话 · 结语</Text>
+      <Text style={{ fontSize: 54, fontWeight: 'bold', color: '#FFFFFF', marginTop: 30, lineHeight: 1.42 }}>把不确定的问题，<br />拆成确定的步骤，<br /><span style={{ color: '#63A7D4' }}>然后一步步走。</span></Text>
+      <Text style={{ fontSize: 20, color: '#A9CFE7', marginTop: 30, lineHeight: 1.5 }}>这是两位创新者共同的思维方式——<br />也是这十一段对话里，真正值得留下的东西。</Text>
+    </Box>
+    <Box style={{ position: 'absolute', left: 90, bottom: 56, flexDirection: 'column', gap: 8 }}>
+      <Box style={{ width: 48, height: 2, background: '#63A7D4', marginBottom: 6 }} />
+      <Text style={{ fontSize: 14, color: '#8FBCE4' }}>资料来源：马斯克全访谈文稿库 elon.qiaomu.ai（588 份英文文稿 · 中文精读）</Text>
+      <Text style={{ fontSize: 14, color: '#737FA1' }}>非官方内容整理 · 引述据公开视频字幕与深度精读，仅作学习交流</Text>
+    </Box>
+  </Box>
+</Slide>

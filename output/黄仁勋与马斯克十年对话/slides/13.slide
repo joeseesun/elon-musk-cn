@@ -1,0 +1,19 @@
+<Slide style={{ width: 1280, height: 720, background: '#0B1521', padding: 0 }}>
+  <Box style={{ position: 'relative', width: 1280, height: 720 }}>
+    <Image src="assets/cover.png" style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, objectFit: 'cover', opacity: 0.55 }} />
+    <Box style={{ position: 'absolute', top: 0, left: 0, width: 1280, height: 720, background: 'rgba(6,14,26,0.68)' }} />
+    <Text style={{ position: 'absolute', left: 780, top: 40, fontSize: 280, fontWeight: 'bold', color: 'rgba(99,167,212,0.12)', lineHeight: 1 }}>03</Text>
+    <Box style={{ position: 'absolute', left: 82, top: 170, width: 760 }}>
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Box style={{ width: 5, height: 22, background: '#63A7D4' }} />
+        <Text style={{ fontSize: 16, color: '#8FBCE4', letterSpacing: 3 }}>CHAPTER THREE</Text>
+      </Box>
+      <Text style={{ fontSize: 68, fontWeight: 'bold', color: '#FFFFFF', marginTop: 26, lineHeight: 1.12 }}>回响 · 彼此眼中</Text>
+      <Text style={{ fontSize: 26, color: '#FFFFFF', marginTop: 34, lineHeight: 1.5, fontWeight: 'bold' }}>一个押算力，一个押软件。<br />十年过去，谁都没有输。</Text>
+    </Box>
+    <Box style={{ position: 'absolute', left: 82, bottom: 70, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+      <Box style={{ width: 40, height: 1, background: '#63A7D4' }} />
+      <Text style={{ fontSize: 15, color: '#A9CFE7' }}>金句、反例与共同的思维方式</Text>
+    </Box>
+  </Box>
+</Slide>

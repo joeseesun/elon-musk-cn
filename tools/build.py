@@ -1593,6 +1593,7 @@ def build_special_pages(eps):
 {SITE_HEADER}
 {body}
 {SITE_FOOTER}
+{umami_tag()}
 </body>
 </html>
 """

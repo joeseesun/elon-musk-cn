@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<title>档案数据 · 用数字看马斯克 · 马斯克全访谈</title>
+<meta name="description" content="651 个马斯克公开视频、588 份文稿的统计：每年出镜次数、场合分布、最长的对话，以及他最爱用的英文词和原话例句。">
+<link rel="canonical" href="https://elon.qiaomu.ai/stats/">
+<meta property="og:title" content="档案数据 · 用数字看马斯克 · 马斯克全访谈">
+<meta property="og:description" content="651 个马斯克公开视频、588 份文稿的统计：每年出镜次数、场合分布、最长的对话，以及他最爱用的英文词和原话例句。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://elon.qiaomu.ai/stats/">
+<meta property="og:image" content="https://elon.qiaomu.ai/assets/og-default.jpg">
+<meta property="og:site_name" content="马斯克全访谈">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebPage", "name": "档案数据 · 用数字看马斯克 · 马斯克全访谈", "url": "https://elon.qiaomu.ai/stats/", "inLanguage": "zh-CN", "description": "651 个马斯克公开视频、588 份文稿的统计：每年出镜次数、场合分布、最长的对话，以及他最爱用的英文词和原话例句。", "isPartOf": {"@id": "https://elon.qiaomu.ai/#website"}}</script>
+<script>
+(function () {
+  var d = document.documentElement, g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  var t = g('em-theme'), f = g('em-font'), z = g('em-size'), lh = g('em-lh'), w = g('em-measure');
+  var BG = { light: '#ffffff', sepia: '#f5eddc', dark: '#141414' };
+  if (!BG[t]) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  d.setAttribute('data-theme', t);
+  var FONTS = {
+    sans: 'https://fonts.googleapis.cn/css2?family=Noto+Sans+SC:wght@400;600&display=swap',
+    serif: 'https://fonts.googleapis.cn/css2?family=Noto+Serif+SC:wght@400;600&display=swap',
+    kai: 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaiscreen.css',
+    song: 'https://cdn.jsdelivr.net/npm/@chinese-fonts/jhlst@3.0.0/dist/%E4%BA%AC%E8%8F%AF%E8%80%81%E5%AE%8B%E4%BD%93v2_002/result.css'
+  };
+  window.__lexFonts = FONTS;
+  window.__lexLoadFont = function (k) {
+    if (!FONTS[k] || document.getElementById('lexfont-' + k)) return;
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = FONTS[k]; l.id = 'lexfont-' + k;
+    document.head.appendChild(l);
+  };
+  if (!f) f = 'serif';
+  if (FONTS[f]) { d.setAttribute('data-font', f); window.__lexLoadFont(f); }
+  if (z && /^(1[5-9]|2[0-2])$/.test(z)) d.style.setProperty('--read-size', z + 'px');
+  if (lh && /^(1\.\d+|2(\.\d+)?)$/.test(lh)) d.style.setProperty('--read-lh', lh);
+  if (w && /^\d{3}$/.test(w)) d.style.setProperty('--measure', w + 'px');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  function syncMeta() { if (meta) meta.content = BG[t]; }
+  syncMeta();
+  window.__lexSetTheme = function (n) {
+    if (!BG[n]) return;
+    t = n;
+    try { localStorage.setItem('em-theme', t); if (t !== 'dark') localStorage.setItem('em-light', t); } catch (e) {}
+    d.classList.add('theme-anim');
+    d.setAttribute('data-theme', t);
+    syncMeta();
+    setTimeout(function () { d.classList.remove('theme-anim'); }, 320);
+    document.dispatchEvent(new CustomEvent('lex-theme', { detail: t }));
+  };
+  window.__lexThemeToggle = function () { window.__lexSetTheme(t === 'dark' ? (g('em-light') || 'light') : 'dark'); };
+  (function () {
+    var vv = window.visualViewport;
+    if (!vv) return;
+    var queued = false;
+    function apply() {
+      queued = false;
+      var off = Math.round(window.innerHeight - vv.offsetTop - vv.height);
+      d.style.setProperty('--vv-off', Math.max(0, off) + 'px');
+    }
+    function onVV() { if (!queued) { queued = true; requestAnimationFrame(apply); } }
+    vv.addEventListener('resize', onVV);
+    vv.addEventListener('scroll', onVV);
+    window.addEventListener('orientationchange', onVV);
+    apply();
+  })();
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target : e.target.parentNode;
+    if (el.closest('[data-theme-toggle]')) return window.__lexThemeToggle();
+    var o = el.closest('[data-open]');
+    if (o) { var m = document.getElementById(o.getAttribute('data-open')); if (m) { m.hidden = false; var c = m.querySelector('.modal-close'); if (c) c.focus(); } if (window.umami) window.umami.track('open-' + o.getAttribute('data-open')); return; }
+    var mm = el.closest('.modal');
+    if (mm && (el === mm || el.closest('.modal-close'))) { mm.hidden = true; return; }
+    var sh = el.closest('[data-share]');
+    if (sh) {
+      var data = { title: document.title, url: location.href.split('#')[0] };
+      if (navigator.share) { navigator.share(data).catch(function () {}); }
+      else if (navigator.clipboard) navigator.clipboard.writeText(data.title + ' ' + data.url).then(function () { var t = sh.textContent; sh.textContent = '链接已复制'; setTimeout(function () { sh.textContent = t; }, 1600); });
+      return;
+    }
+    var cf = el.closest('[data-copy-feed]');
+    if (cf) {
+      var url = location.origin + '/feed.xml', label = cf.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { cf.textContent = '已复制'; setTimeout(function () { cf.textContent = label; }, 1600); }, function () { location.href = '/feed.xml'; });
+      } else location.href = '/feed.xml';
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') Array.prototype.forEach.call(document.querySelectorAll('.modal'), function (m) { m.hidden = true; });
+  });
+  document.addEventListener('load', function (e) { var t = e.target; if (t.tagName === 'IMG') t.classList.add('ok'); }, true);
+  document.addEventListener('error', function (e) { var t = e.target; if (t.tagName === 'IMG' && !t.getAttribute('onerror')) t.classList.add('ok'); }, true);
+  var deferred = null;
+  function showInstall() { Array.prototype.forEach.call(document.querySelectorAll('[data-install]'), function (b) { b.hidden = false; }); }
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; showInstall(); });
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone) document.addEventListener('DOMContentLoaded', showInstall);
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-install]');
+    if (!b) return;
+    if (deferred) { deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; b.hidden = true; }); }
+    else { var m = document.getElementById('installModal'); if (m) m.hidden = false; }
+  });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  }
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.cn"><link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin><link rel="preconnect" href="https://i.ytimg.com"><link rel="stylesheet" href="https://fonts.googleapis.cn/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@500;700&display=swap">
+<link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="马斯克全访谈"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no"><noscript><style>.thumb img,.cont-thumb img,.hero-media img{opacity:1}</style></noscript>
+<link rel="alternate" type="application/rss+xml" title="马斯克全访谈 · 中文精读全文" href="https://elon.qiaomu.ai/feed.xml">
+<link rel="stylesheet" href="/style.css?v=7">
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+<header class="site-header slim">
+  <div class="wrap header-inner">
+    <a class="hdr-back" href="/">← 全部视频</a>
+    <a class="wordmark" href="/" aria-label="马斯克全访谈 · 首页">Elon Musk <span>全访谈</span></a>
+    <div class="header-actions"><a class="hdr-icon" href="/search/" aria-label="在文稿里搜索马斯克的原话" title="文稿搜索"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg></a><button class="theme-toggle" type="button" data-theme-toggle aria-label="切换浅色 / 深色模式" title="切换浅色 / 深色模式"><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button></div>
+  </div>
+</header>
+<main class="wrap ins-main" id="main">
+  <header class="ep-head"><div class="ep-kicker">数据洞察</div><h1 class="ep-title">用数字看马斯克</h1>
+    <p class="ep-dek">651 个视频、401 万个英文词摊开来看：他哪年说得最多、在什么场合说、最爱用哪些词。</p></header>
+
+  <div class="bn-row"><div class="bn"><b>651</b><span>个公开视频</span><small>1998–2026</small></div><div class="bn"><b>588</b><span>份英文文稿</span><small>约 464 小时</small></div><div class="bn"><b>401 万</b><span>个英文词</span><small>文稿总字数</small></div><div class="bn"><b>509</b><span>篇中文精读</span><small>覆盖 87% 的文稿</small></div></div>
+  <section class="ins-sec">
+    <div class="ins-h"><h2>每年留下了多少公开视频</h2><p>档案里每一年的视频数，按场合分色。2022 年收购推特、2024–2025 年投身政治之后，他出现在镜头前的次数明显变多。</p></div>
+    <div class="yb-legend"><span><i class="lg k1"></i>对话</span><span><i class="lg k2"></i>发布会</span><span><i class="lg k3"></i>演讲</span><span><i class="lg k4"></i>股东会</span><span><i class="lg k5"></i>其他</span></div>
+    <div class="yb" role="img" aria-label="每年公开视频数量柱状图"><div class="yb-col" title="1998 年：3 个视频，约 0 小时；对话 3" aria-label="1998 年：3 个视频，约 0 小时；对话 3"><span class="yb-n">3</span><div class="yb-stack"><i class="k1" style="height:2.94%"></i></div><span class="yb-y">98</span></div><div class="yb-col" title="1999 年：1 个视频，约 0 小时；对话 1" aria-label="1999 年：1 个视频，约 0 小时；对话 1"><span class="yb-n">1</span><div class="yb-stack"><i class="k1" style="height:0.98%"></i></div><span class="yb-y odd">99</span></div><div class="yb-col" title="2000 年：0 个视频，约 0 小时" aria-label="2000 年：0 个视频，约 0 小时"><span class="yb-n"></span><div class="yb-stack"></div><span class="yb-y">00</span></div><div class="yb-col" title="2001 年：1 个视频，约 0 小时；对话 1" aria-label="2001 年：1 个视频，约 0 小时；对话 1"><span class="yb-n">1</span><div class="yb-stack"><i class="k1" style="height:0.98%"></i></div><span class="yb-y odd">01</span></div><div class="yb-col" title="2002 年：1 个视频，约 0 小时；对话 1" aria-label="2002 年：1 个视频，约 0 小时；对话 1"><span class="yb-n">1</span><div class="yb-stack"><i class="k1" style="height:0.98%"></i></div><span class="yb-y">02</span></div><div class="yb-col" title="2003 年：5 个视频，约 4 小时；对话 2；演讲 3" aria-label="2003 年：5 个视频，约 4 小时；对话 2；演讲 3"><span class="yb-n">5</span><div class="yb-stack"><i class="k1" style="height:1.96%"></i><i class="k3" style="height:2.94%"></i></div><span class="yb-y odd">03</span></div><div class="yb-col" title="2004 年：0 个视频，约 0 小时" aria-label="2004 年：0 个视频，约 0 小时"><span class="yb-n"></span><div class="yb-stack"></div><span class="yb-y">04</span></div><div class="yb-col" title="2005 年：3 个视频，约 2 小时；对话 1；发布会 2" aria-label="2005 年：3 个视频，约 2 小时；对话 1；发布会 2"><span class="yb-n">3</span><div class="yb-stack"><i class="k1" style="height:0.98%"></i><i class="k2" style="height:1.96%"></i></div><span class="yb-y odd">05</span></div><div class="yb-col" title="2006 年：2 个视频，约 1 小时；对话 2" aria-label="2006 年：2 个视频，约 1 小时；对话 2"><span class="yb-n">2</span><div class="yb-stack"><i class="k1" style="height:1.96%"></i></div><span class="yb-y">06</span></div><div class="yb-col" title="2007 年：6 个视频，约 2 小时；对话 6" aria-label="2007 年：6 个视频，约 2 小时；对话 6"><span class="yb-n">6</span><div class="yb-stack"><i class="k1" style="height:5.88%"></i></div><span class="yb-y odd">07</span></div><div class="yb-col" title="2008 年：12 个视频，约 5 小时；对话 6；发布会 5；演讲 1" aria-label="2008 年：12 个视频，约 5 小时；对话 6；发布会 5；演讲 1"><span class="yb-n">12</span><div class="yb-stack"><i class="k1" style="height:5.88%"></i><i class="k2" style="height:4.90%"></i><i class="k3" style="height:0.98%"></i></div><span class="yb-y">08</span></div><div class="yb-col" title="2009 年：11 个视频，约 6 小时；对话 10；发布会 1" aria-label="2009 年：11 个视频，约 6 小时；对话 10；发布会 1"><span class="yb-n">11</span><div class="yb-stack"><i class="k1" style="height:9.80%"></i><i class="k2" style="height:0.98%"></i></div><span class="yb-y odd">09</span></div><div class="yb-col" title="2010 年：13 个视频，约 8 小时；对话 6；发布会 3；演讲 2；股东会 1；其他 1" aria-label="2010 年：13 个视频，约 8 小时；对话 6；发布会 3；演讲 2；股东会 1；其他 1"><span class="yb-n">13</span><div class="yb-stack"><i class="k1" style="height:5.88%"></i><i class="k2" style="height:2.94%"></i><i class="k3" style="height:1.96%"></i><i class="k4" style="height:0.98%"></i><i class="k5" style="height:0.98%"></i></div><span class="yb-y">10</span></div><div class="yb-col" title="2011 年：15 个视频，约 10 小时；对话 10；发布会 2；演讲 1；股东会 2" aria-label="2011 年：15 个视频，约 10 小时；对话 10；发布会 2；演讲 1；股东会 2"><span class="yb-n">15</span><div class="yb-stack"><i class="k1" style="height:9.80%"></i><i class="k2" style="height:1.96%"></i><i class="k3" style="height:0.98%"></i><i class="k4" style="height:1.96%"></i></div><span class="yb-y odd">11</span></div><div class="yb-col" title="2012 年：22 个视频，约 10 小时；对话 9；发布会 5；演讲 6；股东会 2" aria-label="2012 年：22 个视频，约 10 小时；对话 9；发布会 5；演讲 6；股东会 2"><span class="yb-n">22</span><div class="yb-stack"><i class="k1" style="height:8.82%"></i><i class="k2" style="height:4.90%"></i><i class="k3" style="height:5.88%"></i><i class="k4" style="height:1.96%"></i></div><span class="yb-y">12</span></div><div class="yb-col" title="2013 年：30 个视频，约 23 小时；对话 13；发布会 2；演讲 9；股东会 5；其他 1" aria-label="2013 年：30 个视频，约 23 小时；对话 13；发布会 2；演讲 9；股东会 5；其他 1"><span class="yb-n">30</span><div class="yb-stack"><i class="k1" style="height:12.75%"></i><i class="k2" style="height:1.96%"></i><i class="k3" style="height:8.82%"></i><i class="k4" style="height:4.90%"></i><i class="k5" style="height:0.98%"></i></div><span class="yb-y odd">13</span></div><div class="yb-col" title="2014 年：23 个视频，约 14 小时；对话 10；发布会 4；演讲 7；股东会 1；其他 1" aria-label="2014 年：23 个视频，约 14 小时；对话 10；发布会 4；演讲 7；股东会 1；其他 1"><span class="yb-n">23</span><div class="yb-stack"><i class="k1" style="height:9.80%"></i><i class="k2" style="height:3.92%"></i><i class="k3" style="height:6.86%"></i><i class="k4" style="height:0.98%"></i><i class="k5" style="height:0.98%"></i></div><span class="yb-y">14</span></div><div class="yb-col" title="2015 年：30 个视频，约 19 小时；对话 18；发布会 1；演讲 6；股东会 3；其他 2" aria-label="2015 年：30 个视频，约 19 小时；对话 18；发布会 1；演讲 6；股东会 3；其他 2"><span class="yb-n">30</span><div class="yb-stack"><i class="k1" style="height:17.65%"></i><i class="k2" style="height:0.98%"></i><i class="k3" style="height:5.88%"></i><i class="k4" style="height:2.94%"></i><i class="k5" style="height:1.96%"></i></div><span class="yb-y odd">15</span></div><div class="yb-col" title="2016 年：37 个视频，约 21 小时；对话 13；发布会 12；演讲 5；股东会 5；其他 2" aria-label="2016 年：37 个视频，约 21 小时；对话 13；发布会 12；演讲 5；股东会 5；其他 2"><span class="yb-n">37</span><div class="yb-stack"><i class="k1" style="height:12.75%"></i><i class="k2" style="height:11.76%"></i><i class="k3" style="height:4.90%"></i><i class="k4" style="height:4.90%"></i><i class="k5" style="height:1.96%"></i></div><span class="yb-y">16</span></div><div class="yb-col" title="2017 年：28 个视频，约 20 小时；对话 10；发布会 5；演讲 10；股东会 1；其他 2" aria-label="2017 年：28 个视频，约 20 小时；对话 10；发布会 5；演讲 10；股东会 1；其他 2"><span class="yb-n">28</span><div class="yb-stack"><i class="k1" style="height:9.80%"></i><i class="k2" style="height:4.90%"></i><i class="k3" style="height:9.80%"></i><i class="k4" style="height:0.98%"></i><i class="k5" style="height:1.96%"></i></div><span class="yb-y odd">17</span></div><div class="yb-col" title="2018 年：19 个视频，约 14 小时；对话 6；发布会 5；演讲 1；股东会 3；其他 4" aria-label="2018 年：19 个视频，约 14 小时；对话 6；发布会 5；演讲 1；股东会 3；其他 4"><span class="yb-n">19</span><div class="yb-stack"><i class="k1" style="height:5.88%"></i><i class="k2" style="height:4.90%"></i><i class="k3" style="height:0.98%"></i><i class="k4" style="height:2.94%"></i><i class="k5" style="height:3.92%"></i></div><span class="yb-y">18</span></div><div class="yb-col" title="2019 年：22 个视频，约 19 小时；对话 11；发布会 7；演讲 2；股东会 1；其他 1" aria-label="2019 年：22 个视频，约 19 小时；对话 11；发布会 7；演讲 2；股东会 1；其他 1"><span class="yb-n">22</span><div class="yb-stack"><i class="k1" style="height:10.78%"></i><i class="k2" style="height:6.86%"></i><i class="k3" style="height:1.96%"></i><i class="k4" style="height:0.98%"></i><i class="k5" style="height:0.98%"></i></div><span class="yb-y odd">19</span></div><div class="yb-col" title="2020 年：27 个视频，约 22 小时；对话 9；发布会 10；演讲 7；其他 1" aria-label="2020 年：27 个视频，约 22 小时；对话 9；发布会 10；演讲 7；其他 1"><span class="yb-n">27</span><div class="yb-stack"><i class="k1" style="height:8.82%"></i><i class="k2" style="height:9.80%"></i><i class="k3" style="height:6.86%"></i><i class="k5" style="height:0.98%"></i></div><span class="yb-y">20</span></div><div class="yb-col" title="2021 年：32 个视频，约 24 小时；对话 15；发布会 9；演讲 4；股东会 2；其他 2" aria-label="2021 年：32 个视频，约 24 小时；对话 15；发布会 9；演讲 4；股东会 2；其他 2"><span class="yb-n">32</span><div class="yb-stack"><i class="k1" style="height:14.71%"></i><i class="k2" style="height:8.82%"></i><i class="k3" style="height:3.92%"></i><i class="k4" style="height:1.96%"></i><i class="k5" style="height:1.96%"></i></div><span class="yb-y odd">21</span></div><div class="yb-col" title="2022 年：40 个视频，约 38 小时；对话 22；发布会 9；演讲 5；股东会 4" aria-label="2022 年：40 个视频，约 38 小时；对话 22；发布会 9；演讲 5；股东会 4"><span class="yb-n">40</span><div class="yb-stack"><i class="k1" style="height:21.57%"></i><i class="k2" style="height:8.82%"></i><i class="k3" style="height:4.90%"></i><i class="k4" style="height:3.92%"></i></div><span class="yb-y">22</span></div><div class="yb-col" title="2023 年：54 个视频，约 46 小时；对话 36；发布会 7；演讲 5；股东会 6" aria-label="2023 年：54 个视频，约 46 小时；对话 36；发布会 7；演讲 5；股东会 6"><span class="yb-n">54</span><div class="yb-stack"><i class="k1" style="height:35.29%"></i><i class="k2" style="height:6.86%"></i><i class="k3" style="height:4.90%"></i><i class="k4" style="height:5.88%"></i></div><span class="yb-y odd">23</span></div><div class="yb-col" title="2024 年：50 个视频，约 61 小时；对话 31；发布会 8；演讲 6；股东会 5" aria-label="2024 年：50 个视频，约 61 小时；对话 31；发布会 8；演讲 6；股东会 5"><span class="yb-n">50</span><div class="yb-stack"><i class="k1" style="height:30.39%"></i><i class="k2" style="height:7.84%"></i><i class="k3" style="height:5.88%"></i><i class="k4" style="height:4.90%"></i></div><span class="yb-y">24</span></div><div class="yb-col" title="2025 年：102 个视频，约 101 小时；对话 38；发布会 14；演讲 31；股东会 2；其他 17" aria-label="2025 年：102 个视频，约 101 小时；对话 38；发布会 14；演讲 31；股东会 2；其他 17"><span class="yb-n">102</span><div class="yb-stack"><i class="k1" style="height:37.25%"></i><i class="k2" style="height:13.73%"></i><i class="k3" style="height:30.39%"></i><i class="k4" style="height:1.96%"></i><i class="k5" style="height:16.67%"></i></div><span class="yb-y odd">25</span></div><div class="yb-col" title="2026 年：62 个视频，约 38 小时；对话 30；发布会 11；演讲 15；股东会 3；其他 3" aria-label="2026 年：62 个视频，约 38 小时；对话 30；发布会 11；演讲 15；股东会 3；其他 3"><span class="yb-n">62</span><div class="yb-stack"><i class="k1" style="height:29.41%"></i><i class="k2" style="height:10.78%"></i><i class="k3" style="height:14.71%"></i><i class="k4" style="height:2.94%"></i><i class="k5" style="height:2.94%"></i></div><span class="yb-y">26</span></div></div>
+  </section>
+  <div class="ins-two">
+    <section class="ins-sec"><div class="ins-h"><h2>在什么场合说话</h2></div><ol class="hb"><li><span class="hb-l">访谈</span><span class="hb-bar"><i style="width:100.0%"></i></span><span class="hb-n">272</span></li><li><span class="hb-l">大会演讲</span><span class="hb-bar"><i style="width:46.3%"></i></span><span class="hb-n">126</span></li><li><span class="hb-l">发布会</span><span class="hb-bar"><i style="width:44.9%"></i></span><span class="hb-n">122</span></li><li><span class="hb-l">股东会</span><span class="hb-bar"><i style="width:16.9%"></i></span><span class="hb-n">46</span></li><li><span class="hb-l">播客</span><span class="hb-bar"><i style="width:15.4%"></i></span><span class="hb-n">42</span></li><li><span class="hb-l">政府活动</span><span class="hb-bar"><i style="width:7.7%"></i></span><span class="hb-n">21</span></li><li><span class="hb-l">媒体</span><span class="hb-bar"><i style="width:5.9%"></i></span><span class="hb-n">16</span></li><li><span class="hb-l">X Spaces</span><span class="hb-bar"><i style="width:2.2%"></i></span><span class="hb-n">6</span></li></ol></section>
+    <section class="ins-sec"><div class="ins-h"><h2>最长的十场</h2></div><ol class="hb hb-long"><li><a href="/ep/elon-musk-neuralink-and-the-future-of-humanity-lex-fridman-podca/"><span class="hb-l">马斯克：Neuralink 与人类未来｜莱克斯·弗里德曼播客 #438<small>2024 · 播客</small></span><span class="hb-bar"><i style="width:100.0%"></i></span><span class="hb-n">8 小时 37 分</span></a></li><li><a href="/ep/live-elon-musk-s-full-cpac-interview-bold-views-on-politics-and/"><span class="hb-l">直播：马斯克 CPAC 完整专访：畅谈政治与创新<small>2025 · 大会演讲</small></span><span class="hb-bar"><i style="width:55.3%"></i></span><span class="hb-n">4 小时 46 分</span></a></li><li><a href="/ep/live-elon-musk-speaks-at-dubai-s-world-government-summit-boring/"><span class="hb-l">直播：马斯克在迪拜世界政府峰会谈“无聊城市”、AI 与 DOGE<small>2025 · 大会演讲</small></span><span class="hb-bar"><i style="width:51.2%"></i></span><span class="hb-n">4 小时 24 分</span></a></li><li><a href="/ep/tesla-autonomy-day/"><span class="hb-l">Tesla 自动驾驶日<small>2019 · 发布会</small></span><span class="hb-bar"><i style="width:44.9%"></i></span><span class="hb-n">3 小时 52 分</span></a></li><li><a href="/ep/2023-investor-day-tesla/"><span class="hb-l">2023 Investor Day｜Tesla<small>2023 · 股东会</small></span><span class="hb-bar"><i style="width:43.8%"></i></span><span class="hb-n">3 小时 46 分</span></a></li><li><a href="/ep/watch-elon-musk-s-neuralink-show-and-tell-event-live/"><span class="hb-l">直播：马斯克 Neuralink Show and Tell 发布会<small>2023 · 访谈</small></span><span class="hb-bar"><i style="width:42.3%"></i></span><span class="hb-n">3 小时 39 分</span></a></li><li><a href="/ep/watch-elon-musk-present-tesla-s-2023-investor-day-livestream/"><span class="hb-l">直播：马斯克出席特斯拉 2023 投资者日<small>2023 · 股东会</small></span><span class="hb-bar"><i style="width:41.5%"></i></span><span class="hb-n">3 小时 35 分</span></a></li><li><a href="/ep/tesla-ceo-elon-musk-speaks-at-dubai-s-world-government-summit-bo/"><span class="hb-l">Tesla CEO 马斯克在迪拜世界政府峰会：Boring 城市、AI 与 DODGE<small>2025 · 大会演讲</small></span><span class="hb-bar"><i style="width:41.1%"></i></span><span class="hb-n">3 小时 32 分</span></a></li><li><a href="/ep/elon-musk-tesla-ceo-musk-speaks-at-qatar-economic-forum/"><span class="hb-l">Tesla CEO 马斯克在卡塔尔经济论坛发言<small>2025 · 大会演讲</small></span><span class="hb-bar"><i style="width:39.8%"></i></span><span class="hb-n">3 小时 25 分</span></a></li><li><a href="/ep/joe-rogan-experience-1609-elon-musk/"><span class="hb-l">乔·罗根体验 #1609：马斯克<small>2024 · 播客</small></span><span class="hb-bar"><i style="width:39.5%"></i></span><span class="hb-n">3 小时 24 分</span></a></li></ol></section>
+  </div>
+  <section class="ins-sec" id="phrases">
+    <div class="ins-h"><h2>跟马斯克学英语：他最爱用的词</h2><p>只统计马斯克本人说的话：档案里 69 场已经分好说话人的对话，共约 50 万词，按每万词出现几次排序。每个词配一句他的原话，点一下跳到视频里那一秒。</p></div>
+    <ol class="ph-list"><li class="ph">
+  <div class="ph-h"><span class="ph-rank">01</span><b class="ph-en" lang="en">basically</b><span class="ph-zh">基本上</span>
+    <span class="ph-bar"><i style="width:100.0%"></i></span><span class="ph-n">9.9<small>/万词</small></span></div>
+  <p class="ph-note">口语里的万能连接词</p><a class="ph-ex" href="/ep/joe-rogan-experience-2404-elon-musk/?t=4771"><span class="ph-ts">▶ 1:19:31</span><span class="ph-s" lang="en">And it&#x27;s taken an immense amount of effort for us to overcome <mark>basically</mark> all the bullshit that&#x27;s on the internet.</span><span class="ph-src">2025 · 乔·罗根体验 #2404：马斯克</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">02</span><b class="ph-en" lang="en">obviously</b><span class="ph-zh">显然</span>
+    <span class="ph-bar"><i style="width:80.5%"></i></span><span class="ph-n">7.9<small>/万词</small></span></div>
+  <p class="ph-note">他觉得不言自明的事，常常别人并不觉得</p><a class="ph-ex" href="/ep/elon-musk-wisconsin-town-hall-full-fox-5-news/?t=3220"><span class="ph-ts">▶ 53:40</span><span class="ph-s" lang="en">So the problem with this <mark>obviously</mark> is that if you turn the swing states blue, then there are no swing states.</span><span class="ph-src">2025 · 马斯克威斯康星州市政厅活动（完整版）| FOX 5 News</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">03</span><b class="ph-en" lang="en">crazy</b><span class="ph-zh">疯狂的</span>
+    <span class="ph-bar"><i style="width:47.8%"></i></span><span class="ph-n">4.7<small>/万词</small></span></div>
+  <p class="ph-note">自嘲和夸张时都用</p><a class="ph-ex" href="/ep/2023-investor-day-tesla/?t=12829"><span class="ph-ts">▶ 3:33:49</span><span class="ph-s" lang="en">And then, you know, you&#x27;re not going to drive want <mark>crazy</mark> by unplugging your car, you have in the house go off.</span><span class="ph-src">2023 · 2023 Investor Day｜Tesla</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">04</span><b class="ph-en" lang="en">sustainable</b><span class="ph-zh">可持续的</span>
+    <span class="ph-bar"><i style="width:39.4%"></i></span><span class="ph-n">3.9<small>/万词</small></span></div>
+  <p class="ph-note">特斯拉使命里的关键词</p><a class="ph-ex" href="/ep/tesla-ai-day-2022/?t=9260"><span class="ph-ts">▶ 2:34:20</span><span class="ph-s" lang="en">And when Tesla started, the mission was to accelerate the advent of renewable energy or <mark>sustainable</mark> transport.</span><span class="ph-src">2022 · Tesla AI Day 2022 全程回顾</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">05</span><b class="ph-en" lang="en">civilization</b><span class="ph-zh">文明</span>
+    <span class="ph-bar"><i style="width:37.2%"></i></span><span class="ph-n">3.7<small>/万词</small></span></div>
+  <p class="ph-note">多行星、出生率、AI，最后都落到文明存续</p><a class="ph-ex" href="/ep/joe-rogan-experience-2054-elon-musk/?t=4750"><span class="ph-ts">▶ 1:19:10</span><span class="ph-s" lang="en">It&#x27;s all about that there&#x27;s a lot of physical evidence of an advanced <mark>civilization</mark> from far, far, far longer ago</span><span class="ph-src">2024 · 乔·罗根体验 #2054：马斯克</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">06</span><b class="ph-en" lang="en">essentially</b><span class="ph-zh">本质上</span>
+    <span class="ph-bar"><i style="width:32.7%"></i></span><span class="ph-n">3.2<small>/万词</small></span></div>
+  <p class="ph-note">把复杂问题压成一句话</p><a class="ph-ex" href="/ep/joe-rogan-experience-1609-elon-musk/?t=4801"><span class="ph-ts">▶ 1:20:01</span><span class="ph-s" lang="en">Have you seen some of these alternatives that have <mark>essentially</mark> spaces in between the upper wall and the wheel?</span><span class="ph-src">2024 · 乔·罗根体验 #1609：马斯克</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">07</span><b class="ph-en" lang="en">massive</b><span class="ph-zh">巨大的</span>
+    <span class="ph-bar"><i style="width:23.4%"></i></span><span class="ph-n">2.3<small>/万词</small></span></div>
+  <p class="ph-note">描述规模：产能、算力、火箭</p><a class="ph-ex" href="/ep/elon-musk-war-ai-aliens-politics-physics-video-games-and-humanit/?t=1154"><span class="ph-ts">▶ 19:14</span><span class="ph-s" lang="en">Whoever goes on the offensive will lose <mark>massive</mark> numbers of people and history will not look kindly upon them.</span><span class="ph-src">2024 · 马斯克：战争、AI、外星人、政治、物理、电子游戏与人类 | Lex Fridman 播客 #400</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">08</span><b class="ph-en" lang="en">humanity</b><span class="ph-zh">人类</span>
+    <span class="ph-bar"><i style="width:21.1%"></i></span><span class="ph-n">2.1<small>/万词</small></span></div>
+  <p class="ph-note">「对人类有益」是他解释动机的常用说法</p><a class="ph-ex" href="/ep/elon-musk-interview-with-ben-shapiro-full-interview/?t=856"><span class="ph-ts">▶ 14:16</span><span class="ph-s" lang="en">You know, as long as kids aren&#x27;t taught to hate other people, I think the natural inclination is to love <mark>humanity</mark>.</span><span class="ph-src">2025 · 马斯克接受本·夏皮罗专访（完整版）</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">09</span><b class="ph-en" lang="en">insane</b><span class="ph-zh">疯狂的（褒义）</span>
+    <span class="ph-bar"><i style="width:18.5%"></i></span><span class="ph-n">1.8<small>/万词</small></span></div>
+  <p class="ph-note">「insane mode」就是特斯拉的加速模式名</p><a class="ph-ex" href="/ep/elon-musk-interviewed-by-ron-baron-4-november-2022/?t=3266"><span class="ph-ts">▶ 54:26</span><span class="ph-s" lang="en">So if you think of net present value of future cash flows, if you actually do the math on that, it&#x27;s <mark>insane</mark>.</span><span class="ph-src">2022 · 罗恩·巴伦采访马斯克（2022年11月4日）</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">10</span><b class="ph-en" lang="en">consciousness</b><span class="ph-zh">意识</span>
+    <span class="ph-bar"><i style="width:18.1%"></i></span><span class="ph-n">1.8<small>/万词</small></span></div>
+  <p class="ph-note">他说要「扩展意识的范围与规模」</p><a class="ph-ex" href="/ep/elon-musk-on-racism-bailing-out-trump-hate-speech-and-more-the-d/?t=3899"><span class="ph-ts">▶ 1:04:59</span><span class="ph-s" lang="en">How do we extend <mark>consciousness</mark> into the future such that we are able to better understand the nature of reality?</span><span class="ph-src">2024 · 马斯克谈种族主义、为特朗普解围、仇恨言论等 - 唐·莱蒙秀（完整专访）</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">11</span><b class="ph-en" lang="en">hopefully</b><span class="ph-zh">但愿</span>
+    <span class="ph-bar"><i style="width:17.3%"></i></span><span class="ph-n">1.7<small>/万词</small></span></div>
+  <p class="ph-note">给时间表留余地的软化词</p><a class="ph-ex" href="/ep/go-up-spacex-s-starship-catching-robotic-launch-tower-with-elon/?t=278"><span class="ph-ts">▶ 4:38</span><span class="ph-s" lang="en">Those kind of lifting lugs will touch the top of the arms and then it will <mark>hopefully</mark> not share often and crumple.</span><span class="ph-src">2022 · 跟马斯克爬上 SpaceX 抓取 Starship 的机械发射塔</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">12</span><b class="ph-en" lang="en">next year</b><span class="ph-zh">明年</span>
+    <span class="ph-bar"><i style="width:15.4%"></i></span><span class="ph-n">1.5<small>/万词</small></span></div>
+  <p class="ph-note">「马斯克时间」的源头：很多事都在「明年」</p><a class="ph-ex" href="/ep/elon-musk-2017-gives-the-big-picture-at-governors-meeting/?t=1626"><span class="ph-ts">▶ 27:06</span><span class="ph-s" lang="en">We got, I don&#x27;t know, I think if somebody orders a Model 3 today, they&#x27;d only get it probably late <mark>next year</mark>.</span><span class="ph-src">2017 · 马斯克2017州长会议纵论大局</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">13</span><b class="ph-en" lang="en">exciting</b><span class="ph-zh">激动人心的</span>
+    <span class="ph-bar"><i style="width:14.0%"></i></span><span class="ph-n">1.4<small>/万词</small></span></div>
+  <p class="ph-note">描述未来时的高频形容词</p><a class="ph-ex" href="/ep/elon-musk-s-full-interview-with-code-conference/?t=738"><span class="ph-ts">▶ 12:18</span><span class="ph-s" lang="en">And I think that&#x27;s the <mark>exciting</mark>, inspiring future that I think certainly people in this room want.</span><span class="ph-src">2016 · 马斯克Code Conference完整采访</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">14</span><b class="ph-en" lang="en">frankly</b><span class="ph-zh">坦白说</span>
+    <span class="ph-bar"><i style="width:12.8%"></i></span><span class="ph-n">1.3<small>/万词</small></span></div>
+  <p class="ph-note">准备说一句不太中听的话</p><a class="ph-ex" href="/ep/ai-discussion-with-rishi-sunak/?t=2706"><span class="ph-ts">▶ 45:06</span><span class="ph-s" lang="en">So I think <mark>frankly</mark>, I think probably any social media system that doesn&#x27;t do that will simply be overrun by bots.</span><span class="ph-src">2023 · 马斯克与苏纳克对话 AI</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">15</span><b class="ph-en" lang="en">fundamentally</b><span class="ph-zh">从根本上说</span>
+    <span class="ph-bar"><i style="width:12.4%"></i></span><span class="ph-n">1.2<small>/万词</small></span></div>
+  <p class="ph-note">讲物理极限、成本结构时的开场白</p><a class="ph-ex" href="/ep/elon-musk-on-life-the-universe-and-everything-interview-part-2/?t=2339"><span class="ph-ts">▶ 38:59</span><span class="ph-s" lang="en">It&#x27;s like, I think <mark>fundamentally</mark>, even a kind of a stupid question, because what does it mean to found something?</span><span class="ph-src">2022 · 马斯克谈生命、宇宙及一切：访谈第2部分</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">16</span><b class="ph-en" lang="en">probability</b><span class="ph-zh">概率</span>
+    <span class="ph-bar"><i style="width:12.4%"></i></span><span class="ph-n">1.2<small>/万词</small></span></div>
+  <p class="ph-note">谈未来几乎从不说「一定」，而是说概率</p><a class="ph-ex" href="/ep/elon-musk-a-future-worth-getting-excited-about-tesla-texas-gigaf/?t=738"><span class="ph-ts">▶ 12:18</span><span class="ph-s" lang="en">That we will exceed the <mark>probability</mark> of an accident, at what point do you exceed that of the average person?</span><span class="ph-src">2022 · 马斯克：值得期待的未来｜Tesla 得州超级工厂访谈｜TED</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">17</span><b class="ph-en" lang="en">to be clear</b><span class="ph-zh">说清楚一点</span>
+    <span class="ph-bar"><i style="width:7.5%"></i></span><span class="ph-n">0.7<small>/万词</small></span></div>
+  <p class="ph-note">澄清和纠正前的提示语</p><a class="ph-ex" href="/ep/future-of-the-car-elon-musk-keynote-interview/?t=1596"><span class="ph-ts">▶ 26:36</span><span class="ph-s" lang="en">But my opinion, and Jack Dorsey, I want <mark>to be clear</mark>, shares this opinion, is that we should not have Poma</span><span class="ph-src">2022 · 汽车的未来：马斯克主题访谈</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">18</span><b class="ph-en" lang="en">dramatically</b><span class="ph-zh">大幅地</span>
+    <span class="ph-bar"><i style="width:7.3%"></i></span><span class="ph-n">0.7<small>/万词</small></span></div>
+  <p class="ph-note">「大幅降低成本」的标准搭配</p><a class="ph-ex" href="/ep/elon-musk-neuralink-and-the-future-of-humanity-lex-fridman-podca/?t=1881"><span class="ph-ts">▶ 31:21</span><span class="ph-s" lang="en">We could better align collective human will with AI if the output rate especially was <mark>dramatically</mark> increased.</span><span class="ph-src">2024 · 马斯克：Neuralink 与人类未来｜莱克斯·弗里德曼播客 #438</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">19</span><b class="ph-en" lang="en">order of magnitude</b><span class="ph-zh">一个数量级</span>
+    <span class="ph-bar"><i style="width:7.1%"></i></span><span class="ph-n">0.7<small>/万词</small></span></div>
+  <p class="ph-note">「好一个数量级」= 好十倍，他衡量进步的单位</p><a class="ph-ex" href="/ep/elon-musk-on-advertisers-trust-and-the-wild-storm-in-his-mind-de/?t=5293"><span class="ph-ts">▶ 1:28:13</span><span class="ph-s" lang="en">What we’ll find with computer driving is, I think probably an <mark>order of magnitude</mark> reduction in deaths.</span><span class="ph-src">2023 · 马斯克谈广告主、信任与头脑中的“风暴”｜DealBook Summit 2023</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">20</span><b class="ph-en" lang="en">tremendous</b><span class="ph-zh">极大的</span>
+    <span class="ph-bar"><i style="width:6.3%"></i></span><span class="ph-n">0.6<small>/万词</small></span></div>
+  <p class="ph-note">偏正式的「非常大」</p><a class="ph-ex" href="/ep/2022-annual-shareholder-meeting-tesla/?t=2751"><span class="ph-ts">▶ 45:51</span><span class="ph-s" lang="en">So you need to tell, because it&#x27;s a very long supply chain with a <mark>tremendous</mark> amount of inertia.</span><span class="ph-src">2022 · Tesla 2022 年度股东大会</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">21</span><b class="ph-en" lang="en">hardcore</b><span class="ph-zh">硬核</span>
+    <span class="ph-bar"><i style="width:3.5%"></i></span><span class="ph-n">0.3<small>/万词</small></span></div>
+  <p class="ph-note">2022 年那封「extremely hardcore」邮件</p><a class="ph-ex" href="/ep/tesla-battery-day/?t=11505"><span class="ph-ts">▶ 3:11:45</span><span class="ph-s" lang="en">And obviously, if you care about solving sustainability and doing <mark>hardcore</mark> engineering, definitely come work for Tesla.</span><span class="ph-src">2020 · Tesla Battery Day</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">22</span><b class="ph-en" lang="en">exponential</b><span class="ph-zh">指数级的</span>
+    <span class="ph-bar"><i style="width:3.3%"></i></span><span class="ph-n">0.3<small>/万词</small></span></div>
+  <p class="ph-note">谈 AI 与算力增长</p><a class="ph-ex" href="/ep/we-simulated-the-world-for-full-self-driving-elon-musk-interview/?t=316"><span class="ph-ts">▶ 5:16</span><span class="ph-s" lang="en">That&#x27;s a good thought because you mentioned it every six months, that&#x27;s an <mark>exponential</mark> curve.</span><span class="ph-src">2021 · 我们为 FSD 模拟了整个世界：马斯克 2021 访谈</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">23</span><b class="ph-en" lang="en">epic</b><span class="ph-zh">史诗级的</span>
+    <span class="ph-bar"><i style="width:2.6%"></i></span><span class="ph-n">0.3<small>/万词</small></span></div>
+  <p class="ph-note">形容发射和产品发布</p><a class="ph-ex" href="/ep/elon-musk-talks-twitter-tesla-and-how-his-brain-works-live-at-te/?t=616"><span class="ph-ts">▶ 10:16</span><span class="ph-s" lang="en">So that is part of an <mark>epic</mark> 80-minute interview, which we are releasing to people, members of TED 2022, right after this conference.</span><span class="ph-src">2022 · 马斯克在 TED2022 现场谈 Twitter、Tesla 与大脑运作</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">24</span><b class="ph-en" lang="en">in the limit</b><span class="ph-zh">在极限情况下</span>
+    <span class="ph-bar"><i style="width:2.4%"></i></span><span class="ph-n">0.2<small>/万词</small></span></div>
+  <p class="ph-note">物理学家式的推演习惯</p><a class="ph-ex" href="/ep/breaking-elon-musk-s-first-interview-since-jury-rejected-claim-a/"><span class="ph-ts">▶ ¶</span><span class="ph-s" lang="en">It’s always helpful to use the physics tools of thinking <mark>in the limit</mark>.</span><span class="ph-src">2026 · 突发：陪审团驳回对奥尔特曼 OpenAI 的指控后，马斯克首次受访</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">25</span><b class="ph-en" lang="en">first principles</b><span class="ph-zh">第一性原理</span>
+    <span class="ph-bar"><i style="width:2.0%"></i></span><span class="ph-n">0.2<small>/万词</small></span></div>
+  <p class="ph-note">从物理事实出发推理，而不是类比</p><a class="ph-ex" href="/ep/tesla-q1-2025-financial-results-and-q-a-webcast/"><span class="ph-ts">▶ ¶</span><span class="ph-s" lang="en">It&#x27;s really just the <mark>first principles</mark> approach to manufacturing that will ultimately allow us, I think, to… I&#x27;m trying to think.</span><span class="ph-src">2025 · Tesla Q1 2025 财报及问答网络直播</span></a>
+</li><li class="ph">
+  <div class="ph-h"><span class="ph-rank">26</span><b class="ph-en" lang="en">non-trivial</b><span class="ph-zh">不简单的</span>
+    <span class="ph-bar"><i style="width:0.2%"></i></span><span class="ph-n">0.0<small>/万词</small></span></div>
+  <p class="ph-note">工程师式的轻描淡写，意思是「很难」</p>
+</li></ol>
+  </section>
+  <section class="ins-sec">
+    <div class="ins-h"><h2>中文精读进度</h2><p>AI 基于完整文稿改写的中文长文，正在一篇篇补齐。</p></div>
+    <div class="zp"><div class="zp-bar"><i style="width:86.6%"></i></div><p><b>509</b> / 588 篇 · <a href="/?f=zh">去读精读 →</a></p></div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="ft-top">
+      <a class="ft-mark" href="/">Elon Musk <span>全访谈</span></a>
+      <p class="ft-tag">把马斯克 28 年的公开访谈，用中文认真读一遍。</p>
+    </div>
+    <div class="ft-cols">
+      <nav class="ft-col" aria-label="浏览"><h2>浏览</h2>
+        <a href="/">全部视频</a><a href="/search/">文稿搜索</a><a href="/?f=zh">中文精读</a><a href="/trends/">话题趋势</a><a href="/stats/">档案数据</a><a href="/archive/">视频目录</a><a href="/predictions/">预言追踪</a>
+        <a href="/quotes/">语录</a><a href="/themes/">主题</a><button type="button" data-install hidden>安装为应用</button></nav>
+      <nav class="ft-col" aria-label="订阅"><h2>订阅</h2>
+        <a href="/feed.xml">RSS 全文订阅</a><button type="button" data-copy-feed>复制 RSS 地址</button>
+        <a href="https://silicon-valley.tech/" target="_blank" rel="noopener">数据源 Elon Musk Archive</a></nav>
+      <nav class="ft-col" aria-label="关于"><h2>关于</h2>
+        <a href="/disclaimer/">免责声明</a><a href="https://github.com/joeseesun/elon-musk-cn" target="_blank" rel="noopener">开源代码</a>
+        <a href="/llms.txt">llms.txt</a><a href="https://tuijian.qiaomu.ai/" target="_blank" rel="noopener">乔木推荐</a></nav>
+      <div class="ft-col ft-support"><h2>支持这个项目</h2>
+        <p>一个人独立制作，没有广告，也不收费。如果这里的某篇精读让你有所收获，欢迎请作者喝杯咖啡，让它一直做下去。</p>
+        <div class="ft-actions"><button type="button" class="ft-btn" data-open="rewardModal">打赏支持</button><button type="button" class="ft-btn ghost" data-open="followModal">关注公众号</button></div></div>
+    </div>
+    <div class="ft-bottom">
+      <span>© 2026 向阳乔木 · 非官方粉丝站点，与 Elon Musk 及其公司无隶属关系</span>
+      <span>视频与文稿版权归原权利方所有，本站不托管媒体文件 · 中文精读由 AI 改写，仅供学习参考 · 视频档案数据来自 silicon-valley.tech</span>
+    </div>
+  </div>
+</footer>
+
+<div id="rewardModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="rewardT">
+  <div class="modal-card">
+    <button type="button" class="modal-close" aria-label="关闭">×</button>
+    <h3 id="rewardT">谢谢你的支持</h3>
+    <p class="modal-sub">每一份打赏都会变成更多认真校过的精读</p>
+    <img src="/assets/qiaomu_reward_qr.png" alt="打赏二维码" width="220" height="220" loading="lazy">
+    <p class="modal-links">微信扫一扫</p>
+  </div>
+</div>
+<div id="installModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="installT">
+  <div class="modal-card">
+    <button type="button" class="modal-close" aria-label="关闭">×</button>
+    <h3 id="installT">添加到主屏幕</h3>
+    <p class="modal-sub">像应用一样打开，读过的文章离线也能看</p>
+    <ol class="install-steps"><li>点 Safari 底部的「分享」按钮 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></li><li>向下滑，选择「添加到主屏幕」</li><li>点右上角「添加」</li></ol>
+  </div>
+</div>
+<div id="followModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="followT">
+  <div class="modal-card">
+    <button type="button" class="modal-close" aria-label="关闭">×</button>
+    <h3 id="followT">关注向阳乔木</h3>
+    <p class="modal-sub">微信公众号：向阳乔木推荐看</p>
+    <img src="/assets/qiaomu_wechat_public_account_qr.jpg" alt="公众号二维码" width="220" height="220" loading="lazy">
+    <p class="modal-links"><a href="https://github.com/joeseesun/" target="_blank" rel="noopener">GitHub</a> · <a href="https://x.com/vista8" target="_blank" rel="noopener">X</a></p>
+  </div>
+</div>
+<script defer src="https://umami.qiaomu.ai/script.js" data-website-id="9c095844-823f-5834-8f6f-3a5e5ef7cc8d" data-domains="elon.qiaomu.ai"></script>
+
+</body>
+</html>
