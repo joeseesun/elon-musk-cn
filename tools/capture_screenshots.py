@@ -25,15 +25,16 @@ EP = "/ep/elon-musk-the-end-of-work-the-death-of-money-and-a-world-run-by/"
 SHOTS = [
     ("home", "/", "", "", 1440, 1000),
     ("episode", EP, "", "", 1440, 1000),
+    ("related", EP, "#rel-section", "", 1440, 1000),
     ("search", "/search/?q=%E7%81%AB%E6%98%9F", "", ".sr-list > *", 1440, 1000),
     ("predictions", "/predictions/", "", "", 1440, 1000),
     ("quotes", "/quotes/", "", "", 1440, 1000),
     ("themes", "/themes/", "", "", 1440, 1000),
     ("trends", "/trends/", "", "", 1440, 1000),
     ("stats", "/stats/", "", "", 1440, 1000),
-    ("corpus", "/stats/", "corpus", "", 1440, 1000),
-    ("books", "/stats/", "books", "", 1440, 1000),
-    ("movies", "/stats/", "movies", "", 1440, 1000),
+    ("corpus", "/stats/", "#corpus", "", 1440, 1000),
+    ("books", "/stats/", "#books", "", 1440, 1000),
+    ("movies", "/stats/", "#movies", "", 1440, 1000),
     ("mcp", "/mcp/", "", "", 1440, 1000),
     ("i18n", "/stats/?lang=en", "", "", 1440, 1000),
     ("mobile", "/", "", "", 500, 900),
@@ -55,7 +56,7 @@ def main():
                 locale="zh-CN",
             )
             page = context.new_page()
-            print(f"→ {name}  {path}" + (f"#{anchor}" if anchor else ""), flush=True)
+            print(f"→ {name}  {path}" + (f"  → {anchor}" if anchor else ""), flush=True)
             page.goto(BASE + path, wait_until="domcontentloaded", timeout=60000)
             if wait_for:
                 try:
@@ -68,8 +69,8 @@ def main():
             page.add_style_tag(content=".kit-toast{display:none !important}")
             if anchor:
                 y = page.evaluate(
-                    """id => {
-                        const el = document.getElementById(id);
+                    """selector => {
+                        const el = document.querySelector(selector);
                         return el ? el.getBoundingClientRect().top + window.scrollY - 70 : 0;
                     }""",
                     anchor,

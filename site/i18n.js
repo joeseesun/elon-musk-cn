@@ -80,6 +80,8 @@
     '有文稿': ['', '有文稿', 'With transcript', 'Mit Transkript', 'Avec transcription', 'Con transcripción', '대본 있음', '文字起こしあり'],
     '看过的': ['', '看過的', 'Watched', 'Gesehen', 'Déjà vus', 'Vistos', '본 영상', '見たもの'],
     '最新': ['', '最新', 'Newest', 'Neueste', 'Plus récents', 'Más recientes', '최신순', '最新'],
+    '随机一篇': ['', '隨機一篇', 'Random pick', 'Zufälliger Beitrag', 'Au hasard', 'Aleatorio', '무작위 하나', 'ランダムに読む'],
+    '随机读一篇视频与文稿': ['', '隨機讀一篇影片與文稿', 'Open a random video with transcript', 'Zufälligen Beitrag mit Transkript öffnen', 'Ouvrir une vidéo aléatoire avec transcription', 'Abrir un vídeo aleatorio con transcripción', '대본이 있는 영상 무작위로 열기', '文字起こしのある動画をランダムに開く'],
     '最早': ['', '最早', 'Oldest', 'Älteste', 'Plus anciens', 'Más antiguos', '오래된순', '古い順'],
     '标题搜索': ['', '標題搜尋', 'Title search', 'Titelsuche', 'Recherche par titre', 'Búsqueda por título', '제목 검색', 'タイトル検索'],
     '筛选结果': ['', '篩選結果', 'Filtered results', 'Gefilterte Ergebnisse', 'Résultats filtrés', 'Resultados filtrados', '필터 결과', '絞り込み結果'],

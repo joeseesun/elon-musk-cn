@@ -370,6 +370,22 @@
       state.sort = state.sort === 'asc' ? 'desc' : 'asc';
       syncSort(); resetRender();
     });
+    /* 随机一篇：优先从有文稿/精读的视频里挑，尽量避开上一次抽到的 */
+    const randomBtn = $('#randomBtn');
+    if (randomBtn) randomBtn.addEventListener('click', () => {
+      let pool = [];
+      try { pool = JSON.parse($('#randomPool').textContent) || []; } catch (e) {}
+      if (!pool.length) pool = DATA.filter((e) => e.r || e.tr).map((e) => e.s);
+      if (!pool.length) return;
+      let pick = pool[Math.floor(Math.random() * pool.length)];
+      if (pool.length > 1) {
+        let last = '';
+        try { last = sessionStorage.getItem('elon-last-random') || ''; } catch (e) {}
+        if (pick === last) pick = pool[(pool.indexOf(pick) + 1) % pool.length];
+        try { sessionStorage.setItem('elon-last-random', pick); } catch (e) {}
+      }
+      location.href = '/ep/' + pick + '/';
+    });
     $('.tag-row').addEventListener('click', (ev) => {
       const c = ev.target.closest('[data-tag]'); if (!c) return;
       state.tag = state.tag === c.dataset.tag ? '' : c.dataset.tag;

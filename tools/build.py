@@ -55,7 +55,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 14, 6, 7, 4, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 15, 7, 7, 4, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -170,6 +170,84 @@ def thumb_of(m, big=False):
     if m.get('poster'):
         return m['poster']
     return ''
+
+
+# ---------------------------------------------------------------- 相关视频
+RELATED_STOP = {
+    'the', 'and', 'for', 'with', 'that', 'this', 'from', 'you', 'your', 'are', 'was',
+    'has', 'have', 'not', 'but', 'his', 'her', 'its', 'they', 'their', 'what', 'how',
+    'why', 'all', 'can', 'will', 'elon', 'musk', 'elonmusk', 'video', 'talk', 'interview',
+}
+
+
+def title_tokens(m):
+    """英文标题单词 + 中文标题二字词，用于估算主题相似度。"""
+    en = (m.get('title') or '').lower()
+    words = {w for w in re.findall(r'[a-z0-9]{3,}', en) if w not in RELATED_STOP}
+    zh = re.sub(r'[^\u4e00-\u9fff]', '', m.get('zh') or '')
+    words.update(zh[k:k + 2] for k in range(len(zh) - 1))
+    return words
+
+
+def related_of(i, n=3):
+    """同频道 / 同类型 / 相近年份 / 标题词重合，挑 n 条最相关的其它视频。"""
+    m = master[i]
+    toks = title_tokens(m)
+    year = (m.get('d') or '')[:4]
+    scored = []
+    for j, x in enumerate(master):
+        if j == i or abs(j - i) <= 2:  # 紧邻的上一个/下一个已单独展示
+            continue
+        score = 0.0
+        if m.get('ch') and x.get('ch') == m.get('ch'):
+            score += 4.0
+        if m.get('k') and x.get('k') == m.get('k'):
+            score += 1.2
+        xy = (x.get('d') or '')[:4]
+        if year.isdigit() and xy.isdigit():
+            score += max(0.0, 2.5 - abs(int(xy) - int(year)) * 0.4)
+        score += len(toks & title_tokens(x)) * 2.2
+        if x['slug'] in ZH:
+            score += 0.8
+        if x.get('tr'):
+            score += 0.4
+        if x.get('feat') or any(p['v'].endswith(x['srcId']) for p in extra['picks']):
+            score += 0.3
+        scored.append((score, -abs(j - i), j))
+    scored.sort(reverse=True)
+    return [master[j] for _, _, j in scored[:n]]
+
+
+def related_html(rels):
+    if not rels:
+        return ''
+    cards = []
+    for x in rels:
+        thumb = thumb_of(x)
+        img = (f'<img loading="lazy" decoding="async" src="{esc(thumb)}" alt="">'
+               if thumb else '<div class="no-img">EM</div>')
+        year = (x.get('d') or '')[:4]
+        dur = ts_mmss(x.get('sec')) or ''
+        bits = [f'<span>{esc(year)}</span>' if year else '']
+        if x.get('kZh'):
+            bits.append(f'<span class="ep-n">{esc(x["kZh"])}</span>')
+        if x.get('tr'):
+            bits.append('<span class="zh-tag">文字稿</span>')
+        title = x.get('zh') or x['title']
+        source = f'{x.get("ch")} · YouTube' if x.get('ch') and x.get('ytId') else (x.get('ch') or '')
+        overlay = (f'<span class="rel-year">{esc(year)}</span>' if year else '') + \
+                  (f'<span class="rel-dur">{esc(dur)}</span>' if dur else '')
+        cards.append(
+            f'<a class="pick-card rel-card" href="/ep/{x["slug"]}/">'
+            f'<div class="pick-thumb rel-thumb">{img}{overlay}</div>'
+            f'<div class="pick-body"><div class="rel-kicker">{"".join(bits)}</div>'
+            f'<div class="pick-title">{esc(title)}</div>'
+            f'<div class="pick-en" lang="en">{esc(x["title"])}</div>'
+            f'<div class="rel-src">{esc(source)}</div></div></a>'
+        )
+    return ('<section class="rel-section" id="rel-section" aria-label="相关视频">'
+            '<div class="sec-h"><h2>相关视频</h2><small>同频道、同主题或相邻年份</small></div>'
+            f'<div class="rel-row">{"".join(cards)}</div></section>')
 
 
 # ---------------------------------------------------------------- 公共片段
@@ -322,7 +400,7 @@ THEME_SCRIPT = """<script>
 })();
 </script>"""
 
-I18N_SCRIPT = '<script src="/i18n.js?v=3"></script>\n'
+I18N_SCRIPT = '<script src="/i18n.js?v=4"></script>\n'
 
 HEAD_EXTRA = (I18N_SCRIPT +
               '<link rel="preconnect" href="https://fonts.googleapis.cn">'
@@ -527,6 +605,7 @@ EP_SHELL = """<!DOCTYPE html>
     <nav class="ep-prevnext" aria-label="上一个 / 下一个视频">
       {prevnext}
     </nav>
+    {related}
   </article>
   <aside class="ep-toc" aria-label="精读目录"></aside>
 </main>
@@ -740,6 +819,7 @@ def build_page(i, eps):
                 f'<span class="pn-k">{label}</span><span class="pn-t">{esc(t)}</span></a>')
 
     prevnext = f'{pn_link(prev_e, "← 上一个")}{pn_link(next_e, "下一个 →")}'
+    related = related_html(related_of(i))
 
     page = EP_SHELL.format(
         title_tag=esc(title_tag), desc=esc(desc), url=url,
@@ -754,7 +834,7 @@ def build_page(i, eps):
         md_link=(f'<link rel="alternate" type="text/markdown" title="中文精读 Markdown" href="/ep/{slug}/index.md">' if has_zh else ''),
         media_html=media_html, tab_buttons=tab_buttons,
         panel_zh=panel_zh, panel_tr=panel_tr, panel_q=panel_q, no_content_note=no_content_note,
-        resources=resources, prevnext=prevnext,
+        resources=resources, prevnext=prevnext, related=related,
     )
     dest = SITE / 'ep' / slug / 'index.html'
     ensure_dir(dest.parent, parents=True)
@@ -929,6 +1009,9 @@ def build_index(eps):
     <button type="button" class="sort-btn" id="sort" data-dir="desc" aria-label="切换排序">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M3.5 16.5L7 20l3.5-3.5M13 6h8M13 11h6M13 16h4"/></svg><span>最新</span>
     </button>
+    <button type="button" class="random-btn" id="randomBtn" aria-label="随机读一篇视频与文稿">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>随机一篇</span>
+    </button>
   </div>
   <div class="wrap"><div class="tag-row">{tag_chips}</div></div>
 </div>
@@ -956,6 +1039,7 @@ def build_index(eps):
 {SITE_FOOTER}
 
 {umami_tag()}
+<script type="application/json" id="randomPool">{json.dumps([x['s'] for x in eps if x.get('r') or x.get('tr')], ensure_ascii=False)}</script>
 <script src="/app.js?v={APP_V}"></script>
 </body>
 </html>
