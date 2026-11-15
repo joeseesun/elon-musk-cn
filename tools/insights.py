@@ -418,23 +418,43 @@ PEOPLE = [
     ('习近平', 'Xi Jinping', '"xi jinping"|"president xi"', '中国国家主席'),
 ]
 
-# (中文书名, 英文书名, 作者, 查询, 一句话)
+# (中文书名, 英文书名, 作者, 查询, 一句话, 黑客书架 OpenLibrary 作品 id)；封面在 site/assets/books/{id}.webp（tools/book_covers.py 从本地黑客书架拷贝）
 BOOKS = [
     ('银河系漫游指南', "The Hitchhiker's Guide to the Galaxy", '道格拉斯·亚当斯', 'hitchhiker|"douglas adams"',
-     '少年时期帮他走出存在主义危机：问对问题比找到答案更难'),
-    ('基地', 'Foundation', '阿西莫夫', '"foundation series"|asimov', '文明衰落后如何缩短黑暗时代，SpaceX 的精神源头之一'),
-    ('严厉的月亮', 'The Moon Is a Harsh Mistress', '海因莱因', 'heinlein|"harsh mistress"', '月球殖民地独立的故事，他心目中最好的海因莱因'),
+     '少年时期帮他走出存在主义危机：问对问题比找到答案更难', 'OL2163649W'),
+    ('基地', 'Foundation', '阿西莫夫', '"foundation series"|asimov', '文明衰落后如何缩短黑暗时代，SpaceX 的精神源头之一', 'OL46125W'),
+    ('严厉的月亮', 'The Moon Is a Harsh Mistress', '海因莱因', 'heinlein|"harsh mistress"', '月球殖民地独立的故事，他心目中最好的海因莱因', 'OL59704W'),
     ('文明系列', 'The Culture series', '伊恩·M·班克斯', '"iain banks"|"culture series"|"player of games"|"iain m banks"',
-     '他认为最接近「AI 与人类共处的美好未来」的描写'),
-    ('指环王', 'The Lord of the Rings', '托尔金', '"lord of the rings"|tolkien', '小时候读过很多遍：英雄总想拯救世界'),
-    ('富兰克林传', 'Benjamin Franklin: An American Life', '艾萨克森', '"benjamin franklin"|"ben franklin"', '他最敬佩的人之一：科学家、创业者、政治家'),
-    ('一九八四', 'Nineteen Eighty-Four', '奥威尔', 'orwell|orwellian', '谈言论自由和审查时最常引用'),
-    ('2001 太空漫游', '2001: A Space Odyssey', '阿瑟·克拉克', '"space odyssey"|"arthur c. clarke"|"arthur clarke"', 'HAL 9000：AI 被要求说谎的危险'),
+     '他认为最接近「AI 与人类共处的美好未来」的描写（链接为系列中的《游戏玩家》）', 'OL100779W'),
+    ('指环王', 'The Lord of the Rings', '托尔金', '"lord of the rings"|tolkien', '小时候读过很多遍：英雄总想拯救世界', 'OL27448W'),
+    ('富兰克林传', 'Benjamin Franklin: An American Life', '艾萨克森', '"benjamin franklin"|"ben franklin"', '他最敬佩的人之一：科学家、创业者、政治家', 'OL4288868W'),
+    ('一九八四', 'Nineteen Eighty-Four', '奥威尔', 'orwell|orwellian', '谈言论自由和审查时最常引用', 'OL1168083W'),
+    ('2001 太空漫游', '2001: A Space Odyssey', '阿瑟·克拉克', '"space odyssey"|"arthur c. clarke"|"arthur clarke"', 'HAL 9000：AI 被要求说谎的危险', 'OL17365W'),
     ('文明的故事', 'The Story of Civilization', '威尔·杜兰特', '"will durant"|"lessons of history"|"story of civilization"',
-     '十一卷本世界史，他劝人读历史时常提；还有精简版《历史的教训》'),
-    ('生命 3.0', 'Life 3.0', '泰格马克', 'tegmark|"life 3.0"', '作者泰格马克创办了他资助的「未来生命研究所」'),
+     '十一卷本世界史，他劝人读历史时常提；还有精简版《历史的教训》', 'OL1073905W'),
+    ('生命 3.0', 'Life 3.0', '泰格马克', 'tegmark|"life 3.0"', '作者泰格马克创办了他资助的「未来生命研究所」', 'OL19717530W'),
+    ('罗马帝国衰亡史', 'The History of the Decline and Fall of the Roman Empire', '爱德华·吉本', '"decline and fall"',
+     '文明会遗忘技术：罗马有道路、水渠和管道，后来却全丢了', 'OL24940564W'),
+    ('怀疑的商人', 'Merchants of Doubt', '奥利斯克斯、康韦', '"merchants of doubt"', '他点名推荐：利益集团如何花钱制造对气候科学的怀疑', 'OL15626798W'),
+    ('人口炸弹', 'The Population Bomb', '保罗·埃利希', '"population bomb"', '他最反感的一本书：「人口过剩」论调的源头，「可能是史上最反人类的书」', 'OL3294965W'),
+    ('创新者的窘境', "The Innovator's Dilemma", '克里斯坦森', '"innovators dilemma"|"crossing the chasm"',
+     '和《跨越鸿沟》一起被他拿来解释：大公司为什么做不了激进创新', 'OL1999873W'),
+    ('查理和巧克力工厂', 'Charlie and the Chocolate Factory', '罗尔德·达尔', '"chocolate factory"', '一说起「太空电梯」，他就想到这本书', 'OL45790W'),
+    ('阿特拉斯耸耸肩', 'Atlas Shrugged', '安·兰德', '"atlas shrugged"', '规则越叠越多、实干的人寸步难行：他说美国正处在这本书的情节里', 'OL731644W'),
+    ('自私的基因', 'The Selfish Gene', '理查德·道金斯', '"selfish gene"', '谈生育率时提起作者道金斯，「meme」一词正出自这本书', 'OL1966488W'),
+    ('异乡异客', 'Stranger in a Strange Land', '海因莱因', '"stranger in a strange land"', 'Grok 名字的来源：火星长大的主角用「grok」表示深刻理解', 'OL59688W'),
+    ('沙丘', 'Dune', '弗兰克·赫伯特', '"from dune"|"frank herbert"', '「谁控制了梗，谁就控制了宇宙」改写自书里的「谁控制了香料」', 'OL893414W'),
+    ('乔布斯传', 'Steve Jobs', '艾萨克森', '"biography of jobs"', '他读过，觉得「挺有意思」；同一位作者后来写了他本人的传记', 'OL16085155W'),
+    ('伊利亚特', 'The Iliad', '荷马', 'iliad', '他说这「基本上是一部动作大片」，阿喀琉斯这样的英雄原型都从这里来', None),
+    ('寄生的思维', 'The Parasitic Mind', '加德·萨德', '"parasitic mind"', '「非常好的书，强烈推荐」：坏观念如何像寄生虫一样侵蚀理性', None),
+    ('叶卡捷琳娜大帝传', 'Catherine the Great: Portrait of a Woman', '罗伯特·K·马西', '"catherine the great"',
+     '他说自己早年推文那么「野」，是因为当时正在读这本传记', None),
+    ('霍华德·休斯传', 'a biography of Howard Hughes', '', '"book on howard hughes"|"howard hughes book"', '旅途中用手机读完，「也许是个警示故事」', None),
+    ('克伦佩勒日记', 'I Will Bear Witness (Victor Klemperer)', '维克多·克伦佩勒', '"victor cler"|klemperer',
+     '飞往波兰参观奥斯维辛的路上在读：一位德国犹太人记下的纳粹年代', None),
+    ('富足', 'Abundance', '彼得·戴曼迪斯', '"book called abundance"', '他认同书名里的判断：AI 和机器人会带来人人富足的未来', None),
+    ('百科全书', 'Encyclopaedia Britannica', '', '"read the encyclopedia"|britannica', '小时候家里的书读完了，他就去读百科全书', None),
 ]
-
 
 def _sent_with(text, groups, lo=40, hi=220):
     best = None
@@ -549,26 +569,86 @@ def people_html(docs):
     return f'<ol class="pp">{"".join(out)}</ol><p class="ins-note">数字是提到此人的文稿段落数（含主持人和提问者的话），小折线是 {cols[0]}–{cols[-1]} 每年的热度。点一行去看原话。</p>'
 
 
-def books_html(docs, quality):
-    st = mention_stats(docs, [(b[0], b[3]) for b in BOOKS], quality=quality, want_examples=8)
-    out = []
-    for b, r in sorted(zip(BOOKS, st['rows']), key=lambda x: -x[1]['n']):
-        if not r['n'] or not r['ex']:
+def _book_window(text, q, span=95):
+    """转写没有标点时句子太长，就截取命中词前后一段。"""
+    alts = [a.strip('"') for a in re.findall(r'"[^"]*"|[^\s|"]+', q)]
+    rx = re.compile('|'.join(r'[^a-z0-9]+'.join(map(re.escape, re.findall(r'[a-z0-9]+', a.lower()))) for a in alts if a), re.I)
+    m = rx.search(text)
+    if not m:
+        return None
+    a, b = max(0, m.start() - span), min(len(text), m.end() + span)
+    a = text.rfind(' ', 0, a) + 1 if a else 0
+    b = text.find(' ', b) if b < len(text) and text.find(' ', b) > 0 else len(text)
+    return ('…' if a else '') + text[a:b].strip() + ('…' if b < len(text) else '')
+
+
+# 自动挑的例句不够典型时，指定一段原话里的片段，优先用它
+BOOK_PIN = {
+    '指环王': 'wormtongue', '怀疑的商人': 'recommend people read', '人口炸弹': 'misanthropic book',
+    '生命 3.0': 'future life institute', '文明的故事': 'literally a book called', '百科全书': 'ran out of things to read',
+    '基地': 'really loved', '一九八四': 'orwell book',
+}
+
+
+def _book_examples(docs, q, quality, want=8, pin=None):
+    groups = compile_query(q)
+    ex, seen = [], set()
+    for slug, d, zh, paras in docs:
+        for k, (sec, text) in enumerate(paras):
+            pinned = bool(pin) and pin in text.lower() and not any(e['q'] >= 99 for e in ex)
+            if slug in seen and not pinned:
+                continue
+            seq = tok_seq(text)
+            if not matches(groups, seq, set(seq)):
+                continue
+            if pinned:
+                s = next((x for x in re.split(r'(?<=[.?!])\s+', text) if pin in x.lower() and 40 <= len(x) <= 220), None)
+                w = not s
+                s = s or _book_window(text, f'"{pin}"', 100)
+            else:
+                s = _sent_with(text, groups)
+                w = not s
+                s = s or _book_window(text, q)
+            if s:
+                seen.add(slug)
+                ex.append({'q': 99 if pinned else (quality(slug) if quality else 0), 'w': w,
+                           'slug': slug, 'zh': zh, 'd': d, 'k': k, 'sec': sec, 's': s})
+    ex.sort(key=lambda e: (-e['q'], e['w'], abs(len(e['s']) - 120)))
+    return ex[:want]
+
+
+def books_html(docs, quality, cover_dir=None):
+    st = mention_stats(docs, [(b[0], b[3]) for b in BOOKS])
+    items = []
+    for b, r in sorted(zip(BOOKS, st['rows']), key=lambda x: -x[1]['docs']):
+        if not r['n']:
             continue
-        zh, en, au, q, note = b
+        zh, en, au, q, note, hb = b
+        exs = _book_examples(docs, q, quality, pin=BOOK_PIN.get(zh))
+        if not exs:
+            continue
         key = q.split('|')[0].strip('"').lower()
-        e = next((x for x in r['ex'] if key in x['s'].lower() and not x['s'].endswith('?')), r['ex'][0])
+        e = exs[0] if exs[0]['q'] >= 99 else next(
+            (x for x in exs if key in x['s'].lower() and not x['s'].rstrip('…').endswith('?')), exs[0])
         hl = ' '.join(w for w in re.findall(r'[a-z]+', q.split('|')[0].lower()) if len(w) > 2)
         ts = e['sec'] is not None
-        out.append(f'''<li class="bk">
-  <div class="bk-cover" aria-hidden="true"><b>{esc(zh)}</b><small>{esc(au)}</small></div>
+        has_cover = hb and cover_dir and (cover_dir / f'{hb}.webp').exists()
+        cover = (f'<img class="bk-img" src="/assets/books/{hb}.webp" alt="" loading="lazy" decoding="async" width="76" height="114">' if has_cover
+                 else f'<div class="bk-cover" aria-hidden="true"><b>{esc(zh)}</b><small>{esc(au)}</small></div>')
+        if hb:
+            cover = f'<a class="bk-cv" href="https://hackerbooks.qiaomu.ai/book/{hb}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">{cover}</a>'
+        hb_link = (f'<a class="bk-hb" href="https://hackerbooks.qiaomu.ai/book/{hb}" target="_blank" rel="noopener">黑客书架 ↗</a>' if hb else '')
+        n = r['docs']
+        items.append(f'''<li class="bk">
+  {cover}
   <div class="bk-body"><div class="bk-h"><b>《{esc(zh)}》</b><span lang="en">{esc(en)}</span></div>
     <p class="bk-note">{esc(note)}</p>
     <a class="bk-ex" href="{esc(_ep_href(e, hl))}"><span class="ph-s" lang="en">{_hl(e["s"], q)}</span><span class="ph-src">{"▶ " if ts else ""}{esc((e["d"] or "")[:4])} · {esc(e["zh"])}</span></a>
-    <a class="bk-more" href="/search/?q={esc(_q(q))}">{r["docs"]} 场视频里提到过 →</a></div>
+    <div class="bk-links"><a class="bk-more" href="/search/?q={esc(_q(q))}">{f"{n} 场视频里提到过" if n > 1 else "在文稿里搜索"} →</a>{hb_link}</div></div>
 </li>''')
-    return f'<ol class="bk-list">{"".join(out)}</ol>'
-
+    head, rest = items[:12], items[12:]
+    more = (f'<details class="bk-more-list"><summary>再看 {len(rest)} 本</summary><ol class="bk-list">{"".join(rest)}</ol></details>' if rest else '')
+    return len(items), f'<ol class="bk-list">{"".join(head)}</ol>{more}'
 
 _YR = re.compile(r'(?<![\d$,.])(20[1-9]\d|2100)(?![\d,])')
 
