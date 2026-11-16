@@ -4,7 +4,7 @@
    - 都没有时显示离线页
    - 更新：新版本等待用户确认后才接管，不会读到一半被刷新
    - 离线收藏：页面可发 CACHE_URLS 消息，把指定页面存进离线缓存 */
-const VERSION = 'em-v3';
+const VERSION = 'em-v4';
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
@@ -67,6 +67,8 @@ self.addEventListener('fetch', (e) => {
   const sameOrigin = url.origin === self.location.origin;
   // 检索分片与段落数据量大，交给浏览器 HTTP 缓存，避免挤掉离线页面缓存
   if (sameOrigin && url.pathname.startsWith('/data/search/')) return;
+  // 封面图已本地化且数量多（上千张），交给浏览器 HTTP 缓存，不占 SW 离线容量
+  if (sameOrigin && url.pathname.startsWith('/thumbs/')) return;
   if (req.mode === 'navigate' || (sameOrigin && /\.(json|md|xml|txt)$/.test(url.pathname))) {
     e.respondWith(networkFirst(req));
     return;

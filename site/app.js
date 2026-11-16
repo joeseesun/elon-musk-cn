@@ -53,6 +53,29 @@
     return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  /* 封面图：优先本地 /thumbs/（构建时抓好），缺失时 onerror 回退远程图床 */
+  const THUMB_OK = {}; // yid -> 本地图是否可用（由 SSR 注入或首张成功推定）
+  function thumbSmall(e) {
+    if (e.y && THUMB_OK[e.y] !== false) return `/thumbs/${e.y}.jpg`;
+    if (e.s) return `/thumbs/${e.s}.jpg`;
+    return e.y ? `https://i.ytimg.com/vi/${e.y}/mqdefault.jpg` : (e.po || '');
+  }
+  function thumbSmallHTML(e, extra = '') {
+    const src = thumbSmall(e);
+    if (!src) return '<div class="no-img">EM</div>';
+    // 兜底链：yid 本地图 -> slug 本地图 -> 远程图床
+    const fb1 = (e.y && e.s) ? `/thumbs/${e.s}.jpg` : '';
+    const fb2 = e.y ? `https://i.ytimg.com/vi/${e.y}/mqdefault.jpg` : (e.po || '');
+    let chain = '';
+    if (fb1) chain += `if(this.src.indexOf('${fb1}')<0){this.src='${fb1}';return}`;
+    if (fb2) chain += `this.onerror=null;this.src='${fb2}'`;
+    const onerror = chain ? ` onerror="${chain}"` : '';
+    return `<img loading="lazy" decoding="async" src="${esc(src)}" alt="" width="320" height="180"${extra}${onerror}>`;
+  }
+  function thumbBigSrc(e) {
+    return e.y ? `/thumbs/${e.y}@big.jpg` : '';
+  }
+
   /* ---------- 搜索：归一化 + 多词 AND + 加权排序 ---------- */
   const PUNCT = /[\s·•・\-–—_'’"“”:：,，.。!！?？()（）\[\]【】#&/、|]+/g;
   const norm = (s) => (s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(PUNCT, '');
@@ -121,12 +144,7 @@
   }
 
   function cardHTML(e, toks) {
-    const thumb = e.y
-      ? `https://i.ytimg.com/vi/${e.y}/mqdefault.jpg`
-      : (e.po || '');
-    const img = thumb
-      ? `<img loading="lazy" decoding="async" src="${esc(thumb)}" alt="" width="320" height="180">`
-      : '<div class="no-img">EM</div>';
+    const img = thumbSmallHTML(e);
     const date = (e.d || '').slice(0, 7).replace('-', '.') || (e.d || '');
     const p = (HIST[e.s] || {}).rp || 0;
     const prog = p > 0.01 ? `<span class="prog" aria-hidden="true"><i style="width:${(p * 100).toFixed(1)}%"></i></span>` : '';
@@ -226,8 +244,10 @@
     box.dataset.s = e.s;
     const d = e.d || '';
     const when = d.length >= 7 ? `${d.slice(0, 4)} 年 ${+d.slice(5, 7)} 月` : d;
-    const img = e.y
-      ? `<img src="https://i.ytimg.com/vi/${e.y}/maxresdefault.jpg" alt="" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${e.y}/hqdefault.jpg'">`
+    const bigLocal = thumbBigSrc(e);
+    const fb = e.y ? `https://i.ytimg.com/vi/${e.y}/hqdefault.jpg` : '';
+    const img = bigLocal
+      ? `<img src="${bigLocal}" alt="" onerror="this.onerror=null;this.src='${fb}'">`
       : (e.po ? `<img src="${esc(e.po)}" alt="">` : '');
     const by = [e.ch, when, e.k].filter(Boolean).map(esc).join(' · ');
     box.innerHTML = `<a class="hero-media" href="/ep/${e.s}/" tabindex="-1" aria-hidden="true">${img}</a>
@@ -260,7 +280,7 @@
     $('#contRow').innerHTML = items.map((s) => {
       const e = bySlug[s], h = HIST[s];
       const meta = `读到 ${Math.round((h.rp || 0) * 100)}%`;
-      const thumb = e.y ? `<img loading="lazy" src="https://i.ytimg.com/vi/${e.y}/mqdefault.jpg" alt="">` : (e.po ? `<img loading="lazy" src="${esc(e.po)}" alt="">` : '');
+      const thumb = thumbSmallHTML(e);
       return `<a class="cont-item" href="/ep/${e.s}/">
         <div class="cont-thumb">${thumb}<span class="prog"><i style="width:${((h.rp || 0) * 100).toFixed(1)}%"></i></span></div>
         <div class="cont-body"><div class="cont-title">${esc(e._zh)}</div><div class="cont-meta">${meta}</div></div></a>`;

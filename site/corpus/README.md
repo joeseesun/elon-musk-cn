@@ -33,4 +33,4 @@
 - 引用请注明「https://elon.qiaomu.ai 中文精读（AI 改写，非官方翻译）」并链接对应网页版；使用英文原始语料时另请注明
   silicon-valley.tech（Elon Musk Archive）。
 
-生成日期：2026-11-15
+生成日期：2026-11-16

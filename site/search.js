@@ -618,7 +618,9 @@ shouldn haven hasn hadn ll re ve d m o y let get got gonna gotta wanna going thi
 
   function epHeadHTML(meta, k, n, isZh) {
     const [slug, , d, zh, en, kind, yt] = meta.eps[k];
-    const thumb = yt ? `<img loading="lazy" src="https://i.ytimg.com/vi/${esc(yt)}/mqdefault.jpg" alt="" width="160" height="90">` : '<span class="no-img">EM</span>';
+    const local = yt ? `/thumbs/${esc(yt)}.jpg` : '';
+    const fb = yt ? `https://i.ytimg.com/vi/${esc(yt)}/mqdefault.jpg` : '';
+    const thumb = yt ? `<img loading="lazy" src="${local}" alt="" width="160" height="90" onerror="if(this.src.indexOf('/thumbs/')>=0){this.onerror=null;this.src='${fb}'}">` : '<span class="no-img">EM</span>';
     return `<a class="sr-ep-h" href="/ep/${esc(slug)}/"><span class="sr-thumb">${thumb}</span>
         <span class="sr-ep-t"><span class="sr-kicker">${isZh ? '中文精读 · ' : ''}${esc(kind)}${d ? ' · ' + esc(fmtDate(d)) : ''} · ${n} 处</span>
         <span class="sr-title">${esc(zh || en)}</span>${zh && en !== zh ? `<span class="sr-en" lang="en">${esc(en)}</span>` : ''}</span></a>`;

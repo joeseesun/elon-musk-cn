@@ -123,6 +123,8 @@
    python3 tools/build.py                 # 全量构建到 site/
    ```
 
+   封面图已随仓库存放在 `site/thumbs/`（1301 张 / 57 MB，站点自带不依赖 YouTube 图床，国内打开即加载）。换图库或追新后可用 `python3 tools/fetch_thumbs.py` 增量补齐（纯标准库、并发、断点续跑）。
+
 2. 起本地服务并打开：
 
    ```bash
@@ -157,7 +159,7 @@ python3 tools/translate_quotes.py
 python3 tools/build.py
 ```
 
-各脚本：`tools/sync_data.py`（抓取与主数据）、`tools/translate_titles.py`（标题与专题翻译）、`tools/gen_zh.py`（精读生成，含禁用句式校验与重试）、`tools/translate_quotes.py`（双语金句与语录）、`tools/search_index.py`（文稿分段与全文检索索引，构建时调用）、`tools/insights.py`（话题趋势、口头禅、承诺时间线、公司/人物/书/电影/未来年份统计）、`tools/bili_match.py`（B 站搬运匹配，可断点续跑）、`tools/book_covers.py`（书单封面）、`tools/movie_posters.py`（片单海报，OMDb，需 `OMDB_API_KEY`）、`tools/build_corpus.py`（可下载语料包，全站构建时调用）、`tools/brand.py`（图标与 OG 默认图）。
+各脚本：`tools/fetch_thumbs.py`（封面图抓取到本地 `site/thumbs/`，小图 mqdefault + 大图 maxresdefault 并自动降级 hqdefault，并发带重试、断点续跑）、`tools/sync_data.py`（抓取与主数据）、`tools/translate_titles.py`（标题与专题翻译）、`tools/gen_zh.py`（精读生成，含禁用句式校验与重试）、`tools/translate_quotes.py`（双语金句与语录）、`tools/search_index.py`（文稿分段与全文检索索引，构建时调用）、`tools/insights.py`（话题趋势、口头禅、承诺时间线、公司/人物/书/电影/未来年份统计）、`tools/bili_match.py`（B 站搬运匹配，可断点续跑）、`tools/book_covers.py`（书单封面）、`tools/movie_posters.py`（片单海报，OMDb，需 `OMDB_API_KEY`）、`tools/build_corpus.py`（可下载语料包，全站构建时调用）、`tools/brand.py`（图标与 OG 默认图）。
 
 </details>
 

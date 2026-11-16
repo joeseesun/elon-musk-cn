@@ -49,13 +49,14 @@ def ensure_dir(p, parents=False):
 import insights  # noqa: E402
 import search_index  # noqa: E402
 SITE = ROOT.parent / 'site'
+THUMB_DIR = SITE / 'thumbs'
 TODAY = date.today().isoformat()
 
 CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').exists() else {}
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 15, 7, 7, 4, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 18, 9, 7, 5, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -163,13 +164,43 @@ def html_to_md(h):
     return re.sub(r'\n{3,}', '\n\n', h).strip() + '\n'
 
 
+def local_thumb(yid=None, slug=None, big=False):
+    """优先本地封面（构建时由 tools/fetch_thumbs.py 抓取），缺失时回退 ytimg。"""
+    if yid:
+        name = f'{yid}@big.jpg' if big else f'{yid}.jpg'
+        local = THUMB_DIR / name
+        if local.exists() and local.stat().st_size > 1000:
+            return f'/thumbs/{name}'
+        # yid 图缺失（如视频下架）时，尝试第三方封面的 slug 本地图
+        if slug:
+            sname = f'{slug}@big.jpg' if big else f'{slug}.jpg'
+            sfile = THUMB_DIR / sname
+            if sfile.exists() and sfile.stat().st_size > 1000:
+                return f'/thumbs/{sname}'
+        q = 'maxresdefault' if big else 'mqdefault'
+        return f'https://i.ytimg.com/vi/{yid}/{q}.jpg'
+    if slug:
+        name = f'{slug}@big.jpg' if big else f'{slug}.jpg'
+        local = THUMB_DIR / name
+        if local.exists() and local.stat().st_size > 1000:
+            return f'/thumbs/{name}'
+    return ''
+
 def thumb_of(m, big=False):
     if m.get('ytId'):
-        q = 'maxresdefault' if big else 'mqdefault'
-        return f'https://i.ytimg.com/vi/{m["ytId"]}/{q}.jpg'
+        return local_thumb(yid=m['ytId'], big=big)
+    if m.get('slug'):
+        r = local_thumb(slug=m['slug'], big=big)
+        if r:
+            return r
     if m.get('poster'):
         return m['poster']
     return ''
+
+def abs_thumb(m):
+    """结构化数据用的绝对 URL 大图。"""
+    t = thumb_of(m, big=True) or '/assets/og-default.jpg'
+    return t if t.startswith('http') else f'{DOMAIN}{t}'
 
 
 # ---------------------------------------------------------------- 相关视频
@@ -350,7 +381,7 @@ THEME_SCRIPT = """<script>
     var box = document.getElementById('pwaToast');
     if (!box) {
       var css = document.createElement('style');
-      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:2px 4px;font-size:18px;line-height:1}';
+      css.textContent = '#pwaToast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:11px 14px;background:var(--text,#111);color:var(--bg,#fff);border-radius:10px;font-size:14px;line-height:1.4;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none}#pwaToast.show{opacity:1;pointer-events:auto}#pwaToast button{flex-shrink:0;background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:8px 12px;font-size:13px;cursor:pointer}#pwaToast .pwa-x{border:0;padding:0;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;line-height:1}';
       document.head.appendChild(css);
       box = document.createElement('div'); box.id = 'pwaToast'; box.setAttribute('role', 'status');
       document.body.appendChild(box);
@@ -435,15 +466,11 @@ CHANNELS = [('home', '/', '首页'), ('archive', '/archive/', '目录'), ('searc
 def site_header(cur=''):
     links = ''.join(f'<a href="{href}"' + (' aria-current="page"' if key == cur else '') + f'>{label}</a>'
                     for key, href, label in CHANNELS)
-    # 窄屏频道条可横向滚动，把当前频道滚到可见处
-    center = ('<script>(function(){var n=document.getElementById(\'chanNav\'),a=n&&n.querySelector(\'[aria-current]\');'
-              'if(a&&n.scrollWidth>n.clientWidth)n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2;})();</script>'
-              if cur else '')
     return ('<header class="site-header slim">\n  <div class="wrap header-inner">\n'
             '    <a class="wordmark" href="/" aria-label="马斯克全访谈 · 首页">Elon Musk <span>全访谈</span></a>\n'
             f'    <nav class="chan-nav" id="chanNav" aria-label="频道">{links}</nav>\n'
             f'    <div class="header-actions">{THEME_BTN}</div>\n'
-            f'  </div>\n</header>{center}')
+            f'  </div>\n</header>')
 
 
 ICON_PLAY = '<svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'
@@ -642,7 +669,7 @@ def build_page(i, eps):
     if slug in ZH:
         desc += ' 附 AI 中文精读。'
     og_title = f'{zh_title}｜{title}' if zh_title else title
-    og_img = thumb_of(m, big=True) or f'{DOMAIN}/assets/og-default.jpg'
+    og_img = abs_thumb(m)
 
     zh_html_file = SITE / 'zh' / f'{slug}.html'
     has_zh = slug in ZH and zh_html_file.exists()
@@ -720,7 +747,8 @@ def build_page(i, eps):
     if y or (bili and not m.get('mp4')):
         img = thumb_of(m) or (bili or {}).get('pic') or ''
         attrs = (f' data-yt="{esc(y)}"' if y else '') + (f' data-bv="{esc(bili["bv"])}" data-bp="{int(bili.get("p") or 1)}"' if bili else '')
-        onerr = f' onerror="this.onerror=null;this.src=\'https://i.ytimg.com/vi/{y}/hqdefault.jpg\'"' if y else ''
+        _bigfb = local_thumb(yid=y, big=True) or (f'https://i.ytimg.com/vi/{y}/hqdefault.jpg' if y else '')
+        onerr = f' onerror="this.onerror=null;this.src=\'{_bigfb}\'"' if (_bigfb and y) else ''
         media_html = (f'<div class="media">'
                       f'<button type="button" class="video-facade"{attrs} aria-label="播放视频">'
                       f'<img src="{img}" alt="" width="320" height="180"{onerr}>'
@@ -857,7 +885,7 @@ def build_page(i, eps):
 def ssr_card(x):
     zh, en = x['zh'] or x['t'], x['t']
     when = (x['d'] or '')[:7].replace('-', '.') or (x['d'] or '')
-    thumb = x['y'] and f'https://i.ytimg.com/vi/{x["y"]}/mqdefault.jpg' or x.get('po') or ''
+    thumb = local_thumb(yid=x['y'], slug=x.get('s')) or x.get('po') or ''
     img = f'<img loading="lazy" decoding="async" src="{H.escape(thumb)}" alt="" width="320" height="180">' if thumb else '<div class="no-img">EM</div>'
     tag = '<span class="zh-tag">中文精读</span>' if x.get('r') else ''
     en_html = f'<div class="card-title-en" lang="en">{esc(en)}</div>' if x['zh'] else ''
@@ -872,8 +900,10 @@ def ssr_hero(x):
     d = x['d'] or ''
     when = fmt_date(d)
     by = ' · '.join(esc(v) for v in [x.get('ch'), when] if v)
-    img = x['y'] and (f'<img src="https://i.ytimg.com/vi/{x["y"]}/maxresdefault.jpg" alt="" '
-                      f'onerror="this.onerror=null;this.src=\'https://i.ytimg.com/vi/{x["y"]}/hqdefault.jpg\'">')
+    big = local_thumb(yid=x['y'], slug=x.get('s'), big=True)
+    fb = f'https://i.ytimg.com/vi/{x["y"]}/hqdefault.jpg' if x['y'] else ''
+    img = (f'<img src="{H.escape(big)}" alt="" onerror="this.onerror=null;this.src=\'{fb}\'">'
+           if big else '')
     return (f'<a class="hero-media" href="/ep/{x["s"]}/" tabindex="-1" aria-hidden="true">{img}</a>'
             f'<div class="hero-text"><div class="hero-kicker">最新精读</div>'
             f'<h2 class="hero-title"><a href="/ep/{x["s"]}/">{esc(zh)}</a></h2>'
@@ -922,7 +952,7 @@ def build_index(eps):
     picks_sorted = [x for x in eps if x.get('pick')][:10]
     picks_html = ''
     for x in picks_sorted:
-        pthumb = (f'https://i.ytimg.com/vi/{x["y"]}/mqdefault.jpg' if x['y'] else (x.get('po') or ''))
+        pthumb = local_thumb(yid=x['y'], slug=x.get('s')) or x.get('po') or ''
         pimg = f'<img loading="lazy" src="{esc(pthumb)}" alt="">' if pthumb else '<div class="no-img">EM</div>'
         picks_html += (f'<a class="pick-card" href="/ep/{x["s"]}/"><div class="pick-thumb">{pimg}</div>'
                        f'<div class="pick-body"><div class="pick-title">{esc(x["zh"] or x["t"])}</div>'
