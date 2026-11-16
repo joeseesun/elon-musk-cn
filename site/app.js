@@ -407,6 +407,16 @@
       location.href = '/ep/' + pick + '/';
     });
     $('.tag-row').addEventListener('click', (ev) => {
+      // 「更多话题」展开/收起（仅移动端可见）
+      const more = ev.target.closest('#tagMore');
+      if (more) {
+        const row = more.closest('.tag-row');
+        const open = row.classList.toggle('expanded');
+        more.setAttribute('aria-expanded', open ? 'true' : 'false');
+        const lbl = more.querySelector('.tm-label');
+        if (lbl) lbl.textContent = open ? '收起' : '更多话题';
+        return;
+      }
       const c = ev.target.closest('[data-tag]'); if (!c) return;
       state.tag = state.tag === c.dataset.tag ? '' : c.dataset.tag;
       syncTagChips(); resetRender();

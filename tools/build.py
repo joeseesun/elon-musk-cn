@@ -56,7 +56,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 19, 9, 7, 5, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 21, 10, 7, 5, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -974,6 +974,9 @@ def build_index(eps):
 
     tags = ['Tesla', 'SpaceX', '人工智能', '政治', '能源', 'Neuralink', 'X', '社会', 'Boring Company', '加密货币']
     tag_chips = ''.join(f'<button type="button" class="chip" data-tag="{esc(t)}">{esc(t)}</button>' for t in tags)
+    tag_chips += ('<button type="button" class="tag-more" id="tagMore" aria-expanded="false" aria-controls="tagList">'
+                  '<span class="tm-label">更多话题</span>'
+                  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>')
 
     grid_ssr = ''.join(ssr_card(x) for x in reversed(eps[-30:]))
     hero_ssr = ssr_hero(latest) if latest else ''
@@ -1043,7 +1046,7 @@ def build_index(eps):
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1"/><circle cx="15.5" cy="8.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="8.5" cy="15.5" r="1"/><circle cx="15.5" cy="15.5" r="1"/></svg><span>随机一篇</span>
     </button>
   </div>
-  <div class="wrap"><div class="tag-row">{tag_chips}</div></div>
+  <div class="wrap"><div class="tag-row" id="tagList">{tag_chips}</div></div>
 </div>
 
 <main class="wrap" id="main">
