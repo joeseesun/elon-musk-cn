@@ -56,7 +56,7 @@ CFG = json.load(open(ROOT / 'site_config.json')) if (ROOT / 'site_config.json').
 DOMAIN = CFG.get('domain', 'https://elon.qiaomu.ai')
 SITE_NAME = '马斯克全访谈'
 UMAMI = CFG.get('umami', '')
-CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 18, 9, 7, 5, 2, 1
+CSS_V, APP_V, EP_V, SEARCH_V, TRENDS_V, KIT_V = 19, 9, 7, 5, 2, 1
 
 STATUS_ZH = {'kept': '已兑现', 'late': '迟到兑现', 'missed': '未兑现', 'open': '待验证'}
 
@@ -431,7 +431,7 @@ THEME_SCRIPT = """<script>
 })();
 </script>"""
 
-I18N_SCRIPT = '<script src="/i18n.js?v=4"></script>\n'
+I18N_SCRIPT = '<script src="/i18n.js?v=5"></script>\n'
 
 HEAD_EXTRA = (I18N_SCRIPT +
               '<link rel="preconnect" href="https://fonts.googleapis.cn">'
@@ -1040,7 +1040,7 @@ def build_index(eps):
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M3.5 16.5L7 20l3.5-3.5M13 6h8M13 11h6M13 16h4"/></svg><span>最新</span>
     </button>
     <button type="button" class="random-btn" id="randomBtn" aria-label="随机读一篇视频与文稿">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>随机一篇</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1"/><circle cx="15.5" cy="8.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="8.5" cy="15.5" r="1"/><circle cx="15.5" cy="15.5" r="1"/></svg><span>随机一篇</span>
     </button>
   </div>
   <div class="wrap"><div class="tag-row">{tag_chips}</div></div>

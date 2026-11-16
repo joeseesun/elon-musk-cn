@@ -17,6 +17,10 @@
     'zh': '中', 'zh-TW': '繁', 'en': 'EN', 'de': 'DE', 'fr': 'FR',
     'es': 'ES', 'ko': '한', 'ja': '日'
   };
+  // Lucide "languages" 图标：语言切换按钮统一用图标，不再显示语种缩写
+  var ICON_LANG = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+    + '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/>'
+    + '<path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>';
   var LANG_ATTR = {
     'zh': 'zh-CN', 'zh-TW': 'zh-TW', 'en': 'en', 'de': 'de',
     'fr': 'fr', 'es': 'es', 'ko': 'ko', 'ja': 'ja'
@@ -449,7 +453,11 @@
 
   function syncSwitcher() {
     var btn = document.getElementById('i18nBtn');
-    if (btn) btn.textContent = SHORT[cur] || '中';
+    if (btn) {
+      if (!btn.querySelector('svg')) btn.innerHTML = ICON_LANG;
+      btn.setAttribute('title', LABELS[cur] || '语言');
+      btn.setAttribute('aria-label', '语言：' + (LABELS[cur] || '中文') + '（点击切换）');
+    }
     Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (el) {
       var on = el.getAttribute('data-lang') === cur;
       el.setAttribute('aria-current', on ? 'true' : 'false');
@@ -467,10 +475,9 @@
     btn.type = 'button';
     btn.className = 'i18n-btn';
     btn.id = 'i18nBtn';
-    btn.setAttribute('aria-label', 'Language / 语言');
     btn.setAttribute('aria-haspopup', 'true');
     btn.setAttribute('aria-expanded', 'false');
-    btn.textContent = SHORT[cur] || '中';
+    btn.innerHTML = ICON_LANG;
     var menu = document.createElement('div');
     menu.className = 'i18n-menu';
     menu.setAttribute('role', 'menu');
